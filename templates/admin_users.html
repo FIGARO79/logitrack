@@ -1,71 +1,774 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LogiTrack - Admin Panel</title>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>LogiTrack - Admin Panel</title>
     <link rel="icon" href="{{ request.url_for('static', path='favicon.ico') }}">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Inter', sans-serif; } </style>
-</head>
-<body class="bg-gray-100">
-    <div class="container mx-auto mt-10 p-4 bg-white rounded-lg shadow-lg max-w-4xl">
-        <div class="flex justify-between items-center mb-6 border-b pb-4">
-            <h1 class="text-2xl font-bold text-gray-800">Panel de Administración de Usuarios</h1>
-            <a href="{{ request.url_for('admin_logout') }}" class="bg-gray-600 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">
-                Cerrar Sesión de Admin
+        <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+        <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet" />
+        <style>
+            /* General styles */
+            body {
+                font-family: "Inter", sans-serif;
+                background-color: #f9fafb;
+            }
+            /* Adjust container-wrapper for more fluid behavior */
+            .container-wrapper {
+                width: 100%; /* Make it take full width */
+                max-width: 1200px; /* Max width for larger screens */
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .label-container {
+                border: 1px solid #d1d5db;
+                padding: 0.75rem;
+                background-color: white;
+                color: #1f2937;
+                width: 100%;
+                max-width: 265px;
+                height: auto;
+                aspect-ratio: 265 / 378;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                box-shadow:
+                    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+                    0 1px 2px 0 rgba(0, 0, 0, 0.06);
+                border-radius: 0.375rem;
+                margin-left: auto;
+                margin-right: auto;
+                position: relative;
+                overflow: hidden;
+            }
+            #qrCodeContainer {
+                min-height: 96px;
+                width: 96px;
+                height: 96px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                border: 1px solid #e5e7eb;
+                border-radius: 0.25rem;
+                flex-shrink: 0;
+            }
+            #qrCodeContainer img {
+                display: block;
+                margin: auto;
+                max-width: 100%;
+                max-height: 100%;
+            }
+            .qr-placeholder {
+                width: 100%;
+                height: 100%;
+                border: 1px dashed #9ca3af;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                font-size: 0.75rem;
+                color: #6b7280;
+                border-radius: 0.25rem;
+            }
+            .label-item-code,
+            .label-item-description {
+                font-size: 0.875rem;
+                font-weight: bold;
+                line-height: 1.25 !important;
+                word-break: normal;
+                margin-bottom: 0.25rem;
+            }
+            .label-item-description {
+                 margin-bottom: 10mm;
+            }
+            .label-data-field {
+                font-size: 0.75rem;
+                font-weight: normal;
+                line-height: 1.2 !important;
+                display: grid;
+                grid-template-columns: auto 1fr;
+                gap: 0.5rem;
+                align-items: start;
+                margin-bottom: 0.5mm;
+            }
+            .label-data-field span:first-child {
+                font-weight: 500;
+                color: #4b5563;
+                white-space: normal;
+            }
+            .label-data-field span:last-child,
+            .label-data-field input[type="number"].label-qty-input {
+                font-weight: normal;
+                text-align: right;
+                word-break: break-all;
+            }
+            .label-qty-input {
+                -moz-appearance: textfield;
+                appearance: textfield;
+                border: none;
+                background-color: transparent;
+                padding: 0;
+                margin: 0;
+                max-width: 70px;
+                font-size: inherit;
+                font-weight: inherit;
+                color: inherit;
+                text-align: right;
+                outline: none;
+                box-shadow: none;
+                justify-self: end;
+                line-height: 1.2;
+            }
+            .label-qty-input::-webkit-outer-spin-button,
+            .label-qty-input::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+            .label-disclaimer {
+                font-size: 7pt !important;
+                font-weight: normal !important;
+                line-height: 1.1 !important;
+                margin-right: 0.5rem;
+                flex-grow: 1;
+            }
+            .label-logo {
+                max-width: 40%;
+                max-height: 20px;
+                width: auto;
+                height: auto;
+                object-fit: contain;
+                margin-bottom: 3.5mm;
+                display: block;
+            }
+            .label-bottom-section {
+                margin-top: auto;
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                gap: 0.5rem;
+            }
+            input[type="text"],
+            input[type="number"],
+            select {
+                border: 1px solid #d1d5db;
+                padding: 6px 12px;
+                border-radius: 0.375rem;
+                width: 100%;
+                box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+                transition:
+                    border-color 0.2s,
+                    box-shadow 0.2s;
+            }
+            input:focus,
+            select:focus {
+                outline: 2px solid transparent;
+                outline-offset: 2px;
+                border-color: #ffbf24ed;
+                box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.4);
+            }
+            .form-label {
+                font-weight: 500;
+                margin-bottom: 3px;
+                display: block;
+                color: #374151;
+                font-size: 0.875rem;
+            }
+            .data-field {
+                background-color: #f3f4f6;
+                padding: 8px 12px;
+                border-radius: 0.375rem;
+                min-height: 38px;
+                border: 1px solid #d1d5db;
+                color: #374151;
+                overflow-wrap: break-word;
+                font-size: 0.875rem;
+                line-height: 1.5;
+                display: flex;
+                align-items: center;
+            }
+            th,
+            td {
+                border: 1px solid #e5e7eb;
+                padding: 10px 12px;
+                text-align: left;
+                vertical-align: middle;
+                font-size: 0.875rem;
+                line-height: 1.4;
+            }
+            th {
+                background-color: #f9fafb;
+                font-weight: 600;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                color: #6b7280;
+                white-space: nowrap;
+                letter-spacing: 0.05em;
+                position: relative;
+            }
+            tbody tr:nth-child(even) {
+                background-color: #f9fafb;
+            }
+            tbody tr:hover {
+                background-color: #f0f9ff;
+            }
+            button, .btn-secondary {
+                padding: 9px 15px;
+                border-radius: 0.375rem;
+                cursor: pointer;
+                transition:
+                    background-color 0.2s,
+                    box-shadow 0.2s;
+                font-weight: 500;
+                font-size: 0.875rem;
+                box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+            button:focus, .btn-secondary:focus {
+                outline: 2px solid transparent;
+                outline-offset: 2px;
+                box-shadow: 0 0 0 3px rgba(13, 11, 7, 0.53);
+            }
+            button:disabled, .btn-secondary:disabled {
+                cursor: not-allowed;
+                opacity: 0.6;
+            }
+            .btn-primary {
+                background-color: #fbbf24;
+                color: #1f2937;
+                border: 1px solid transparent;
+            }
+            .btn-primary:hover:not(:disabled) {
+                background-color: #f59e0b;
+                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            }
+            .btn-secondary {
+                background-color: #6b7280;
+                color: white;
+                border: 1px solid transparent;
+                text-decoration: none;
+            }
+            .btn-secondary:hover:not(:disabled) {
+                background-color: #4b5563;
+                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            }
+            .btn-print-label {
+                width: 100%;
+                max-width: 265px;
+                margin-top: 0.5rem;
+                margin-left: auto;
+                margin-right: auto;
+                display: block;
+            }
+            .btn-export-log {
+              background-color: #4b5563;
+              color: white;
+              border: none;
+              padding: 10px 20px;
+              border-radius: 5px;
+              cursor: pointer;
+            }
+            .btn-export-log:hover {
+              background-color: #1565C0;
+            }
+
+            /* --- Toast Notification Styles --- */
+            #toast-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.75rem; }
+            .toast { display: flex; align-items: center; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); max-width: 350px; opacity: 0; transform: translateX(100%); transition: opacity 0.2s ease, transform 0.2s ease; }
+            .toast.show { opacity: 1; transform: translateX(0); }
+            .toast-icon { margin-right: 0.75rem; flex-shrink: 0; }
+            .toast.success { background-color: #dcfce7; color: #166534; border: 1px solid #4ade80; }
+            .toast.error { background-color: #fee2e2; color: #991b1b; border: 1px solid #f87171; }
+            .toast.info { background-color: #e0f2fe; color: #0c4a6e; border: 1px solid #7dd3fc; }
+            /* --- Spinner --- */
+            .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+            .sortable-header {
+                cursor: pointer;
+                user-select: none;
+                padding-right: 24px !important;
+            }
+            .sortable-header::after {
+                content: "";
+                position: absolute;
+                right: 8px;
+                top: 50%;
+                margin-top: -4px;
+                border: 4px solid transparent;
+                opacity: 0.3;
+                pointer-events: none;
+                transition: opacity 0.2s ease-in-out;
+            }
+            .sortable-header.sort-asc::after {
+                border-bottom-color: #4b5563;
+                opacity: 1;
+            }
+            .sortable-header.sort-desc::after {
+                border-top-color: #4b5563;
+                opacity: 1;
+            }
+            .action-btn { background: none; border: none; padding: 0.25rem; border-radius: 9999px; color: #6b7280; transition: background-color 0.2s, color 0.2s; }
+            .action-btn:hover { background-color: #e5e7eb; color: #1f2937; }
+            .edit-btn:hover { color: #2563eb; }
+            .delete-btn:hover { color: #dc2626; }
+
+
+            /* Estilos de Impresión */
+            @page {
+                    size: 70mm 100mm;
+                    margin: 3.5mm;
+            }
+            @media print {
+                html, body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 70mm; height: 100mm; overflow: hidden; }
+                body { margin: 0; padding: 0; -webkit-print-color-adjust: antialiased; print-color-adjust: optimizeLegibility; width: 70mm; height: 100mm; overflow: hidden; font-family: "Arial", "Helvetica", sans-serif; color: #000000 !important; }
+                body * { visibility: hidden; }
+                .label-print-area, .label-print-area * { visibility: visible; }
+                .label-print-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: none; box-shadow: none; display: flex; align-items: center; justify-content: center; }
+                .label-container { width: 100%; height: 100% !important; max-width: 63mm; max-height: 93mm; margin: 0; padding: 0mm; border: none; box-shadow: none; page-break-inside: avoid; background: white !important; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; overflow: hidden; }
+                .label-item-code { font-size: 12pt !important; font-weight: bold !important; line-height: 1.25 !important; word-break: normal; margin-bottom: 0.5mm; color: #000000 !important; }
+                .label-item-description { font-size: 12pt !important; font-weight: bold !important; line-height: 1.25 !important; word-break: normal; margin-bottom: 13mm; color: #000000 !important; }
+                .label-data-field { margin-bottom: 0.5mm; }
+                .label-data-field span { font-size: 9pt !important; font-weight: normal !important; line-height: 1.2 !important; color: #000000 !important; }
+                .label-data-field span:first-child { white-space: normal; }
+                .label-disclaimer { font-size: 7pt !important; font-weight: normal !important; line-height: 1.1 !important; color: #000000 !important; }
+                #qrCodeContainer { width: 25mm; height: 25mm; min-height: 25mm; border: none; flex-shrink: 0; }
+                #qrCodeContainer img { max-width: 100%; max-height: 100%; object-fit: contain; }
+                .qr-placeholder { border: 1px dashed; color: #000000 !important; font-size: 6pt; }
+                .label-logo { max-width: 55%; max-height: 7mm; width: auto; height: auto; object-fit: contain; margin-bottom: 2mm; display: block; }
+                #labelQtyPackInput { display: none !important; visibility: hidden !important; }
+                #labelQtyPackSpan { visibility: visible !important; display: inline !important; font-size: 9pt !important; font-weight: normal !important; text-align: right !important; color: #000000 !important; line-height: 1.2 !important; }
+                #printLabelBtn, .btn-print-label, .form-label, input:not(.label-qty-input), select, .data-field, #toast-container, h1, h2, table, #addLogEntryBtn, #exportLogBtn, #emptyTableMessage, .container-wrapper > img:first-of-type { display: none !important; visibility: hidden !important; }
+            }
+            @media screen {
+                #labelQtyPackSpan { display: none; }
+            }
+            /* 1. El body vuelve a usar flexbox */
+            /* 1. El body vuelve a usar flexbox */
+            body {
+                display: flex;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            /* 2. Estilos de la barra lateral */
+            .sidebar {
+                width: 240px;
+                background-color: #0c0c0c;
+                color: #ffffff;
+                padding: 1rem;
+                flex-shrink: 0;
+                transition: width 0.3s ease-in-out;
+                will-change: width; /* Hint para el navegador */
+                /* ----- CORRECCIÓN 1: Añadido para alinear el botón de logout al fondo ----- */
+                display: flex;
+                flex-direction: column;
+            }
+            
+            /* ----- CORRECCIÓN 2: Reglas nuevas para alinear iconos y texto ----- */
+            .sidebar .desktop-nav a,
+            .sidebar .desktop-logout-btn {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem; /* 12px */
+            }
+            /* Ajustar padding solo para los enlaces de navegación (el botón de logout usa tailwind) */
+            .sidebar .desktop-nav a {
+                padding: 0.75rem 0.5rem; /* 12px 8px */
+                border-radius: 0.375rem; /* 6px */
+                margin-bottom: 0.25rem; /* 4px */
+            }
+            /* --- FIN REGLAS NUEVAS --- */
+
+
+            /* 3. Cuando está colapsada, se reduce su ancho */
+            .sidebar.sidebar-collapsed {
+                width: 72px;
+            }
+
+            /* 4. El contenido principal crece para ocupar el espacio restante */
+            .main-content {
+                flex-grow: 1;
+                overflow-y: auto; /* Permite scroll vertical en el contenido */
+            }
+
+            /* 5. Estilos para el texto y otros elementos que se ocultarán */
+            .sidebar .sidebar-text,
+            .sidebar .gadgets-heading,
+            .sidebar .text-xl.font-bold {
+                /* Modificado: transición simple */
+                transition: all 0.2s ease-in-out;
+                white-space: nowrap;
+            }
+
+            /* 6. Ocultar el texto cuando la barra está colapsada */
+            .sidebar.sidebar-collapsed .sidebar-text,
+            .sidebar.sidebar-collapsed .gadgets-heading,
+            .sidebar.sidebar-collapsed .text-xl.font-bold {
+                /* Modificado: Usamos display: none para ocultar completamente el texto */
+                display: none;
+            }
+
+            /* 7. Iconos */
+            .sidebar svg {
+                flex-shrink: 0;
+            }
+            
+            /* MODIFICADO: Eliminadas las reglas de 'opacity' y 'visibility' para el SVG, ya no son necesarias */
+
+            /* 8. Centrar los iconos cuando la barra está colapsada */
+            /* ----- CORRECCIÓN 3: Modificada la regla para forzar el colapso del botón ----- */
+            .sidebar.sidebar-collapsed a,
+            .sidebar.sidebar-collapsed button {
+                justify-content: center;
+                padding-left: 0.5rem;  /* Añadido para anular padding de tailwind */
+                padding-right: 0.5rem; /* Añadido para anular padding de tailwind */
+            }
+            /* --- FIN DE ESTILOS PARA LA BARRA LATERAL --- */
+
+            /* Specific column width adjustments for better fit */
+            #logTable th:nth-child(1), #logTable td:nth-child(1) { min-width: 140px; } /* Packing List Number */
+            #logTable th:nth-child(2), #logTable td:nth-child(2) { min-width: 100px; } /* Waybill */
+            #logTable th:nth-child(3), #logTable td:nth-child(3) { min-width: 100px; } /* Item Code */
+            #logTable th:nth-child(4), #logTable td:nth-child(4) { min-width: 200px; } /* Item Description */
+            #logTable th:nth-child(5), #logTable td:nth-child(5) { min-width: 120px; } /* Bin Location */
+            #logTable th:nth-child(6), #logTable td:nth-child(6) { min-width: 120px; } /* Relocated Bin */
+            #logTable th:nth-child(7), #logTable td:nth-child(7) { min-width: 90px; }  /* Qty. Received */
+            #logTable th:nth-child(8), #logTable td:nth-child(8) { min-width: 90px; }  /* Qty. Expected */
+            #logTable th:nth-child(9), #logTable td:nth-child(9) { min-width: 80px; }  /* Difference */
+            #logTable th:nth-child(10), #logTable td:nth-child(10) { min-width: 150px; } /* Timestamp */
+            #logTable th:nth-child(11), #logTable td:nth-child(11) { min-width: 100px; } /* Acciones */
+
+
+            /* Responsive adjustments for smaller screens */
+            @media (max-width: 1023px) {
+                .sidebar { width: 100%; height: auto; position: relative; padding-bottom: 0; }
+                .flex.h-screen.overflow-hidden { flex-direction: column; height: auto; overflow: visible; }
+                .flex.flex-col.flex-1.overflow-auto { overflow: visible; }
+                .main-content { padding-left: 0; padding-top: 1rem; }
+                .grid.grid-cols-1.lg\:grid-cols-3 { grid-template-columns: 1fr; }
+                .lg\:col-span-2, .lg\:col-span-1 { grid-column: span 1 / span 1; }
+                .label-container { max-width: 300px; margin-bottom: 1.5rem; }
+            }
+
+            @media (max-width: 767px) {
+                #logTable th, #logTable td { padding: 8px 10px; font-size: 0.75rem; }
+            }
+
+            @media (max-width: 1023px) {
+                /* Ocultar la lógica de expandir/colapsar en móvil */
+                .sidebar.sidebar-collapsed {
+                    width: 100%;
+                }
+                .sidebar.sidebar-collapsed .sidebar-text {
+                    display: none;
+                }
+                .sidebar:not(.sidebar-collapsed) a, .sidebar:not(.sidebar-collapsed) button {
+                    justify-content: center;
+                }
+
+                /* 1. La barra lateral se convierte en barra superior fija */
+                .sidebar {
+                    flex-direction: row;
+                    justify-content: space-between;
+                    align-items: center;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 64px;
+                    padding: 0 1rem;
+                    z-index: 50;
+                    border-bottom: 1px solid #4a5568;
+                }
+
+                /* 2. Ocultar la navegación de escritorio y otros elementos */
+                .sidebar .desktop-nav,
+                .sidebar .desktop-logout-btn,
+                .sidebar .gadgets-heading,
+                .sidebar .flex.items-center,
+                .sidebar .text-xl.font-bold {
+                    display: none;
+                }
+
+                /* 3. Ajustar logo y mostrar el botón de hamburguesa */
+                .sidebar img.mb-6 {
+                    margin-bottom: 0;
+                    height: 30px;
+                }
+
+                .hamburger-button {
+                    display: block; /* Mostrar el botón */
+                    background: none;
+                    border: none;
+                    color: white;
+                    cursor: pointer;
+                    padding: 0.5rem;
+                }
+
+                /* 4. Estilos para el menú desplegable */
+                .mobile-menu-container {
+                    display: none; /* Oculto por defecto */
+                    position: fixed;
+                    top: 64px; /* Justo debajo de la barra superior */
+                    left: 0;
+                    width: 100%;
+                    height: calc(100vh - 64px);
+                    background-color: #0c0c0c;
+                    padding: 1rem;
+                    overflow-y: auto;
+                }
+
+                .mobile-menu-container.is-open {
+                    display: block; /* Clase para mostrar el menú */
+                }
+
+                .mobile-menu-container a {
+                    justify-content: flex-start; /* Alinear texto e icono a la izquierda */
+                    padding: 1rem;
+                }
+                .mobile-menu-container .sidebar-text {
+                    display: inline; /* Asegurarse de que el texto es visible */
+                    font-size: 1.125rem;
+                }
+
+                /* 5. Ajustar el contenido principal para que no quede debajo de la barra */
+                .main-content {
+                    padding-top: 80px;
+                }
+
+                /* Quitar la funcionalidad de hover en la barra en móvil */
+                .sidebar:hover {
+                    width: 100%;
+                }
+            }
+
+            /* Ocultar el botón de hamburguesa en escritorio */
+            @media (min-width: 1024px) {
+                .hamburger-button {
+                    display: none;
+                }
+            }
+
+            /* --- REGLA AÑADIDA --- */
+            /* Oculta el contenedor del menú móvil en escritorio para evitar duplicados */
+            .mobile-menu-container {
+                display: none;
+            }
+
+        </style>
+    </head>
+    <body class="bg-white flex h-screen overflow-hidden">
+        <aside class="sidebar">
+            <!-- Logo (se mantiene igual) -->
+            <img src="/static/images/sandvik_logotype_white_rgb300.png"
+                alt="Logotipo Sandvik Principal"
+                width="200" height="30" class="mb-6" onerror="this.onerror=null; this.src='https://placehold.co/200x30/fBBF24/1F2937?text=Sandvik+Logo';" />
+
+            <!-- =============================================================== -->
+            <!-- NUEVO: Botón de Hamburguesa (para ser visible solo en móviles) -->
+            <!-- =============================================================== -->
+            <button id="hamburger-btn" class="hamburger-button" aria-label="Abrir menú">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+            </button>
+
+
+
+            <h2 class="text-xl font-bold mb-6 text-yellow-400 sidebar-text">Menú Principal</h2>
+
+            <!-- MODIFICADO: Se añade la clase 'desktop-nav' para identificar la navegación de escritorio -->
+            <nav class="desktop-nav">
+                <a id="viewStockBtn" href="/stock" class="text-white hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                    <span class="sidebar-text">Consultar Stock</span>
+                </a>
+                <a id="viewLabelBtn" href="/label" class="text-white hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+                    </svg>
+                    <span class="sidebar-text">Etiquetado</span>
+                </a>
+                <a id="viewLogsLinkBtn" href="/view_logs#" class="text-white hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-text" viewBox="0 0 16 16">
+                        <path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5M5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z"/>
+                        <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1"/>
+                    </svg>
+                    <span class="sidebar-text">Visualizar Logs</span>
+                </a>
+                <a id="viewReconciliationBtn" href="/reconciliation" class="text-white hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
+                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/>
+                    </svg>
+                    <span class="sidebar-text">Ver conciliación</span>
+                </a>
+                <a id="UpdateFilesBtn" href="/update"text-white hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-arrow-up" viewBox="0 0 16 16">
+                        <path d="M8 11a.5.5 0 0 0 .5-.5V6.707l1.146 1.147a.5.5 0 0 0 .708-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L7.5 6.707V10.5a.5.5 0 0 0 .5.5"/>
+                        <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1"/>
+                    </svg>
+                    <span class="sidebar-text">Actualizar Ficheros</span>
+                </a>
+                <a id="viewCountsBtn" href="/counts" class="text-white hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-card-checklist" viewBox="0 0 16 16">
+                        <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2z"/>
+                        <path d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0M7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0"/>
+                    </svg>
+                    <span class="sidebar-text">Conteo de Items</span>
+                </a>
+                <a id="viewcountsbtn" href="/view_counts" class="text-white hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-spreadsheet" viewBox="0 0 16 16">
+                        <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v4h10V2a1 1 0 0 0-1-1zm9 6h-3v2h3zm0 3h-3v2h3zm0 3h-3v2h2a1 1 0 0 0 1-1zm-4 2v-2H6v2zm-4 0v-2H3v1a1 1 0 0 0 1 1zm-2-3h2v-2H3zm0-3h2V7H3zm3-2v2h3V7zm3 3H6v2h3z"/>
+                    </svg>
+                    <span class="sidebar-text">Validar conteos</span>
+                </a>
+            </nav>
+
+            <!-- MODIFICADO: Se añade la clase 'desktop-logout-btn' y un icono para consistencia -->
+            <a href="/logout" class="desktop-logout-btn text-white hover:bg-gray-700 mt-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5" viewBox="0 0 16 16">
+                    <path d="M7.5 1v7h1V1z"/>
+                    <path d="M3 8.812a5 5 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812"/>
+                </svg>
+                <span class="sidebar-text">Cerrar Sesión</span>
             </a>
-        </div>
 
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Usuarios Registrados</h2>
+            <!-- =============================================================== -->
+            <!-- NUEVO: Contenedor para el menú que se desplegará en móviles   -->
+            <!-- =============================================================== -->
+            <div id="mobile-menu" class="mobile-menu-container"></div>
+        </aside>
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white">
-                <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                    <tr>
-                        <th class="py-3 px-6 text-left">ID</th>
-                        <th class="py-3 px-6 text-left">Username</th>
-                        <th class="py-3 px-6 text-center">Estado</th>
-                        <th class="py-3 px-6 text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody class="text-gray-600 text-sm font-light">
-                    {% for user in users %}
-                    <tr class="border-b border-gray-200 hover:bg-gray-100">
-                        <td class="py-3 px-6 text-left whitespace-nowrap">{{ user.id }}</td>
-                        <td class="py-3 px-6 text-left">{{ user.username }}</td>
-                        <td class="py-3 px-6 text-center">
-                            {% if user.is_approved %}
-                                <span class="bg-green-200 text-green-700 py-1 px-3 rounded-full text-xs">Aprobado</span>
-                            {% else %}
-                                <span class="bg-yellow-200 text-yellow-700 py-1 px-3 rounded-full text-xs">Pendiente</span>
-                            {% endif %}
-                        </td>
-                        <td class="py-3 px-6 text-center">
-                            <div class="flex item-center justify-center space-x-2">
-                                {% if not user.is_approved %}
-                                    <form action="{{ request.url_for('approve_user', user_id=user.id) }}" method="post" onsubmit="return confirm('¿Seguro que quieres aprobar a este usuario?');">
-                                        <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-xs">Aprobar</button>
-                                    </form>
-                                {% endif %}
-                                <form action="{{ request.url_for('delete_user', user_id=user.id) }}" method="post" onsubmit="return confirm('¡Atención! ¿Estás seguro de que quieres ELIMINAR a este usuario? Esta acción no se puede deshacer.');">
-                                    <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-xs">Eliminar</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="4" class="text-center py-4">No hay usuarios registrados.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-6">
-            <a href="{{ request.url_for('home_page') }}" class="text-blue-600 hover:underline">&larr; Volver a la aplicación</a>
-        </div>
-    </div>
-</body>
+        <main class="main-content flex flex-col flex-1 overflow-auto">
+            <div class="container-wrapper mx-auto px-4 sm:px-6 lg:px-8 py-2">
+                <div class="container mx-auto mt-10 p-4 bg-white rounded-lg shadow-lg max-w-4xl">
+                    <div class="flex justify-between items-center mb-6 border-b pb-4">
+                        <h1 class="text-2xl font-bold text-gray-800">Panel de Administración de Usuarios</h1>
+                        <a href="{{ request.url_for('admin_logout') }}" class="bg-gray-600 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">
+                            Cerrar Sesión de Admin
+                        </a>
+                    </div>
+
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Usuarios Registrados</h2>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                                <tr>
+                                    <th class="py-3 px-6 text-left">ID</th>
+                                    <th class="py-3 px-6 text-left">Username</th>
+                                    <th class="py-3 px-6 text-center">Estado</th>
+                                    <th class="py-3 px-6 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-600 text-sm font-light">
+                                {% for user in users %}
+                                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                    <td class="py-3 px-6 text-left whitespace-nowrap">{{ user.id }}</td>
+                                    <td class="py-3 px-6 text-left">{{ user.username }}</td>
+                                    <td class="py-3 px-6 text-center">
+                                        {% if user.is_approved %}
+                                            <span class="bg-green-200 text-green-700 py-1 px-3 rounded-full text-xs">Aprobado</span>
+                                        {% else %}
+                                            <span class="bg-yellow-200 text-yellow-700 py-1 px-3 rounded-full text-xs">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-3 px-6 text-center">
+                                        <div class="flex item-center justify-center space-x-2">
+                                            {% if not user.is_approved %}
+                                                <form action="{{ request.url_for('approve_user', user_id=user.id) }}" method="post" onsubmit="return confirm('¿Seguro que quieres aprobar a este usuario?');">
+                                                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-xs">Aprobar</button>
+                                                </form>
+                                            {% endif %}
+                                            <form action="{{ request.url_for('delete_user', user_id=user.id) }}" method="post" onsubmit="return confirm('¡Atención! ¿Estás seguro de que quieres ELIMINAR a este usuario? Esta acción no se puede deshacer.');">
+                                                <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-xs">Eliminar</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">No hay usuarios registrados.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-6">
+                        <a href="{{ request.url_for('home_page') }}" class="text-blue-600 hover:underline">&larr; Volver a la aplicación</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="toast-container"></div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                // --- CÓDIGO NUEVO PARA LA BARRA LATERAL COLAPSABLE ---
+                const sidebar = document.querySelector(".sidebar");
+                if (sidebar) {
+                    // Colapsar la barra por defecto al cargar la página
+                    sidebar.classList.add("sidebar-collapsed");
+
+                    // Expandir la barra al pasar el mouse
+                    sidebar.addEventListener("mouseenter", () => {
+                        sidebar.classList.remove("sidebar-collapsed");
+                    });
+
+                    // Colapsar la barra al quitar el mouse
+                    sidebar.addEventListener("mouseleave", () => {
+                        sidebar.classList.add("sidebar-collapsed");
+                    });
+                }
+                // --- FIN DEL CÓDIGO NUEVO ---
+                
+                // ===============================================================
+                // NUEVO: LÓGICA PARA EL MENÚ MÓVIL
+                // ===============================================================
+                const hamburgerBtn = document.getElementById('hamburger-btn');
+                const mobileMenu = document.getElementById('mobile-menu');
+                const desktopNav = document.querySelector('.desktop-nav');
+                const desktopLogoutBtn = document.querySelector('.desktop-logout-btn');
+
+                if (hamburgerBtn && mobileMenu && desktopNav && desktopLogoutBtn) {
+                    // Clona los enlaces de navegación y el botón de logout al contenedor del menú móvil
+                    mobileMenu.innerHTML = desktopNav.innerHTML;
+                    mobileMenu.appendChild(desktopLogoutBtn.cloneNode(true));
+
+                    // Añade el evento de click al botón de hamburguesa
+                    hamburgerBtn.addEventListener('click', () => {
+                        const isOpen = mobileMenu.classList.toggle('is-open');
+
+                        // Cambia el icono de hamburguesa a una 'X' y viceversa
+                        if (isOpen) {
+                            hamburgerBtn.innerHTML = `
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>`;
+                        } else {
+                            hamburgerBtn.innerHTML = `
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                                </svg>`;
+                        }
+                    });
+                }
+            });
+        </script>
+    </body>
 </html>
