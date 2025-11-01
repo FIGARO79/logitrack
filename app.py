@@ -845,6 +845,20 @@ async def export_reconciliation(username: str = Depends(login_required)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno al generar el archivo de conciliación: {e}")
 
+
+@app.get('/api/debug/last_counts')
+async def debug_last_counts(limit: int = 20, username: str = Depends(login_required)):
+    """Endpoint de diagnóstico (temporal): devuelve los últimos `limit` registros de stock_counts.
+
+    Protegido por login. Usar solo en desarrollo para verificar persistencia de conteos.
+    """
+    try:
+        all_counts = await load_all_counts_db_async()
+        # all_counts ya viene ordenado DESC por id en la consulta SQL
+        return JSONResponse(content=all_counts[:int(limit)])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al leer conteos: {e}")
+
 # --- Rutas para servir las páginas HTML ---
 @app.get('/', response_class=HTMLResponse)
 def home_page(request: Request, username: str = Depends(login_required)):
