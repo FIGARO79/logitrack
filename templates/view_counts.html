@@ -68,8 +68,10 @@
                                     <td class="px-5 py-4 border-b border-gray-200 text-sm">{{ count.item_description }}</td>
                                     <td class="px-5 py-4 border-b border-gray-200 text-sm font-semibold text-blue-600">{{ count.counted_location }}</td>
                                     <td class="px-5 py-4 border-b border-gray-200 text-sm font-bold text-green-600">{{ count.counted_qty }}</td>
-                                    <td class="px-5 py-4 border-b border-gray-200 text-sm">{{ count.system_qty }}</td>
-                                    <td class="px-5 py-4 border-b border-gray-200 text-sm font-bold {% if count.difference != 0 %}text-red-600{% else %}text-gray-700{% endif %}">{{ count.difference }}</td>
+                                    <td class="px-5 py-4 border-b border-gray-200 text-sm">{{ count.system_qty if count.system_qty is not none else '-' }}</td>
+                                    <td class="px-5 py-4 border-b border-gray-200 text-sm font-bold {% if count.difference is not none and count.difference != 0 %}text-red-600{% else %}text-gray-700{% endif %}">
+                                        {{ count.difference if count.difference is not none else '-' }}
+                                    </td>
                                     <td class="px-5 py-4 border-b border-gray-200 text-sm">{{ count.bin_location_system }}</td>
                                 </tr>
                                 {% endfor %}

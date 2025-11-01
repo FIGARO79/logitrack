@@ -24,6 +24,8 @@ import shutil
 # --- Cache para DataFrames ---
 df_master_cache = None
 df_grn_cache = None
+# Map en memoria para cantidad por item (optimización)
+master_qty_map = {}
 
 # --- Configuración de Rutas ---
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -131,6 +133,22 @@ async def load_csv_data():
     df_grn_cache = await read_csv_safe(GRN_CSV_FILE_PATH, columns=COLUMNS_TO_READ_GRN)
     if df_master_cache is not None:
         print(f"Cargados {len(df_master_cache)} registros del maestro de items.")
+        # Construir mapa en memoria item_code -> Physical_Qty (int o None)
+        try:
+            master_qty_map.clear()
+            for _, row in df_master_cache.iterrows():
+                code = row.get('Item_Code')
+                raw_qty = row.get('Physical_Qty')
+                qty_val = None
+                if raw_qty not in (None, ''):
+                    try:
+                        qty_val = int(float(raw_qty))
+                    except (ValueError, TypeError):
+                        qty_val = None
+                if code:
+                    master_qty_map[code] = qty_val
+        except Exception as e:
+            print(f"Warning: no se pudo construir master_qty_map: {e}")
     if df_grn_cache is not None:
         print(f"Cargados {len(df_grn_cache)} registros del archivo GRN.")
 
@@ -919,7 +937,39 @@ async def view_counts_page(request: Request, username: str = Depends(login_requi
     if not isinstance(username, str):
         return username
     all_counts = await load_all_counts_db_async()
-    return templates.TemplateResponse('view_counts.html', {"request": request, "counts": all_counts})
+
+    # Optimización: usar el mapa en memoria master_qty_map (item_code -> int|None)
+    master_map = master_qty_map
+
+    # Enriquecer los conteos con cantidad del sistema y diferencia para análisis.
+    enriched_counts = []
+    for count in all_counts:
+        item_code = count.get('item_code')
+
+        # Obtener cantidad del sistema desde el mapeo en memoria
+        system_qty = None
+        raw_system = master_map.get(item_code) if master_map else None
+        if raw_system not in (None, ''):
+            try:
+                system_qty = int(float(raw_system))
+            except (ValueError, TypeError):
+                system_qty = None
+
+        # Cantidad contada (falla a 0 si es inválida)
+        try:
+            counted_qty = int(count.get('counted_qty') or 0)
+        except (ValueError, TypeError):
+            counted_qty = 0
+
+        # Calcular diferencia solo si tenemos system_qty
+        difference = (counted_qty - system_qty) if system_qty is not None else None
+
+        enriched = dict(count)
+        enriched['system_qty'] = system_qty
+        enriched['difference'] = difference
+        enriched_counts.append(enriched)
+
+    return templates.TemplateResponse('view_counts.html', {"request": request, "counts": enriched_counts})
 
 @app.get('/reconciliation', response_class=HTMLResponse)
 async def reconciliation_page(request: Request, username: str = Depends(login_required)):
