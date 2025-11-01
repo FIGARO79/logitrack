@@ -39,6 +39,19 @@
         input[type="file"]::file-selector-button:hover {
             background-color: #d1d5db;
         }
+
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #9CA3AF;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -81,9 +94,17 @@
                     <div class="space-y-6">
                         <div>
                             <label for="password" class="block mb-2 text-sm font-medium text-gray-800">Contraseña de Actualización:</label>
-                            <input type="password" id="password" name="password" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-500 focus:border-yellow-500 block w-full p-2.5"
-                                placeholder="••••••••••">
+                            <div class="password-container">
+                                <input type="password" id="password" name="password" required
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-500 focus:border-yellow-500 block w-full p-2.5"
+                                    placeholder="••••••••••">
+                                <span class="toggle-password" id="togglePassword">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </span>
+                            </div>
                         </div>
 
                         <div class="p-4 border-l-4 border-gray-200 bg-gray-50 rounded-r-lg">
@@ -126,8 +147,16 @@
                             <form action="/clear_database" method="post" onsubmit="return confirm('ADVERTENCIA: ¿Estás TOTALMENTE SEGURO de que quieres borrar TODOS los registros? Esta acción no se puede deshacer.');">
                                 <div class="mb-4">
                                     <label for="password_clear" class="block mb-2 text-sm font-medium text-gray-900">Confirmar Contraseña:</label>
-                                    <input type="password" id="password_clear" name="password" required
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5">
+                                    <div class="password-container">
+                                        <input type="password" id="password_clear" name="password" required
+                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5">
+                                        <span class="toggle-password" id="togglePasswordClear">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </span>
+                                    </div>
                                 </div>
                                 <button type="submit"
                                     class="w-full text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-200">
@@ -176,6 +205,34 @@
             } else if (error) {
                 showToast(error, 'error');
             }
+
+            const togglePassword = document.getElementById('togglePassword');
+            const password = document.getElementById('password');
+
+            togglePassword.addEventListener('click', function () {
+                // Toggle the type attribute
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+
+                // Toggle the eye icon
+                this.querySelector('svg').classList.toggle('hidden');
+                this.insertAdjacentHTML('beforeend', type === 'password' ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .946-3.11 3.56-5.595 6.837-6.425M16.5 10.5a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" /></svg>');
+                this.querySelector('svg:not(.hidden)').remove();
+            });
+
+            const togglePasswordClear = document.getElementById('togglePasswordClear');
+            const passwordClear = document.getElementById('password_clear');
+
+            togglePasswordClear.addEventListener('click', function () {
+                // Toggle the type attribute
+                const type = passwordClear.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordClear.setAttribute('type', type);
+
+                // Toggle the eye icon
+                this.querySelector('svg').classList.toggle('hidden');
+                this.insertAdjacentHTML('beforeend', type === 'password' ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .946-3.11 3.56-5.595 6.837-6.425M16.5 10.5a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" /></svg>');
+                this.querySelector('svg:not(.hidden)').remove();
+            });
         });
     </script>
 </body>
