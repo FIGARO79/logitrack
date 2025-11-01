@@ -420,6 +420,15 @@
                     showToast(result.message, 'success');
                     clearForm(false); // Don't clear location
                     await updateSessionData();
+                    // Después de guardar un conteo, devolver foco al campo de item para el siguiente escaneo/entrada
+                    try {
+                        itemCodeInput.focus();
+                        // Seleccionar texto para facilitar sobreescritura en caso de lectura manual
+                        if (typeof itemCodeInput.select === 'function') itemCodeInput.select();
+                    } catch (e) {
+                        // Ignorar errores de enfoque en navegadores/ambientes raros
+                        console.warn('No se pudo focusear itemCodeInput:', e);
+                    }
 
                 } catch (error) {
                     showToast(`Error al guardar: ${error.message}`, 'error');

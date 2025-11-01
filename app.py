@@ -242,11 +242,11 @@ async def init_db():
 
             # --- Tabla de Conteos (Modificada) ---
             # Se añade session_id y se mejora la estructura.
-            # NOTA: Si la tabla 'stock_counts' ya existe con un esquema antiguo,
-            # puede que necesites eliminar el archivo .db para que se recree correctamente.
-            await conn.execute("DROP TABLE IF EXISTS stock_counts") # Para desarrollo, facilita la actualización del esquema
+            # NOTA: En producción NO eliminamos la tabla para preservar los conteos.
+            # Si necesitas forzar un esquema nuevo durante desarrollo, borra manualmente
+            # el archivo de base de datos `inbound_log.db` o ejecuta una migración controlada.
             await conn.execute('''
-                CREATE TABLE stock_counts (
+                CREATE TABLE IF NOT EXISTS stock_counts (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     session_id INTEGER NOT NULL,
                     timestamp TEXT NOT NULL,
