@@ -229,24 +229,25 @@ async def init_db():
                 )
             ''')
 
-                        await conn.execute('''
-                            CREATE TABLE IF NOT EXISTS session_locations ( 
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                session_id INTEGER NOT NULL,
-                                location_code TEXT NOT NULL,
-                                status TEXT NOT NULL DEFAULT 'open', -- open, closed
-                                count_stage INTEGER NOT NULL DEFAULT 1, -- Etapa del conteo
-                                closed_at TEXT,
-                                FOREIGN KEY(session_id) REFERENCES count_sessions(id)
-                            )
-                        ''')
-            
-                        # --- Migración para añadir count_stage si no existe ---
-                        cursor = await conn.execute("PRAGMA table_info(session_locations);
-                        columns = [row['name'] for row in await cursor.fetchall()]
-                        if 'count_stage' not in columns:
-                            print("Migrando esquema: añadiendo 'count_stage' a 'session_locations'.")
-                            await conn.execute("ALTER TABLE session_locations ADD COLUMN count_stage INTEGER NOT NULL DEFAULT 1;")
+            await conn.execute('''
+                CREATE TABLE IF NOT EXISTS session_locations ( 
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id INTEGER NOT NULL,
+                    location_code TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'open', -- open, closed
+                    count_stage INTEGER NOT NULL DEFAULT 1, -- Etapa del conteo
+                    closed_at TEXT,
+                    FOREIGN KEY(session_id) REFERENCES count_sessions(id)
+                )
+            ''')
+
+            # --- Migración para añadir count_stage si no existe ---
+            cursor = await conn.execute("PRAGMA table_info(session_locations)")
+            columns = [row['name'] for row in await cursor.fetchall()]
+            if 'count_stage' not in columns:
+                print("Migrando esquema: añadiendo 'count_stage' a 'session_locations'.")
+                await conn.execute("ALTER TABLE session_locations ADD COLUMN count_stage INTEGER NOT NULL DEFAULT 1;")
+
                         # --- Tabla de Conteos (Modificada) ---
             # Se añade session_id y se mejora la estructura.
             # NOTA: En producción NO eliminamos la tabla para preservar los conteos.
