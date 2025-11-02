@@ -1149,11 +1149,25 @@ async def get_count_stats(username: str = Depends(login_required)):
                     
                     processed_items.add(item_code)
 
+            # 5. Ubicaciones con stock
+            cursor = await conn.execute("SELECT COUNT(DISTINCT counted_location) FROM stock_counts WHERE counted_qty > 0")
+            locations_with_stock = (await cursor.fetchone())[0]
+
+            # 6. Total de ubicaciones con stock (del maestro de items)
+            total_locations_with_stock = 0
+            if df_master_cache is not None:
+                # Filtrar items con stock > 0
+                stock_items = df_master_cache[pd.to_numeric(df_master_cache['Physical_Qty'], errors='coerce').fillna(0) > 0]
+                bin_1_locations = stock_items['Bin_1'].dropna().unique()
+                total_locations_with_stock = len(bin_1_locations)
+
             return JSONResponse(content={
                 "total_items_with_stock": total_items_with_stock,
                 "counted_locations": counted_locations,
                 "total_items_counted": total_items_counted,
-                "items_with_differences": items_with_differences
+                "items_with_differences": items_with_differences,
+                "locations_with_stock": locations_with_stock,
+                "total_locations_with_stock": total_locations_with_stock
             })
 
     except aiosqlite.Error as e:
