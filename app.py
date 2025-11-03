@@ -890,13 +890,12 @@ def update_files_get(request: Request, username: str = Depends(login_required)):
         return username
     return templates.TemplateResponse("update.html", {"request": request, "error": request.query_params.get('error'), "message": request.query_params.get('message')})
 
-@app.post('/update', response_class=HTMLResponse)
-async def update_files_post(request: Request, password: str = Form(...), item_master: UploadFile = File(None), grn_file: UploadFile = File(None), username: str = Depends(login_required)):
+@app.post('/update', response_class=JSONResponse)
+async def update_files_post(request: Request, password: str = Form(...), item_master: UploadFile = File(None), grn_file: UploadFile = File(None), picking_file: UploadFile = File(None), username: str = Depends(login_required)):
     if not isinstance(username, str):
-        return username
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"error": "Unauthorized"})
     if password != UPDATE_PASSWORD:
-        redirect_url = str(request.url.replace(query='error=Contraseña incorrecta'))
-        return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+        return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"error": "Contraseña incorrecta"})
     
     files_uploaded = False
     message = ""
@@ -920,26 +919,25 @@ async def update_files_post(request: Request, password: str = Form(...), item_ma
         else:
             error += f'Nombre incorrecto para archivo GRN. Se esperaba "{os.path.basename(GRN_CSV_FILE_PATH)}". '
 
+    if picking_file and picking_file.filename:
+        if picking_file.filename == 'AURRSGLBD0240 - Unconfirmed Picking Notes.csv':
+            with open(os.path.join(DATABASE_FOLDER, 'AURRSGLBD0240 - Unconfirmed Picking Notes.csv'), "wb") as buffer:
+                shutil.copyfileobj(picking_file.file, buffer)
+            message += f'Archivo "{picking_file.filename}" actualizado. '
+            files_uploaded = True
+        else:
+            error += f'Nombre incorrecto para archivo de picking. Se esperaba "AURRSGLBD0240 - Unconfirmed Picking Notes.csv". '
+
     if files_uploaded:
         await load_csv_data()
 
     if not files_uploaded and not error:
         error = "No seleccionaste ningún archivo para subir."
 
-    # Construir la URL de redirección manualmente para evitar el NoMatchFound
-    query_params_dict = {}
-    if message:
-        query_params_dict['message'] = message
     if error:
-        query_params_dict['error'] = error
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"error": error})
     
-    # urlencode se encarga de formatear los parámetros correctamente (ej. espacios como %20)
-    query_string = urlencode(query_params_dict)
-    
-    # Redirigir a la ruta /update con los parámetros de consulta
-    redirect_url = f"/update?{query_string}" if query_string else "/update"
-    
-    return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+    return JSONResponse(content={"message": message})
 
 @app.get('/view_logs', response_class=HTMLResponse)
 async def view_logs(request: Request, username: str = Depends(login_required)):

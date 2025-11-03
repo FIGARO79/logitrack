@@ -71,11 +71,11 @@
                 </div>
                 <!-- Navigation Link -->
                 <div>
-                     <a href="/" class="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    <a href="/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                         </svg>
-                        Volver al Registro
+                        INICIO
                     </a>
                 </div>
             </div>
@@ -91,10 +91,10 @@
                 </div>
                  <hr class="mb-6">
 
-                <form action="/update" method="post" enctype="multipart/form-data">
+                <form id="upload-form" action="/update" method="post" enctype="multipart/form-data">
                     <div class="space-y-6">
                         <div>
-                            <label for="password" class="block mb-2 text-sm font-medium text-gray-800">Contraseña de Actualización:</label>
+                            <label for="password" class="block mb-2 text-sm font-medium text-gray-800">Contraseña de Administrador:</label>
                             <div class="password-container">
                                 <input type="password" id="password" name="password" required
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-500 focus:border-yellow-500 block w-full p-2.5"
@@ -111,17 +111,17 @@
                             </div>
                         </div>
 
-                        <div class="p-4 border-l-4 border-gray-200 bg-gray-50 rounded-r-lg">
-                            <label for="item_master" class="block text-base font-semibold text-gray-800">1. Archivo Maestro de Ítems</label>
-                            <p class="text-xs text-gray-500 mt-1 mb-3">Nombre esperado: 'AURRSGLBD0250 - Item Stockroom Balance.csv'</p>
-                            <input type="file" name="item_master" id="item_master" class="block w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 cursor-pointer focus:outline-none">
+                        <div id="drop-zone" class="flex items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-4-4V7a4 4 0 014-4h1.586a1 1 0 01.707.293l1.414 1.414a1 1 0 00.707.293H13.5a4 4 0 014 4v1.586a1 1 0 01-.293.707l-1.414 1.414a1 1 0 00-.293.707V16a4 4 0 01-4 4H7z"></path></svg>
+                                <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                                <p class="text-xs text-gray-500">CSV files (250, 280, 240)</p>
+                            </div>
+                            <input id="file-input" type="file" class="hidden" multiple />
                         </div>
 
-                        <div class="p-4 border-l-4 border-gray-200 bg-gray-50 rounded-r-lg">
-                            <label for="grn_file" class="block text-base font-semibold text-gray-800">2. Archivo de GRN (Stock In)</label>
-                            <p class="text-xs text-gray-500 mt-1 mb-3">Nombre esperado: 'AURRSGLBD0280 - Stock In Goods Inwards And Inspection.csv'</p>
-                            <input type="file" name="grn_file" id="grn_file" class="block w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 cursor-pointer focus:outline-none">
-                        </div>
+                        <div id="file-list" class="mt-4"></div>
+
                     </div>
 
                     <button type="submit"
@@ -179,12 +179,137 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // --- SVG Icons for Toasts ---
-            const ICONS = {
-                success: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-                error: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-                info: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
-            };
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+            const fileList = document.getElementById('file-list');
+            const uploadForm = document.getElementById('upload-form');
+            const passwordInput = document.getElementById('password');
+
+            let filesToUpload = [];
+
+            // --- Drag and Drop Event Listeners ---
+            dropZone.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('bg-gray-200');
+            });
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('bg-gray-200');
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('bg-gray-200');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('bg-gray-200');
+                const files = e.dataTransfer.files;
+                handleFiles(files);
+            });
+
+            // --- Click to Upload Event Listener ---
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const files = e.target.files;
+                handleFiles(files);
+            });
+
+            // --- Form Submission ---
+            uploadForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                uploadFiles();
+            });
+
+            // --- Helper Functions ---
+            function handleFiles(files) {
+                for (const file of files) {
+                    if (isValidFile(file)) {
+                        filesToUpload.push(file);
+                    }
+                }
+                renderFileList();
+            }
+
+            function isValidFile(file) {
+                const validFileNames = [
+                    'AURRSGLBD0250 - Item Stockroom Balance.csv',
+                    'AURRSGLBD0280 - Stock In Goods Inwards And Inspection.csv',
+                    'AURRSGLBD0240 - Unconfirmed Picking Notes.csv'
+                ];
+                return validFileNames.includes(file.name);
+            }
+
+            function renderFileList() {
+                fileList.innerHTML = '';
+                filesToUpload.forEach((file, index) => {
+                    const fileElement = document.createElement('div');
+                    fileElement.className = 'flex items-center justify-between p-2 bg-gray-100 rounded-md';
+                    fileElement.innerHTML = `
+                        <span>${file.name}</span>
+                        <button type="button" class="text-red-500" data-index="${index}">Remove</button>
+                    `;
+                    fileList.appendChild(fileElement);
+                });
+
+                // Add event listeners to remove buttons
+                fileList.querySelectorAll('button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const index = e.target.dataset.index;
+                        filesToUpload.splice(index, 1);
+                        renderFileList();
+                    });
+                });
+            }
+
+            async function uploadFiles() {
+                const password = passwordInput.value;
+                if (!password) {
+                    showToast('Please enter the admin password.', 'error');
+                    return;
+                }
+
+                if (filesToUpload.length === 0) {
+                    showToast('Please select files to upload.', 'error');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('password', password);
+                filesToUpload.forEach(file => {
+                    if (file.name === 'AURRSGLBD0250 - Item Stockroom Balance.csv') {
+                        formData.append('item_master', file);
+                    } else if (file.name === 'AURRSGLBD0280 - Stock In Goods Inwards And Inspection.csv') {
+                        formData.append('grn_file', file);
+                    } else if (file.name === 'AURRSGLBD0240 - Unconfirmed Picking Notes.csv') {
+                        formData.append('picking_file', file);
+                    }
+                });
+
+                try {
+                    const response = await fetch('/update', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        showToast(result.message, 'success');
+                        filesToUpload = [];
+                        renderFileList();
+                    } else {
+                        showToast(result.error, 'error');
+                    }
+                } catch (error) {
+                    showToast('An error occurred while uploading the files.', 'error');
+                }
+            }
 
             // --- Toast Notification Function ---
             function showToast(message, type = "info") {
@@ -201,41 +326,12 @@
                     toast.addEventListener("transitionend", () => toast.remove());
                 }, 5000);
             }
-            
-            // --- Check for URL parameters and show toast ---
-            const urlParams = new URLSearchParams(window.location.search);
-            const message = urlParams.get('message');
-            const error = urlParams.get('error');
 
-            if (message) {
-                showToast(message, 'success');
-            } else if (error) {
-                showToast(error, 'error');
-            }
-
-            const togglePassword = document.getElementById('togglePassword');
-            const password = document.getElementById('password');
-            const eyeIcon = togglePassword.querySelectorAll('svg')[0];
-            const eyeSlashIcon = togglePassword.querySelectorAll('svg')[1];
-
-            togglePassword.addEventListener('click', function () {
-                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-                password.setAttribute('type', type);
-                eyeIcon.classList.toggle('hidden');
-                eyeSlashIcon.classList.toggle('hidden');
-            });
-
-            const togglePasswordClear = document.getElementById('togglePasswordClear');
-            const passwordClear = document.getElementById('password_clear');
-            const eyeIconClear = togglePasswordClear.querySelectorAll('svg')[0];
-            const eyeSlashIconClear = togglePasswordClear.querySelectorAll('svg')[1];
-
-            togglePasswordClear.addEventListener('click', function () {
-                const type = passwordClear.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordClear.setAttribute('type', type);
-                eyeIconClear.classList.toggle('hidden');
-                eyeSlashIconClear.classList.toggle('hidden');
-            });
+            const ICONS = {
+                success: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+                error: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+                info: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+            };
         });
     </script>
 </body>
