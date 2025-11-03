@@ -39,13 +39,13 @@
 
     <!-- Contenedor Principal -->
     <div class="container mx-auto max-w-4xl p-4 md:p-6">
+        <div class="bg-white p-6 rounded-lg shadow-md">
         <header class="mb-6">
-            <h1 class="text-3xl font-bold text-center text-blue-700">Auditoría de Picking y Empaquetado</h1>
+            <h1 class="text-3xl font-bold text-center text-gray-800">Chequeo de picking</h1>
         </header>
 
         <!-- Sección 1: Carga de Pedido -->
-        <section id="load-section" class="bg-white p-6 rounded-lg shadow-md mb-6">
-            <h2 class="text-xl font-semibold mb-4">1. Cargar Pedido</h2>
+        <section id="load-section" class="mb-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="order-number" class="block text-sm font-medium text-gray-700">Order Number</label>
@@ -62,46 +62,53 @@
             </button>
         </section>
 
-        <!-- Sección 2: Auditoría (Oculta por defecto) -->
-        <section id="audit-section" class="hidden">
-            <!-- Información del Cliente -->
-            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-                <h2 class="text-xl font-semibold mb-2">Información del Pedido</h2>
-                <p class="text-lg">Cliente: <span id="customer-name" class="font-bold text-blue-700"></span></p>
-            </div>
+            <!-- Sección 2: Auditoría (Oculta por defecto) -->
+            <section id="audit-section" class="hidden">
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold mb-2">Auditoría del Pedido</h2>
+                    <p class="text-lg">Cliente: <span id="customer-name" class="font-bold text-blue-700"></span></p>
+                </div>
 
-            <!-- Escáner y Lista de Items -->
-            <div class="grid grid-cols-1 lg:grid-cols-1 gap-6">
-                <!-- Columna Izquierda: Escáner y Controles -->
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-xl font-semibold mb-4">2. Escanear Items</h2>
-                    <div id="qr-reader" class="w-full aspect-square max-h-[103px] mx-auto"></div>
-                    <div class="flex gap-2 mt-4">
-                        <button id="start-scanner-btn" class="flex-1 bg-green-500 text-white py-2 px-4 rounded-md font-semibold shadow-sm hover:bg-green-600">Iniciar Escáner</button>
-                        <button id="stop-scanner-btn" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md font-semibold shadow-sm hover:bg-gray-600 hidden">Detener</button>
+                <!-- Escáner y Lista de Items -->
+                <div class="grid grid-cols-1 lg:grid-cols-1 gap-6">
+                    <div id="scanner-container" class="hidden">
+                        <div id="qr-reader" class="w-full aspect-square max-h-[103px] mx-auto"></div>
+                        <div class="flex gap-2 mt-4">
+                            <button id="start-scanner-btn" class="flex-1 bg-green-500 text-white py-2 px-4 rounded-md font-semibold shadow-sm hover:bg-green-600">Iniciar Escáner</button>
+                            <button id="stop-scanner-btn" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md font-semibold shadow-sm hover:bg-gray-600 hidden">Detener</button>
+                        </div>
                     </div>
-                    <div class="mt-4">
-                        <label for="manual-code" class="block text-sm font-medium text-gray-700">Ingreso Manual (si falla el escáner)</label>
-                        <div class="flex gap-2 mt-1">
-                            <input type="text" id="manual-code" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Item Code">
-                            <button id="manual-add-btn" class="bg-blue-500 text-white py-2 px-4 rounded-md font-semibold shadow-sm hover:bg-blue-600">Añadir</button>
+                    <div>
+                        <label for="itemCode" class="form-label">ITEM CODE:</label>
+                        <div class="flex items-end gap-2">
+                            <input type="text" id="itemCode" name="itemCode" class="flex-grow" placeholder="Escanee el código o ingrese el item" oninput="this.value = this.value.toUpperCase()" required />
+                            <button type="button" id="scanItemBtn" title="Escanear código de barras" class="btn-secondary h-9 w-auto px-3 flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-qr-code-scan" viewBox="0 0 16 16">
+                                <path d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z"/>
+                                <path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z"/>
+                                <path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z"/>
+                                <path d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 2h-1v1h-2v1h3zm-4 2v-1H8v1z"/>
+                                <path d="M12 9h2V8h-2z"/>
+                                </svg>
+                            </button>
+                            <button type="button" id="findItemBtn" class="bg-gray-500 text-white py-2 px-4 rounded-md font-semibold shadow-sm hover:bg-gray-600"><span>Buscar</span></button>
                         </div>
                     </div>
                 
 
                 <!-- Columna Derecha: Lista de Items -->
-                <div class="bg-white p-6 rounded-lg shadow-md">
+                <div>
                     <h2 class="text-xl font-semibold mb-4">3. Lista de Items</h2>
                     <div class="overflow-x-auto max-h-[500px]">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50 sticky top-0">
+                            <thead class="bg-gray-200">
                                 <tr>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Code</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Req.</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scan.</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dif.</th>
-                                </span>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ITEM CODE</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REQ.</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SCAN.</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DIF.</th>
+                                </tr>
                             </thead>
                             <tbody id="items-table-body" class="bg-white divide-y divide-gray-200">
                                 <!-- Filas de items se insertarán aquí -->
@@ -112,8 +119,8 @@
             
 
                     <!-- Acciones Finales -->
-                    <div class="mt-6 bg-white p-6 rounded-lg shadow-md flex flex-col md:flex-row gap-4">
-                        <button id="finalize-btn" class="w-full md:w-auto flex-1 bg-green-600 text-white py-3 px-6 rounded-md font-semibold shadow-sm hover:bg-green-700 text-lg">
+                    <div class="mt-6 flex flex-col md:flex-row gap-4">
+                        <button id="finalize-btn" class="w-full md:w-auto flex-1 bg-green-500 text-white py-3 px-6 rounded-md font-semibold shadow-sm hover:bg-green-600 text-lg">
                             Finalizar Auditoría
                         </button>
                         <button id="reset-btn" class="w-full md:w-auto bg-gray-200 text-gray-700 py-3 px-6 rounded-md font-semibold hover:bg-gray-300">
@@ -154,13 +161,11 @@
         const loadOrderBtn = document.getElementById('load-order-btn');
         const orderNumberInput = document.getElementById('order-number');
         const despatchNumberInput = document.getElementById('despatch-number');
-        const csvFileInput = document.getElementById('csv-file');
         const customerNameEl = document.getElementById('customer-name');
         const itemsTableBody = document.getElementById('items-table-body');
-        const startScannerBtn = document.getElementById('start-scanner-btn');
-        const stopScannerBtn = document.getElementById('stop-scanner-btn');
-        const manualCodeInput = document.getElementById('manual-code');
-        const manualAddBtn = document.getElementById('manual-add-btn');
+        const itemCodeInput = document.getElementById('itemCode');
+        const scanItemBtn = document.getElementById('scanItemBtn');
+        const findItemBtn = document.getElementById('findItemBtn');
         const finalizeBtn = document.getElementById('finalize-btn');
         const resetBtn = document.getElementById('reset-btn');
         const messageBox = document.getElementById('message-box');
@@ -188,9 +193,16 @@
 
         // --- Event Listeners ---
         loadOrderBtn.addEventListener('click', loadOrder);
-        startScannerBtn.addEventListener('click', startScanner);
+        scanItemBtn.addEventListener('click', () => {
+            const scannerContainer = document.getElementById('scanner-container');
+            scannerContainer.classList.toggle('hidden');
+            if (!scannerContainer.classList.contains('hidden')) {
+                startScanner();
+            }
+        });
         stopScannerBtn.addEventListener('click', stopScanner);
-        manualAddBtn.addEventListener('click', () => processScan(manualCodeInput.value));
+        findItemBtn.addEventListener('click', () => processScan(itemCodeInput.value));
+        itemCodeInput.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); processScan(itemCodeInput.value); } });
         finalizeBtn.addEventListener('click', finalizeAudit);
         resetBtn.addEventListener('click', resetApp);
         cancelModalBtn.addEventListener('click', () => confirmationModal.classList.add('hidden'));
@@ -251,12 +263,13 @@
          * Actualiza la tabla de items con los datos actuales de 'orderItems'.
          */
         function updateTable() {
+            const itemsTableBody = document.getElementById('items-table-body');
             itemsTableBody.innerHTML = '';
             let allComplete = true;
 
             if (orderItems.length === 0) return;
 
-            orderItems.forEach(item => {
+            orderItems.forEach((item, index) => {
                 const diff = item.qty_scan - item.qty_req;
                 let rowClass = 'bg-white';
                 let diffClass = 'text-gray-700';
@@ -282,10 +295,24 @@
                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${item.code}</td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${item.description}</td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-blue-700">${item.qty_req}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold ${item.qty_scan === 0 ? 'text-gray-400' : 'text-gray-900'}">${item.qty_scan}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold">
+                        <input type="number" value="${item.qty_scan}" class="w-20 text-center border border-gray-300 rounded-md" data-index="${index}">
+                    </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm ${diffClass}">${diff}</td>
                 `;
                 itemsTableBody.appendChild(row);
+            });
+
+            // Add event listeners to the new input fields
+            itemsTableBody.querySelectorAll('input[type="number"]').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const index = e.target.dataset.index;
+                    const newQty = parseInt(e.target.value, 10);
+                    if (!isNaN(newQty)) {
+                        orderItems[index].qty_scan = newQty;
+                        updateTable();
+                    }
+                });
             });
 
             // Si todo está completo, mostrar mensaje y detener escáner
@@ -326,6 +353,8 @@
                 onScanSuccess,
                 onScanFailure
             ).then(() => {
+                const startScannerBtn = document.getElementById('start-scanner-btn');
+                const stopScannerBtn = document.getElementById('stop-scanner-btn');
                 startScannerBtn.classList.add('hidden');
                 stopScannerBtn.classList.remove('hidden');
                 showMessage("Cámara iniciada. Apunte al código.", "info");
@@ -342,8 +371,8 @@
             if (html5QrCode && html5QrCode.isScanning) {
                 html5QrCode.stop()
                     .then(() => {
-                        startScannerBtn.classList.remove('hidden');
-                        stopScannerBtn.classList.add('hidden');
+                        const scannerContainer = document.getElementById('scanner-container');
+                        scannerContainer.classList.add('hidden');
                         showMessage("Escáner detenido.", "info");
                     })
                     .catch(err => {
@@ -362,21 +391,15 @@
             const item = orderItems.find(i => i.code === scannedCode);
 
             if (item) {
-                if (item.qty_scan < item.qty_req) {
-                    item.qty_scan++;
-                    soundBeep.triggerAttackRelease("C5", "0.1"); // Sonido agudo OK
-                    showMessage(`OK: ${item.description}`, "success");
-                } else {
-                    item.qty_scan++; // Permitir escanear de más (sobrante)
-                    soundBoop.triggerAttackRelease("G4", "0.1"); // Sonido advertencia
-                    showMessage(`ADVERTENCIA: Item ya completo. (${item.description})`, "warning");
-                }
+                item.qty_scan++;
+                soundBeep.triggerAttackRelease("C5", "0.1"); // Sonido agudo OK
+                showMessage(`OK: ${item.description}`, "success");
             } else {
                 soundBoop.triggerAttackRelease("C3", "0.2"); // Sonido grave ERROR
                 showMessage(`ERROR: Item incorrecto (${scannedCode})`, "error");
             }
 
-            manualCodeInput.value = ''; // Limpiar input manual
+            itemCodeInput.value = ''; // Limpiar input manual
             updateTable();
         }
 
