@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auditoría de Picking</title>
+    <title>Chequeo de Picking</title>
     <!-- Carga de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Carga de la biblioteca para escanear QR/códigos de barras -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" xintegrity="sha512-r6rL1TIIFRBcK7mB/G/R/vNzx0vXEOy/N0PNHvKMIUvAUlSAgP/gfb/T5A/L/m+LbpLWoI2C/a/CSJtMrjVd/A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <!-- Carga de la biblioteca para parsear CSV (PapaParse) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" xintegrity="sha512-dfbSBCFEJQG0evQ2/MdVf/DuObpMVPaT8FfX4UvhTfTqYmv/vuFwS4Lz0VqD_S/vQhZ+3E/pS/cmhMhK/N2S/A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <!-- Carga de la biblioteca para sonidos (Tone.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js" xintegrity="sha512-S/v27I/vR/wI/vT4QGKJ1bcrPd/pQHYa1Kjln9qKqKG46tWp1/cvcGoR/Ag03T/oFzX/cI/Oa/v/Q/9S/0fJ/Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- PapaParse ya no es necesario si se usa la API, pero lo mantenemos por si el código original lo usaba en otro lado, aunque lo ideal sería quitarlo si no se usa -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" xintegrity="sha512-dfbSBCFEJQG0evQ2/MdVf/DuObpMVPaT8FfX4UvhTfTqYmv/vuFwS4Lz0VqD_S/vQhZ+3E/pS/cmhMhK/N2S/A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         /* Estilo para la fuente Inter */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -32,82 +32,91 @@
             border: 2px dashed #cbd5e0;
             border-radius: 8px;
             overflow: hidden;
+            background-color: #f7fafc; /* Fondo claro */
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
 
-    <!-- Contenedor Principal -->
-    <div class="container mx-auto max-w-4xl p-4 md:p-6">
-        <div class="bg-white p-6 rounded-lg shadow-md">
-        <header class="mb-6">
-            <h1 class="text-3xl font-bold text-center text-gray-800">Chequeo de picking</h1>
-        </header>
+    <!-- Contenedor Principal (Ajustado a max-w-3xl para parecerse a la imagen) -->
+    <div class="container mx-auto max-w-3xl w-full">
+        <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl border border-gray-200">
 
-        <!-- Sección 1: Carga de Pedido -->
-        <section id="load-section" class="mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="order-number" class="block text-sm font-medium text-gray-700">Order Number</label>
-                    <input type="text" id="order-number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Ej: 0043677">
+            <!-- Sección 1: Carga de Pedido -->
+            <section id="load-section" class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-6">Auditoría de Picking</h1>
+                <h2 class="text-xl font-semibold mb-4">1. Cargar Pedido</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="order-number" class="block text-sm font-medium text-gray-700">Order Number</label>
+                        <input type="text" id="order-number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Ej: 0043785">
+                    </div>
+                    <div>
+                        <label for="despatch-number" class="block text-sm font-medium text-gray-700">Despatch Number</label>
+                        <input type="text" id="despatch-number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Ej: 00">
+                    </div>
                 </div>
-                <div>
-                    <label for="despatch-number" class="block text-sm font-medium text-gray-700">Despatch Number</label>
-                    <input type="text" id="despatch-number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Ej: 01">
-                </div>
-            </div>
 
-            <button id="load-order-btn" class="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded-md font-semibold shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                Cargar Pedido
-            </button>
-        </section>
+                <button id="load-order-btn" class="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded-md font-semibold shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Cargar Pedido
+                </button>
+            </section>
 
             <!-- Sección 2: Auditoría (Oculta por defecto) -->
             <section id="audit-section" class="hidden">
-                <div class="mb-6">
-                    <h2 class="text-xl font-semibold mb-2">Auditoría del Pedido</h2>
-                    <p class="text-lg">Cliente: <span id="customer-name" class="font-bold text-blue-700"></span></p>
+                <header class="mb-6">
+                    <h1 class="text-3xl font-bold text-gray-800">Chequeo de picking</h1>
+                </header>
+
+                <div class="mb-6 space-y-2">
+                    <p class="text-lg">Orden: <span id="order-number-display" class="font-bold text-gray-700"></span>/<span id="despatch-number-display" class="font-bold text-gray-700"></span></p>
+                    <p class="text-lg">Cliente: <span id="customer-name" class="font-bold text-gray-700"></span></p>
                 </div>
 
-                <!-- Escáner y Lista de Items -->
-                <div class="grid grid-cols-1 lg:grid-cols-1 gap-6">
-                    <div id="scanner-container" class="hidden">
-                        <div id="qr-reader" class="w-full aspect-square max-h-[103px] mx-auto"></div>
-                        <div class="flex gap-2 mt-4">
-                            <button id="start-scanner-btn" class="flex-1 bg-green-500 text-white py-2 px-4 rounded-md font-semibold shadow-sm hover:bg-green-600">Iniciar Escáner</button>
-                            <button id="stop-scanner-btn" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md font-semibold shadow-sm hover:bg-gray-600 hidden">Detener</button>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="itemCode" class="form-label">ITEM CODE:</label>
-                        <div class="flex items-end gap-2">
-                            <input type="text" id="itemCode" name="itemCode" class="flex-grow" placeholder="Escanee el código o ingrese el item" oninput="this.value = this.value.toUpperCase()" required />
-                            <button type="button" id="scanItemBtn" title="Escanear código de barras" class="btn-secondary h-9 w-auto px-3 flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-qr-code-scan" viewBox="0 0 16 16">
+                <!-- Escáner y Búsqueda de Items (Diseño de la imagen) -->
+                <div class="mb-6">
+                    <label for="itemCode" class="block text-sm font-medium text-gray-700 mb-1">ITEM CODE:</label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="itemCode" name="itemCode" class="flex-grow block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Escanee el código o ingrese el item" oninput="this.value = this.value.toUpperCase()" />
+                        
+                        <!-- Botón QR -->
+                        <button type="button" id="scanItemBtn" title="Escanear código de barras" class="flex-shrink-0 p-2 border border-gray-300 bg-gray-100 text-gray-600 rounded-md shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-qr-code-scan" viewBox="0 0 16 16">
                                 <path d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z"/>
                                 <path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z"/>
                                 <path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z"/>
                                 <path d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 2h-1v1h-2v1h3zm-4 2v-1H8v1z"/>
                                 <path d="M12 9h2V8h-2z"/>
-                                </svg>
-                            </button>
-                            <button type="button" id="findItemBtn" class="bg-gray-500 text-white py-2 px-4 rounded-md font-semibold shadow-sm hover:bg-gray-600"><span>Buscar</span></button>
-                        </div>
+                            </svg>
+                        </button>
+                        <!-- Botón Buscar -->
+                        <button type="button" id="findItemBtn" class="flex-shrink-0 bg-gray-600 text-white py-2 px-5 rounded-md font-semibold shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            Buscar
+                        </button>
                     </div>
-                
+                </div>
 
-                <!-- Columna Derecha: Lista de Items -->
+                <!-- Contenedor del Escáner (Oculto) -->
+                <div id="scanner-container" class="hidden mb-4">
+                    <div id="qr-reader" class="w-full max-w-md mx-auto aspect-video md:aspect-square md:max-h-[300px]"></div>
+                    <button id="stop-scanner-btn" class="mt-4 w-full bg-gray-500 text-white py-2 px-4 rounded-md font-semibold shadow-sm hover:bg-gray-600">
+                        Detener Escáner
+                    </button>
+                </div>
+            
+                <!-- Lista de Items -->
                 <div>
-                    <h2 class="text-xl font-semibold mb-4">3. Lista de Items</h2>
-                    <div class="overflow-x-auto max-h-[500px]">
+                    <h3 class="text-xl font-semibold mb-4">Lista de items</h3>
+                    <div class="overflow-x-auto border rounded-md max-h-[400px] md:max-h-[500px]">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-200">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
                                 <tr>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ITEM CODE</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REQ.</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SCAN.</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DIF.</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Code</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Req.</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scan.</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dif.</th>
                                 </tr>
                             </thead>
                             <tbody id="items-table-body" class="bg-white divide-y divide-gray-200">
@@ -117,17 +126,17 @@
                     </div>
                 </div>
             
-
-                    <!-- Acciones Finales -->
-                    <div class="mt-6 flex flex-col md:flex-row gap-4">
-                        <button id="finalize-btn" class="w-full md:w-auto flex-1 bg-green-500 text-white py-3 px-6 rounded-md font-semibold shadow-sm hover:bg-green-600 text-lg">
-                            Finalizar Auditoría
-                        </button>
-                        <button id="reset-btn" class="w-full md:w-auto bg-gray-200 text-gray-700 py-3 px-6 rounded-md font-semibold hover:bg-gray-300">
-                            Cargar Otro Pedido
-                        </button>
-                    </div>
-        </section>
+                <!-- Acciones Finales (Diseño de la imagen) -->
+                <div class="mt-8 flex flex-col md:flex-row gap-4">
+                    <button id="finalize-btn" class="flex-1 order-1 bg-green-600 text-white py-3 px-6 rounded-md font-semibold shadow-sm hover:bg-green-700 text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Finalizar Auditoría
+                    </button>
+                    <button id="reset-btn" class="flex-1 order-2 md:order-2 bg-gray-200 text-gray-700 py-3 px-6 rounded-md font-semibold hover:bg-gray-300 text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">
+                        Cargar Otro Pedido
+                    </button>
+                </div>
+            </section>
+        </div>
     </div>
 
     <!-- Contenedor de Mensajes (Toast) -->
@@ -141,7 +150,7 @@
             <h3 class="text-xl font-bold text-yellow-600 mb-4">Confirmar Finalización</h3>
             <p class="text-gray-700 mb-6">Se detectaron diferencias en el picking (faltantes o sobrantes). ¿Desea guardar y finalizar la auditoría de todos modos?</p>
             <div class="flex justify-end gap-4">
-                <button id="cancel-modal-btn" class="py-2 px-4 bg-gray-200 text-gray-700 rounded-md font-semibold hover:bg-gray-300">Cancelar</ar>
+                <button id="cancel-modal-btn" class="py-2 px-4 bg-gray-200 text-gray-700 rounded-md font-semibold hover:bg-gray-300">Cancelar</button>
                 <button id="confirm-modal-btn" class="py-2 px-4 bg-yellow-500 text-white rounded-md font-semibold hover:bg-yellow-600">Confirmar y Guardar</button>
             </div>
         </div>
@@ -150,7 +159,7 @@
 
     <script>
         // --- Variables Globales ---
-        let orderItems = [];
+        let orderItems = []; // Almacenará los items del pedido filtrado
         let customerName = "";
         let html5QrCode;
         let soundBeep, soundBoop;
@@ -162,10 +171,14 @@
         const orderNumberInput = document.getElementById('order-number');
         const despatchNumberInput = document.getElementById('despatch-number');
         const customerNameEl = document.getElementById('customer-name');
+        const orderNumberDisplay = document.getElementById('order-number-display');
+        const despatchNumberDisplay = document.getElementById('despatch-number-display');
         const itemsTableBody = document.getElementById('items-table-body');
         const itemCodeInput = document.getElementById('itemCode');
         const scanItemBtn = document.getElementById('scanItemBtn');
         const findItemBtn = document.getElementById('findItemBtn');
+        const scannerContainer = document.getElementById('scanner-container');
+        const stopScannerBtn = document.getElementById('stop-scanner-btn');
         const finalizeBtn = document.getElementById('finalize-btn');
         const resetBtn = document.getElementById('reset-btn');
         const messageBox = document.getElementById('message-box');
@@ -177,7 +190,12 @@
         // --- Inicialización ---
         document.addEventListener('DOMContentLoaded', () => {
             // Inicializar el objeto del escáner
-            html5QrCode = new Html5Qrcode("qr-reader");
+            try {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            } catch (e) {
+                console.error("No se pudo inicializar Html5Qrcode. Asegúrese de que el div 'qr-reader' existe.", e);
+                showMessage("Error al iniciar el componente de escáner.", "error");
+            }
 
             // Inicializar sonidos (sólo si Tone.js se cargó)
             try {
@@ -185,21 +203,14 @@
                 soundBoop = new Tone.Synth({ oscillator: { type: "square" } }).toDestination();
             } catch (e) {
                 console.warn("Tone.js no se pudo inicializar. Los sonidos estarán desactivados.");
-                // Crear objetos 'dummy' para evitar errores
-                soundBeep = { triggerAttackRelease: () => {} };
+                soundBeep = { triggerAttackRelease: () => {} }; // Objetos 'dummy'
                 soundBoop = { triggerAttackRelease: () => {} };
             }
         });
 
         // --- Event Listeners ---
-        loadOrderBtn.addEventListener('click', loadOrder);
-        scanItemBtn.addEventListener('click', () => {
-            const scannerContainer = document.getElementById('scanner-container');
-            scannerContainer.classList.toggle('hidden');
-            if (!scannerContainer.classList.contains('hidden')) {
-                startScanner();
-            }
-        });
+        loadOrderBtn.addEventListener('click', loadOrder); // Cambiado a la función original
+        scanItemBtn.addEventListener('click', toggleScanner);
         stopScannerBtn.addEventListener('click', stopScanner);
         findItemBtn.addEventListener('click', () => processScan(itemCodeInput.value));
         itemCodeInput.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); processScan(itemCodeInput.value); } });
@@ -211,7 +222,7 @@
         // --- Funciones Principales ---
 
         /**
-         * Carga y parsea el archivo CSV, filtra el pedido y prepara la UI de auditoría.
+         * Carga el pedido desde la API (función original).
          */
         async function loadOrder() {
             const orderNum = orderNumberInput.value.trim();
@@ -223,10 +234,18 @@
             }
 
             try {
+                // Esta es la llamada a la API que tu código original tenía
                 const response = await fetch(`/api/picking/order/${orderNum}/${despatchNum}`);
+                
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || "Error al cargar el pedido.");
+                    let errorMsg = `Error al cargar el pedido. Código: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.detail || errorMsg;
+                    } catch(e) {
+                        // No se pudo parsear el JSON de error, usar mensaje genérico
+                    }
+                    throw new Error(errorMsg);
                 }
 
                 const filteredItems = await response.json();
@@ -245,13 +264,16 @@
                 }));
 
                 customerName = filteredItems[0]["Customer Name"] || "N/A";
-                customerNameEl.textContent = customerName;
-
+                
                 // Actualizar la UI
+                customerNameEl.textContent = customerName;
+                orderNumberDisplay.textContent = orderNum;
+                despatchNumberDisplay.textContent = despatchNum;
                 updateTable();
                 loadSection.classList.add('hidden');
                 auditSection.classList.remove('hidden');
                 showMessage(`Pedido ${orderNum}/${despatchNum} cargado. Listo para escanear.`, "success");
+                itemCodeInput.focus(); // Poner foco en el input de item
 
             } catch (e) {
                 showMessage(e.message, "error");
@@ -259,11 +281,11 @@
             }
         }
 
+
         /**
          * Actualiza la tabla de items con los datos actuales de 'orderItems'.
          */
         function updateTable() {
-            const itemsTableBody = document.getElementById('items-table-body');
             itemsTableBody.innerHTML = '';
             let allComplete = true;
 
@@ -274,15 +296,17 @@
                 let rowClass = 'bg-white';
                 let diffClass = 'text-gray-700';
 
-                if (diff === 0 && item.qty_scan > 0) {
-                    rowClass = 'bg-green-100'; // Completo
+                if (diff === 0 && item.qty_scan > 0 && item.qty_scan === item.qty_req) {
+                    rowClass = 'bg-green-50'; // Completo
                     diffClass = 'text-green-700 font-bold';
                 } else if (diff < 0 && item.qty_scan > 0) {
-                    rowClass = 'bg-yellow-100'; // Parcial
+                    rowClass = 'bg-yellow-50'; // Parcial
                     diffClass = 'text-yellow-700 font-bold';
                 } else if (diff > 0) {
-                    rowClass = 'bg-red-100'; // Sobrante
+                    rowClass = 'bg-red-50'; // Sobrante
                     diffClass = 'text-red-700 font-bold';
+                } else if (diff < 0) {
+                     diffClass = 'text-red-700 font-bold'; // Faltante (aún no escaneado)
                 }
                 
                 if (diff !== 0) {
@@ -290,34 +314,48 @@
                 }
 
                 const row = document.createElement('tr');
-                row.className = rowClass;
+                row.className = `${rowClass} transition-colors duration-200`;
                 row.innerHTML = `
                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${item.code}</td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${item.description}</td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-blue-700">${item.qty_req}</td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm font-bold">
-                        <input type="number" value="${item.qty_scan}" class="w-20 text-center border border-gray-300 rounded-md" data-index="${index}">
+                        <input type="number" value="${item.qty_scan}" min="0" class="w-20 text-center border border-gray-300 rounded-md shadow-sm py-1" data-index="${index}">
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm ${diffClass}">${diff}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold ${diffClass}">${diff}</td>
                 `;
                 itemsTableBody.appendChild(row);
             });
 
-            // Add event listeners to the new input fields
+            // Añadir event listeners a los inputs numéricos de la tabla
             itemsTableBody.querySelectorAll('input[type="number"]').forEach(input => {
                 input.addEventListener('change', (e) => {
                     const index = e.target.dataset.index;
-                    const newQty = parseInt(e.target.value, 10);
-                    if (!isNaN(newQty)) {
-                        orderItems[index].qty_scan = newQty;
-                        updateTable();
+                    let newQty = parseInt(e.target.value, 10);
+                    
+                    if (isNaN(newQty) || newQty < 0) {
+                        newQty = 0; // Resetear a 0 si es inválido
                     }
+                    
+                    orderItems[index].qty_scan = newQty;
+                    updateTable(); // Re-dibujar la tabla para reflejar el cambio
                 });
             });
 
-            // Si todo está completo, mostrar mensaje y detener escáner
-            if (allComplete) {
+            // Si todo está completo, mostrar mensaje
+            if (allComplete && orderItems.length > 0) {
                 showMessage("¡Picking Completo! Todos los items verificados.", "success");
+            }
+        }
+
+        /**
+         * Muestra/Oculta el escáner de la cámara.
+         */
+        function toggleScanner() {
+            if (scannerContainer.classList.contains('hidden')) {
+                scannerContainer.classList.remove('hidden');
+                startScanner();
+            } else {
                 stopScanner();
             }
         }
@@ -326,41 +364,35 @@
          * Inicia la cámara para escanear.
          */
         function startScanner() {
-            // Configuración del escáner
+            if (!html5QrCode) {
+                showMessage("El escáner no está inicializado.", "error");
+                return;
+            }
+
             const config = {
                 fps: 10,
-                qrbox: { width: 250, height: 250 },
+                qrbox: (viewfinderWidth, viewfinderHeight) => {
+                    const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                    const qrboxSize = Math.floor(minEdge * 0.8); // 80% del borde más pequeño
+                    return { width: qrboxSize, height: qrboxSize };
+                },
                 rememberLastUsedCamera: true,
                 supportedScanTypes: [
                     Html5QrcodeScanType.SCAN_TYPE_CAMERA
                 ]
             };
 
-            // Función de éxito
-            const onScanSuccess = (decodedText, decodedResult) => {
-                processScan(decodedText);
-            };
-
-            // Función de fallo (opcional, para debug)
-            const onScanFailure = (error) => {
-                // console.warn(`Scan error: ${error}`);
-            };
-
-            // Iniciar escáner
             html5QrCode.start(
                 { facingMode: "environment" }, // Pedir cámara trasera
                 config,
-                onScanSuccess,
-                onScanFailure
+                (decodedText, decodedResult) => processScan(decodedText), // onScanSuccess
+                (error) => { /* onScanFailure (opcional) */ }
             ).then(() => {
-                const startScannerBtn = document.getElementById('start-scanner-btn');
-                const stopScannerBtn = document.getElementById('stop-scanner-btn');
-                startScannerBtn.classList.add('hidden');
-                stopScannerBtn.classList.remove('hidden');
                 showMessage("Cámara iniciada. Apunte al código.", "info");
             }).catch(err => {
                 showMessage("Error al iniciar la cámara. Verifique permisos.", "error");
                 console.error(err);
+                scannerContainer.classList.add('hidden');
             });
         }
 
@@ -371,13 +403,15 @@
             if (html5QrCode && html5QrCode.isScanning) {
                 html5QrCode.stop()
                     .then(() => {
-                        const scannerContainer = document.getElementById('scanner-container');
                         scannerContainer.classList.add('hidden');
                         showMessage("Escáner detenido.", "info");
                     })
                     .catch(err => {
                         console.error("Error al detener el escáner:", err);
                     });
+            } else {
+                // Si no estaba escaneando, solo oculta el contenedor
+                scannerContainer.classList.add('hidden');
             }
         }
 
@@ -387,19 +421,35 @@
         function processScan(scannedCode) {
             if (!scannedCode || scannedCode.trim() === '') return;
             
-            scannedCode = scannedCode.trim();
+            scannedCode = scannedCode.trim().toUpperCase(); // Asegurarse de que esté en mayúsculas
             const item = orderItems.find(i => i.code === scannedCode);
 
             if (item) {
                 item.qty_scan++;
                 soundBeep.triggerAttackRelease("C5", "0.1"); // Sonido agudo OK
                 showMessage(`OK: ${item.description}`, "success");
+                
+                // Enfocar y resaltar la fila
+                const row = itemsTableBody.querySelector(`input[data-index="${orderItems.indexOf(item)}"]`);
+                if(row) {
+                    row.closest('tr').classList.add('bg-blue-100');
+                    row.focus();
+                    setTimeout(() => {
+                        // Quitar clase solo si todavía existe
+                        const currentRow = itemsTableBody.querySelector(`input[data-index="${orderItems.indexOf(item)}"]`);
+                        if (currentRow) {
+                            currentRow.closest('tr').classList.remove('bg-blue-100');
+                        }
+                    }, 1500); // Quitar resaltado después de 1.5s
+                }
+
             } else {
                 soundBoop.triggerAttackRelease("C3", "0.2"); // Sonido grave ERROR
                 showMessage(`ERROR: Item incorrecto (${scannedCode})`, "error");
             }
 
             itemCodeInput.value = ''; // Limpiar input manual
+            itemCodeInput.focus(); // Devolver el foco al input
             updateTable();
         }
 
@@ -407,6 +457,12 @@
          * Finaliza la auditoría. Comprueba diferencias.
          */
         function finalizeAudit() {
+            // Asegurarse de que se haya cargado un pedido
+            if (orderItems.length === 0) {
+                showMessage("No hay ningún pedido cargado para finalizar.", "error");
+                return;
+            }
+
             const differencesExist = orderItems.some(item => item.qty_scan !== item.qty_req);
 
             if (differencesExist) {
@@ -415,6 +471,8 @@
             } else {
                 // Todo OK
                 showMessage("¡Auditoría Finalizada! Picking OK.", "success", 5000);
+                // Aquí podrías guardar los datos
+                console.log("Datos guardados (OK):", orderItems);
                 resetApp();
             }
         }
@@ -426,7 +484,7 @@
             confirmationModal.classList.add('hidden');
             showMessage("Auditoría finalizada y guardada con diferencias.", "warning", 5000);
             // Aquí iría la lógica para guardar los datos (ej. enviar a un servidor)
-            console.log("Datos guardados con diferencias:", orderItems);
+            console.log("Datos guardados (con diferencias):", orderItems);
             resetApp();
         }
 
@@ -438,10 +496,11 @@
             orderItems = [];
             customerName = "";
             customerNameEl.textContent = "";
+            orderNumberDisplay.textContent = "";
+            despatchNumberDisplay.textContent = "";
             itemsTableBody.innerHTML = '';
             orderNumberInput.value = '';
             despatchNumberInput.value = '';
-            csvFileInput.value = null; // Limpiar el input de archivo
 
             auditSection.classList.add('hidden');
             loadSection.classList.remove('hidden');
@@ -454,31 +513,20 @@
         function showMessage(message, type = "info", duration = 3000) {
             messageText.textContent = message;
             
-            // Quitar clases de color anteriores
             messageBox.classList.remove('bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-blue-500', 'opacity-0', 'translate-x-10', 'hidden');
 
-            // Añadir clase de color según el tipo
             switch (type) {
-                case "success":
-                    messageBox.classList.add('bg-green-500');
-                    break;
-                case "error":
-                    messageBox.classList.add('bg-red-500');
-                    break;
-                case "warning":
-                    messageBox.classList.add('bg-yellow-500');
-                    break;
-                default:
-                    messageBox.classList.add('bg-blue-500');
+                case "success": messageBox.classList.add('bg-green-500'); break;
+                case "error": messageBox.classList.add('bg-red-500'); break;
+                case "warning": messageBox.classList.add('bg-yellow-500'); break;
+                default: messageBox.classList.add('bg-blue-500');
             }
             
-            // Mostrar
             messageBox.classList.remove('hidden');
-            setTimeout(() => {
+            requestAnimationFrame(() => {
                 messageBox.classList.remove('opacity-0', 'translate-x-10');
-            }, 10); // Pequeño delay para que la transición de entrada funcione
+            });
 
-            // Ocultar después de la duración
             setTimeout(() => {
                 messageBox.classList.add('opacity-0', 'translate-x-10');
                 setTimeout(() => {
@@ -491,3 +539,4 @@
 
 </body>
 </html>
+
