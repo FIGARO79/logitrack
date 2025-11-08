@@ -1455,7 +1455,7 @@ def login_get(request: Request):
         return RedirectResponse(url='/', status_code=status.HTTP_302_FOUND)
     return templates.TemplateResponse("login.html", {"request": request, "message": request.query_params.get("message"), "error": request.query_params.get("error")})
 
-@app.post('/login', response_class=HTMLResponse)
+@app.post('/login')
 async def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
     async with aiosqlite.connect(DB_FILE_PATH) as conn:
         conn.row_factory = aiosqlite.Row
@@ -1464,16 +1464,23 @@ async def login_post(request: Request, username: str = Form(...), password: str 
 
     if user and check_password_hash(user['password_hash'], password):
         if user['is_approved'] == 1:
-            response = RedirectResponse(url=request.url_for('home_page'), status_code=status.HTTP_302_FOUND)
-            response.set_cookie(key="username", value=username, httponly=True)
+            # Éxito: Enviamos una respuesta JSON y establecemos la cookie de sesión.
+            response = JSONResponse(content={"message": "Login successful", "user": username})
+            # La cookie se adjunta a esta respuesta JSON. El navegador la guardará.
+            response.set_cookie(key="username", value=username, httponly=True, samesite='lax', secure=True, path='/')
             return response
         else:
-            # ARREGLADO: URL manual
-            query_string = urlencode({'error': 'Tu cuenta aún no ha sido aprobada'})
-            return RedirectResponse(url=f'/login?{query_string}', status_code=status.HTTP_302_FOUND)
+            # Error de aprobación: Enviamos un JSON con el error específico.
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Tu cuenta aún no ha sido aprobada."
+            )
     else:
-        query_string = urlencode({'error': 'Usuario o contraseña incorrectos'})
-        return RedirectResponse(url=f'/login?{query_string}', status_code=status.HTTP_302_FOUND)
+        # Error de credenciales: Enviamos un JSON con el error específico.
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Usuario o contraseña incorrectos."
+        )
 
 @app.get('/logout')
 def logout(request: Request):
