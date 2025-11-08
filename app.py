@@ -53,6 +53,16 @@ COLUMNS_TO_READ_GRN = [GRN_COLUMN_NAME_IN_CSV, 'Item_Code', 'Quantity', 'Item_De
 # --- Inicialización de FastAPI ---
 app = FastAPI()
 
+
+# Add this CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins. For production, restrict this to your frontend's domain.
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers
+)
+
 # --- Middleware CORREGIDO para forzar HTTPS y manejar 'scheme' ---
 class SchemeMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
