@@ -7,7 +7,6 @@ from starlette.concurrency import run_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse, JSONResponse
-from starlette.requests import Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -57,10 +56,10 @@ app = FastAPI()
 # Add this CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins. For production, restrict this to your frontend's domain.
+    allow_origins=["*"],  # Permite solicitudes de cualquier origen.
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],  # Permite todos los métodos (POST, GET, etc).
+    allow_headers=["*"],  # Permite todas las cabeceras.
 )
 
 # --- Middleware CORREGIDO para forzar HTTPS y manejar 'scheme' ---
