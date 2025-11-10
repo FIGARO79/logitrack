@@ -1465,9 +1465,12 @@ async def login_post(request: Request, username: str = Form(...), password: str 
 
     if user and check_password_hash(user['password_hash'], password):
         if user['is_approved'] == 1:
-            # Éxito: Enviamos una respuesta JSON y establecemos la cookie de sesión.
-            response = JSONResponse(content={"message": "Login successful", "user": username})
-            # La cookie se adjunta a esta respuesta JSON. El navegador la guardará.
+            # Éxito: redirigimos al root y establecemos la cookie de sesión.
+            # Anteriormente devolvíamos JSON, lo que hacía que el navegador mostrara
+            # el JSON crudo en la página. Usamos RedirectResponse para evitar ese
+            # comportamiento y no mostrar el mensaje de 'Login successful'.
+            response = RedirectResponse(url='/', status_code=status.HTTP_302_FOUND)
+            # Adjuntamos la cookie a la respuesta de redirección.
             response.set_cookie(key="username", value=username, httponly=True, samesite='lax', secure=True, path='/')
             return response
         else:
