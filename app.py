@@ -1576,6 +1576,15 @@ async def reset_password(user_id: int, request: Request):
     if not request.cookies.get("admin_logged_in"):
         return RedirectResponse(url=str(request.url.replace(path='/admin/users', query='')), status_code=status.HTTP_302_FOUND)
     
+    # Obtener el username del usuario
+    async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        cursor = await conn.execute("SELECT username FROM users WHERE id = ?", (user_id,))
+        user = await cursor.fetchone()
+    
+    if not user:
+        return RedirectResponse(url=str(request.url.replace(path='/admin/users', query='error=Usuario no encontrado')), status_code=status.HTTP_302_FOUND)
+    
+    username = user[0]
     new_password = "1234"
     hashed_password = generate_password_hash(new_password)
     
@@ -1583,7 +1592,10 @@ async def reset_password(user_id: int, request: Request):
         await conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hashed_password, user_id))
         await conn.commit()
     
-    return RedirectResponse(url=str(request.url.replace(path='/admin/users', query='message=Contraseña reseteada')), status_code=status.HTTP_302_FOUND)
+    # Redirigir a login con mensaje que incluye usuario y contraseña temporal
+    message = f"Contraseña reseteada. Usuario: {username}, Contraseña temporal: {new_password}"
+    query_string = urlencode({'message': message})
+    return RedirectResponse(url=f'/login?{query_string}', status_code=status.HTTP_302_FOUND)
 
 @app.post('/admin/reset_count_sessions/{user_id}')
 async def reset_count_sessions(user_id: int, request: Request):
