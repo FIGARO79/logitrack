@@ -97,6 +97,18 @@ class SchemeMiddleware(BaseHTTPMiddleware):
         return response
 
 app.add_middleware(SchemeMiddleware)
+# Añadir HSTS en producción para que navegadores requieran HTTPS
+class HSTSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        is_production = os.environ.get('PYTHONANYWHERE_DOMAIN')
+        scheme = request.scope.get('scheme', 'http')
+        if is_production and scheme == 'https':
+            # 2 años en segundos
+            response.headers['Strict-Transport-Security'] = 'max-age=63072000; includeSubDomains; preload'
+        return response
+
+app.add_middleware(HSTSMiddleware)
 # --- FIN DE LA CORRECCIÓN DE MIDDLEWARE ---
 
 # --- Montar archivos estáticos ---
@@ -1615,9 +1627,13 @@ async def reset_password(user_id: int, request: Request):
         )
         await conn.commit()
 
-    # Redirigir al panel de admin y mostrar el token para que el admin lo copie y entregue al usuario
-    query_string = urlencode({'reset_token': token, 'reset_user': username})
-    return RedirectResponse(url=f'/admin/users?{query_string}', status_code=status.HTTP_302_FOUND)
+    # Renderizar directamente la página admin con el token en contexto (NO poner token en la URL)
+    async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+        cursor = await conn.execute("SELECT id, username, is_approved FROM users ORDER BY id DESC")
+        users = await cursor.fetchall()
+
+    return templates.TemplateResponse('admin_users.html', {"request": request, "users": users, "reset_token": token, "reset_user": username})
 
 
 @app.get('/set_password')
