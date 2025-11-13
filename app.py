@@ -105,6 +105,19 @@ app.mount("/static", StaticFiles(directory=os.path.join(PROJECT_ROOT, "static"))
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__)) # Asegúrate que esta línea está antes
 templates = Jinja2Templates(directory=os.path.join(PROJECT_ROOT, "templates"))
 
+# Helper para generar URLs seguras en producción (HTTPS)
+def secure_url_for(request: Request, name: str, **path_params):
+    """Genera URLs que usan HTTPS en producción y HTTP en desarrollo."""
+    url = request.url_for(name, **path_params)
+    # Si estamos en producción (PYTHONANYWHERE), fuerza HTTPS
+    is_production = os.environ.get('PYTHONANYWHERE_DOMAIN')
+    if is_production and str(url).startswith('http://'):
+        url = str(url).replace('http://', 'https://', 1)
+    return url
+
+# Hacer el helper disponible en todas las plantillas Jinja2
+templates.env.globals['secure_url_for'] = secure_url_for
+
 # --- CONFIGURACIÓN DE SEGURIDAD ---
 SECRET_KEY = 'una-clave-secreta-muy-dificil-de-adivinar'
 UPDATE_PASSWORD = 'warehouse_admin_2025'
@@ -1535,7 +1548,7 @@ def admin_users_post(request: Request, password: str = Form(...)):
     if password == UPDATE_PASSWORD:
         response = RedirectResponse(url='/admin/users', status_code=status.HTTP_302_FOUND)
         # Marcar secure sólo si la petición usa HTTPS
-        response.set_cookie(key="admin_logged_in", value="true", httponly=True, secure=(request.url.scheme == 'https'))
+        response.set_cookie(key="admin_logged_in", value="true", httponly=True, samesite='lax', secure=(request.url.scheme == 'https'))
         return response
     else:
         return templates.TemplateResponse("admin_login.html", {"request": request, "error": "Contraseña incorrecta"})
