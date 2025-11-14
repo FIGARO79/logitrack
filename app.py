@@ -275,16 +275,49 @@ async def init_db():
                 )
             ''')
 
-            # --- Nuevas Tablas para Sesiones de Conteo ---
+            # --- Tablas para Sesiones de Conteo (Modificadas) ---
             await conn.execute('''
                 CREATE TABLE IF NOT EXISTS count_sessions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_username TEXT NOT NULL,
                     start_time TEXT NOT NULL,
                     end_time TEXT,
-                    status TEXT NOT NULL DEFAULT 'in_progress' -- in_progress, completed
+                    status TEXT NOT NULL DEFAULT 'in_progress', -- in_progress, completed
+                    inventory_stage INTEGER NOT NULL DEFAULT 1 -- --- NUEVO: Se añade columna de etapa
                 )
             ''')
+
+            # --- NUEVO: Añadir columna 'inventory_stage' a 'count_sessions' si no existe (para BD antiguas) ---
+            cursor = await conn.execute("PRAGMA table_info(count_sessions);")
+            existing_cols_sessions = [row['name'] for row in await cursor.fetchall()]
+            if 'inventory_stage' not in existing_cols_sessions:
+                try:
+                    await conn.execute("ALTER TABLE count_sessions ADD COLUMN inventory_stage INTEGER NOT NULL DEFAULT 1;")
+                except aiosqlite.Error as e:
+                    print(f"DB Warning: no se pudo añadir columna 'inventory_stage' a count_sessions: {e}")
+            
+            # --- NUEVO: Tabla 'app_state' para estado global del inventario ---
+            await conn.execute('''
+                CREATE TABLE IF NOT EXISTS app_state (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                )
+            ''')
+            
+            # --- NUEVO: Inicializar el estado de la etapa de inventario a '1' si no está definida ---
+            await conn.execute("INSERT OR IGNORE INTO app_state (key, value) VALUES ('current_inventory_stage', '1');")
+
+            # --- NUEVO: Tabla 'recount_list' para la lista de tareas de reconteo ---
+            await conn.execute('''
+                CREATE TABLE IF NOT EXISTS recount_list (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    item_code TEXT NOT NULL,
+                    stage_to_count INTEGER NOT NULL DEFAULT 1,
+                    status TEXT NOT NULL DEFAULT 'pending' -- pending, counted
+                )
+            ''')
+            # --- FIN DE CAMBIOS DE ETAPA DE INVENTARIO ---
+
 
             await conn.execute('''
                 CREATE TABLE IF NOT EXISTS session_locations ( 
@@ -296,11 +329,7 @@ async def init_db():
                     FOREIGN KEY(session_id) REFERENCES count_sessions(id)
                 )
             ''')
-            # --- Tabla de Conteos (Modificada) ---
-            # Se añade session_id y se mejora la estructura.
-            # NOTA: En producción NO eliminamos la tabla para preservar los conteos.
-            # Si necesitas forzar un esquema nuevo durante desarrollo, borra manualmente
-            # el archivo de base de datos `inbound_log.db` o ejecuta una migración controlada.
+            
             await conn.execute('''
                 CREATE TABLE IF NOT EXISTS stock_counts (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -329,6 +358,7 @@ async def init_db():
             await conn.execute("CREATE INDEX IF NOT EXISTS idx_importReference_itemCode ON logs (importReference, itemCode)")
             await conn.execute("CREATE INDEX IF NOT EXISTS idx_session_id ON stock_counts (session_id)")
             await conn.execute("CREATE INDEX IF NOT EXISTS idx_location_code ON session_locations (location_code)")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_recount_item_stage ON recount_list (item_code, stage_to_count);") # --- NUEVO ÍNDICE ---
 
             # --- Nuevas Tablas para Auditoría de Picking ---
             await conn.execute('''
@@ -511,7 +541,15 @@ async def start_new_session(username: str = Depends(login_required)):
     """Inicia una nueva sesión de conteo para el usuario actual."""
     print(f"Attempting to start a new session for user: {username}")
     async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        conn.row_factory = aiosqlite.Row # Añadir row_factory para leer la etapa
         try:
+            # --- NUEVO: Obtener la etapa de inventario global actual ---
+            cursor_stage = await conn.execute("SELECT value FROM app_state WHERE key = 'current_inventory_stage'")
+            stage_row = await cursor_stage.fetchone()
+            current_stage = int(stage_row['value']) if (stage_row and stage_row['value']) else 1 # Default a 1
+            print(f"Global inventory stage is: {current_stage}")
+            # --- FIN NUEVO ---
+
             # Opcional: Finalizar sesiones anteriores del mismo usuario
             print("Closing previous sessions...")
             await conn.execute(
@@ -521,15 +559,19 @@ async def start_new_session(username: str = Depends(login_required)):
             print("Previous sessions closed.")
 
             # Crear nueva sesión
-            print("Creating new session...")
+            print(f"Creating new session for stage {current_stage}...") # Modificado
             cursor = await conn.execute(
-                "INSERT INTO count_sessions (user_username, start_time, status) VALUES (?, ?, ?)",
-                (username, datetime.datetime.now().isoformat(timespec='seconds'), 'in_progress')
+                # --- MODIFICADO: Añadir inventory_stage ---
+                "INSERT INTO count_sessions (user_username, start_time, status, inventory_stage) VALUES (?, ?, ?, ?)",
+                (username, datetime.datetime.now().isoformat(timespec='seconds'), 'in_progress', current_stage)
             )
             await conn.commit()
             session_id = cursor.lastrowid
-            print(f"New session created with ID: {session_id}")
-            return {"session_id": session_id, "message": f"Sesión {session_id} iniciada."}
+            print(f"New session created with ID: {session_id} for stage {current_stage}") # Modificado
+            
+            # --- MODIFICADO: Devolver la etapa al frontend ---
+            return {"session_id": session_id, "inventory_stage": current_stage, "message": f"Sesión {session_id} (Etapa {current_stage}) iniciada."}
+        
         except aiosqlite.Error as e:
             print(f"Database error in start_new_session: {e}")
             raise HTTPException(status_code=500, detail=f"Error de base de datos: {e}")
@@ -823,7 +865,7 @@ async def stock_item(item_code: str):
         raise HTTPException(status_code=404, detail="Artículo no encontrado")
 
 @app.get('/api/get_item_details/{item_code}')
-async def get_item_details_for_label(item_code: str):
+async def get_item_details_for_label(item_code: str, username: str = Depends(login_required)):
     details = await get_item_details_from_master_csv(item_code)
     if details:
         response_data = {
@@ -837,11 +879,46 @@ async def get_item_details_for_label(item_code: str):
     else:
         raise HTTPException(status_code=404, detail="Artículo no encontrado")
 
+
 @app.get('/api/get_item_for_counting/{item_code}')
 async def get_item_for_counting(item_code: str, username: str = Depends(login_required)):
+    
+    current_stage = 1 # Default
+    
+    # 1. Obtener la sesión activa del usuario y su etapa
+    async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+        cursor = await conn.execute(
+            "SELECT inventory_stage FROM count_sessions WHERE user_username = ? AND status = 'in_progress' ORDER BY start_time DESC LIMIT 1",
+            (username,)
+        )
+        active_session = await cursor.fetchone()
+    
+    if not active_session:
+        raise HTTPException(status_code=403, detail="No tienes una sesión de conteo activa. Inicia una nueva sesión.")
+        
+    current_stage = active_session['inventory_stage']
+    print(f"User {username} counting item {item_code} for stage {current_stage}")
+
+    # 2. Aplicar lógica de etapa de reconteo (si aplica)
+    if current_stage > 1:
+        # Es un reconteo, verificar si el item está en la lista de tareas
+        async with aiosqlite.connect(DB_FILE_PATH) as conn:
+            conn.row_factory = aiosqlite.Row
+            cursor_recount = await conn.execute(
+                "SELECT 1 FROM recount_list WHERE item_code = ? AND stage_to_count = ?",
+                (item_code, current_stage)
+            )
+            item_in_list = await cursor_recount.fetchone()
+            
+        if not item_in_list:
+            print(f"RECHAZADO: Item {item_code} no está en la lista de reconteo para la etapa {current_stage}.")
+            raise HTTPException(status_code=404, detail=f"Item no requerido. Este item no está en la lista de reconteo para la Etapa {current_stage}.")
+
+    # 3. Obtener detalles del item del maestro
     details = await get_item_details_from_master_csv(item_code)
     if details:
-        # Inventario ciego - no devolvemos cantidad de stock
+        # Si el item existe, devolver sus datos para el conteo ciego.
         response_data = {
             'item_code': details.get('Item_Code'),
             'description': details.get('Item_Description'),
@@ -849,34 +926,67 @@ async def get_item_for_counting(item_code: str, username: str = Depends(login_re
         }
         return JSONResponse(content=response_data)
     else:
-        raise HTTPException(status_code=404, detail="Artículo no encontrado")
+        # --- INICIO DE LA MODIFICACIÓN ---
+        # Si el item no se encuentra en el maestro...
+        if current_stage == 1:
+            # ... y estamos en Etapa 1, permitimos el conteo ciego de items no registrados.
+            print(f"Item {item_code} no encontrado en el maestro. Permitiendo conteo ciego para Etapa 1.")
+            response_data = {
+                'item_code': item_code,
+                'description': 'ITEM NO ENCONTRADO',
+                'bin_location': 'N/A'
+            }
+            return JSONResponse(content=response_data)
+        else:
+            # ... y estamos en una etapa de reconteo, un item no encontrado es un error.
+            raise HTTPException(status_code=404, detail="Artículo no encontrado en el maestro de items.")
+        # --- FIN DE LA MODIFICACIÓN ---
 
 @app.post('/api/save_count')
 async def save_count(data: StockCount, username: str = Depends(login_required)):
-    """Guarda un conteo de stock, verificando que la sesión y la ubicación estén activas."""
+    """Guarda un conteo de stock, verificando la sesión, la etapa y la ubicación."""
     try:
         async with aiosqlite.connect(DB_FILE_PATH) as conn:
             conn.row_factory = aiosqlite.Row
-            # 1. Verificar que la sesión está activa y pertenece al usuario
+            
+            # 1. Verificar que la sesión está activa y obtener su etapa
             cursor = await conn.execute(
-                "SELECT id FROM count_sessions WHERE id = ? AND user_username = ? AND status = 'in_progress'",
+                "SELECT id, inventory_stage FROM count_sessions WHERE id = ? AND user_username = ? AND status = 'in_progress'",
                 (data.session_id, username)
             )
-            if not await cursor.fetchone():
+            active_session = await cursor.fetchone()
+            
+            if not active_session:
                 raise HTTPException(status_code=403, detail="La sesión de conteo no es válida, está cerrada o no te pertenece.")
+            
+            current_stage = active_session['inventory_stage']
+            print(f"User {username} saving item {data.item_code} for stage {current_stage}")
 
-            # 2. Verificar que la ubicación no esté cerrada para esta sesión
-            cursor = await conn.execute(
+            # --- NUEVA VALIDACIÓN DE ETAPA ---
+            if current_stage > 1:
+                # Es un reconteo, verificar si el item está en la lista de tareas
+                cursor_recount = await conn.execute(
+                    "SELECT 1 FROM recount_list WHERE item_code = ? AND stage_to_count = ?",
+                    (data.item_code, current_stage)
+                )
+                item_in_list = await cursor_recount.fetchone()
+                
+                if not item_in_list:
+                    print(f"RECHAZADO (SAVE): Item {data.item_code} no está en la lista de reconteo para la etapa {current_stage}.")
+                    raise HTTPException(status_code=400, detail=f"Item no requerido. Este item no está en la lista de reconteo (Etapa {current_stage}).")
+            # --- FIN NUEVA VALIDACIÓN ---
+
+            # 2. (Original) Verificar que la ubicación no esté cerrada para esta sesión
+            cursor_loc = await conn.execute(
                 "SELECT status FROM session_locations WHERE session_id = ? AND location_code = ?",
                 (data.session_id, data.counted_location)
             )
-            location_status = await cursor.fetchone()
+            location_status = await cursor_loc.fetchone()
             if location_status and location_status['status'] == 'closed':
                 raise HTTPException(status_code=400, detail=f"La ubicación {data.counted_location} ya está cerrada y no se puede modificar.")
 
-            # 3. Insertar el conteo
+            # 3. (Original) Insertar el conteo
             counted_qty = int(data.counted_qty)
-            # Para inventario ciego, no usamos system_qty ni calculamos difference
             await conn.execute(
                 '''
                 INSERT INTO stock_counts (session_id, timestamp, item_code, item_description, counted_qty, counted_location, bin_location_system, username)
@@ -887,6 +997,9 @@ async def save_count(data: StockCount, username: str = Depends(login_required)):
                     data.description, counted_qty, data.counted_location, data.bin_location_system, username
                 )
             )
+            
+            # (Quitamos la lógica de UPDATE recount_list, eso lo hará el admin al cerrar la etapa)
+            
             await conn.commit()
         return JSONResponse(content={'message': 'Conteo guardado con éxito'}, status_code=201)
     except (ValueError, TypeError):
@@ -1193,33 +1306,40 @@ async def view_counts_page(request: Request, username: str = Depends(login_requi
             lambda sync_conn: pd.read_sql_query(
                 """
                 SELECT
-                    item_code,
-                    counted_location,
-                    SUM(counted_qty) as counted_qty,
-                    item_description,
-                    bin_location_system,
-                    username,
-                    session_id,
-                    MAX(timestamp) as timestamp
+                    sc.*,
+                    cs.inventory_stage  -- --- NUEVO: Traer la etapa de la sesión ---
                 FROM
-                    stock_counts
-                GROUP BY
-                    item_code,
-                    counted_location
+                    stock_counts sc
+                JOIN 
+                    count_sessions cs ON sc.session_id = cs.id
                 ORDER BY
-                    MAX(id) DESC
+                    sc.id DESC
                 """,
                 sync_conn
             )
         )
-    all_counts = all_counts.to_dict(orient='records')
+    
+    # --- LÓGICA MODIFICADA PARA AGRUPAR POR ETAPA ---
+    # Convertir a dicts
+    all_counts_list = all_counts.to_dict(orient='records')
+    
+    # Agrupar conteos por item, ubicación Y etapa
+    grouped_counts = {}
+    for count in all_counts_list:
+        key = (count['item_code'], count['counted_location'], count['inventory_stage'])
+        if key not in grouped_counts:
+            grouped_counts[key] = {
+                **count,
+                'counted_qty': 0
+            }
+        grouped_counts[key]['counted_qty'] += count['counted_qty']
+        
+    # Usar los conteos agrupados
+    all_counts_list = list(grouped_counts.values())
 
-    # Optimización: usar el mapa en memoria master_qty_map (item_code -> int|None)
     master_map = master_qty_map
-
-    # Construir mapeo session_id -> user_username para mostrar quién realizó el conteo
     session_map = {}
-    session_ids = list({c.get('session_id') for c in all_counts if c.get('session_id') is not None})
+    session_ids = list({c.get('session_id') for c in all_counts_list if c.get('session_id') is not None})
     if session_ids:
         try:
             async with aiosqlite.connect(DB_FILE_PATH) as conn:
@@ -1233,12 +1353,9 @@ async def view_counts_page(request: Request, username: str = Depends(login_requi
         except Exception:
             session_map = {}
 
-    # Enriquecer los conteos con cantidad del sistema y diferencia para análisis.
     enriched_counts = []
-    for count in all_counts:
+    for count in all_counts_list:
         item_code = count.get('item_code')
-
-        # Obtener cantidad del sistema desde el mapeo en memoria
         system_qty = None
         raw_system = master_map.get(item_code) if master_map else None
         if raw_system not in (None, ''):
@@ -1247,23 +1364,19 @@ async def view_counts_page(request: Request, username: str = Depends(login_requi
             except (ValueError, TypeError):
                 system_qty = None
 
-        # Cantidad contada (falla a 0 si es inválida)
         try:
             counted_qty = int(count.get('counted_qty') or 0)
         except (ValueError, TypeError):
             counted_qty = 0
 
-        # Calcular diferencia solo si tenemos system_qty
         difference = (counted_qty - system_qty) if system_qty is not None else None
 
         enriched = dict(count)
         enriched['system_qty'] = system_qty
         enriched['difference'] = difference
-        # Añadir nombre de usuario que realizó la sesión (si está almacenado en el conteo, usarlo; sino usar session_map)
         enriched['username'] = count.get('username') or (session_map.get(count.get('session_id')) if session_map else None)
         enriched_counts.append(enriched)
 
-    # Construir lista de usuarios únicos para el filtro en la UI
     usernames = sorted({u for u in session_map.values() if u})
 
     return templates.TemplateResponse('view_counts.html', {"request": request, "counts": enriched_counts, "usernames": usernames})
@@ -1272,9 +1385,27 @@ async def view_counts_page(request: Request, username: str = Depends(login_requi
 @app.get('/api/export_counts')
 async def export_counts(username: str = Depends(login_required)):
     """Exporta todos los conteos enriquecidos a Excel (incluye usuario, system_qty y diferencia)."""
-    all_counts = await load_all_counts_db_async()
+    
+    # --- NUEVO: Traer la etapa de inventario en la consulta ---
+    async with async_engine.connect() as conn:
+        all_counts_df = await conn.run_sync(
+            lambda sync_conn: pd.read_sql_query(
+                """
+                SELECT 
+                    sc.*, 
+                    cs.inventory_stage 
+                FROM 
+                    stock_counts sc
+                JOIN 
+                    count_sessions cs ON sc.session_id = cs.id
+                ORDER BY sc.id DESC
+                """, 
+                sync_conn
+            )
+        )
+    all_counts = all_counts_df.to_dict(orient='records')
 
-    # Usar master_qty_map y consultar sesiones para mapear usernames
+
     master_map = master_qty_map
     session_map = {}
     session_ids = list({c.get('session_id') for c in all_counts if c.get('session_id') is not None})
@@ -1312,6 +1443,7 @@ async def export_counts(username: str = Depends(login_required)):
         enriched = {
             'id': count.get('id'),
             'session_id': count.get('session_id'),
+            'inventory_stage': count.get('inventory_stage'), # --- NUEVO: Añadir etapa al reporte ---
             'username': count.get('username') or (session_map.get(count.get('session_id')) if session_map else None),
             'timestamp': count.get('timestamp'),
             'item_code': item_code,
@@ -1327,7 +1459,7 @@ async def export_counts(username: str = Depends(login_required)):
     # Construir DataFrame y exportar a Excel
     df = pd.DataFrame(enriched_rows)
     # Reordenar columnas para la exportación
-    columns_order = ['id', 'session_id', 'username', 'timestamp', 'item_code', 'item_description', 'counted_location', 'counted_qty', 'system_qty', 'difference', 'bin_location_system']
+    columns_order = ['id', 'session_id', 'inventory_stage', 'username', 'timestamp', 'item_code', 'item_description', 'counted_location', 'counted_qty', 'system_qty', 'difference', 'bin_location_system']
     df = df[columns_order]
 
     output = BytesIO()
@@ -1344,19 +1476,46 @@ async def export_counts(username: str = Depends(login_required)):
     filename = f"conteos_export_{timestamp_str}.xlsx"
     return Response(content=output.getvalue(), media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers={"Content-Disposition": f"attachment; filename={filename}"})
 
+
+
+
+
 @app.get('/api/counts/stats')
 async def get_count_stats(username: str = Depends(login_required)):
     """Devuelve estadísticas sobre los conteos de stock."""
     try:
         async with aiosqlite.connect(DB_FILE_PATH) as conn:
             conn.row_factory = aiosqlite.Row
-
-            # 1. Total de ubicaciones contadas
-            cursor = await conn.execute("SELECT COUNT(DISTINCT counted_location) FROM stock_counts")
+            
+            # --- NUEVO: Obtener etapa actual ---
+            cursor = await conn.execute("SELECT value FROM app_state WHERE key = 'current_inventory_stage'")
+            stage_row = await cursor.fetchone()
+            current_stage = int(stage_row['value']) if stage_row else 1
+            
+            # --- NUEVO: Filtrar consultas por la etapa actual ---
+            
+            # 1. Total de ubicaciones contadas (en esta etapa)
+            cursor = await conn.execute(
+                """
+                SELECT COUNT(DISTINCT sc.counted_location) 
+                FROM stock_counts sc
+                JOIN count_sessions cs ON sc.session_id = cs.id
+                WHERE cs.inventory_stage = ?
+                """, (current_stage,)
+            )
             counted_locations = (await cursor.fetchone())[0]
 
-            # 2. Total de items contados (grupos de item/ubicación)
-            cursor = await conn.execute("SELECT COUNT(*) FROM (SELECT DISTINCT item_code, counted_location FROM stock_counts)")
+            # 2. Total de items contados (grupos de item/ubicación) (en esta etapa)
+            cursor = await conn.execute(
+                """
+                SELECT COUNT(*) FROM (
+                    SELECT DISTINCT sc.item_code, sc.counted_location 
+                    FROM stock_counts sc
+                    JOIN count_sessions cs ON sc.session_id = cs.id
+                    WHERE cs.inventory_stage = ?
+                )
+                """, (current_stage,)
+            )
             total_items_counted = (await cursor.fetchone())[0]
 
             # 3. Total de items con stock (del maestro de items)
@@ -1366,16 +1525,23 @@ async def get_count_stats(username: str = Depends(login_required)):
                     if qty is not None and qty > 0:
                         total_items_with_stock += 1
             
-            # 4. Items con diferencias
-            cursor = await conn.execute("SELECT item_code, counted_qty FROM stock_counts")
-            all_counts = await cursor.fetchall()
+            # 4. Items con diferencias (en esta etapa)
+            cursor = await conn.execute(
+                """
+                SELECT sc.item_code, sc.counted_qty 
+                FROM stock_counts sc
+                JOIN count_sessions cs ON sc.session_id = cs.id
+                WHERE cs.inventory_stage = ?
+                """, (current_stage,)
+            )
+            all_counts_stage = await cursor.fetchall()
             
             items_with_differences = 0
-            processed_items = set()
+            processed_items_stage = set()
 
-            for count in all_counts:
+            for count in all_counts_stage:
                 item_code = count['item_code']
-                if item_code not in processed_items:
+                if item_code not in processed_items_stage:
                     system_qty_raw = master_qty_map.get(item_code)
                     system_qty = 0
                     if system_qty_raw is not None:
@@ -1384,28 +1550,43 @@ async def get_count_stats(username: str = Depends(login_required)):
                         except (ValueError, TypeError):
                             system_qty = 0
                     
-                    # Sumar todos los conteos para este item_code
-                    cursor = await conn.execute("SELECT SUM(counted_qty) FROM stock_counts WHERE item_code = ?", (item_code,))
+                    # Sumar todos los conteos para este item_code (SOLO en esta etapa)
+                    cursor = await conn.execute(
+                        """
+                        SELECT SUM(sc.counted_qty) 
+                        FROM stock_counts sc
+                        JOIN count_sessions cs ON sc.session_id = cs.id
+                        WHERE sc.item_code = ? AND cs.inventory_stage = ?
+                        """, (item_code, current_stage)
+                    )
                     total_counted_for_item = (await cursor.fetchone())[0]
 
                     if total_counted_for_item != system_qty:
                         items_with_differences += 1
                     
-                    processed_items.add(item_code)
+                    processed_items_stage.add(item_code)
 
-            # 5. Ubicaciones con stock
-            cursor = await conn.execute("SELECT COUNT(DISTINCT counted_location) FROM stock_counts WHERE counted_qty > 0")
+            # 5. Ubicaciones con stock (contadas en esta etapa)
+            cursor = await conn.execute(
+                """
+                SELECT COUNT(DISTINCT sc.counted_location) 
+                FROM stock_counts sc
+                JOIN count_sessions cs ON sc.session_id = cs.id
+                WHERE cs.inventory_stage = ? AND sc.counted_qty > 0
+                """, (current_stage,)
+            )
             locations_with_stock = (await cursor.fetchone())[0]
 
             # 6. Total de ubicaciones con stock (del maestro de items)
             total_locations_with_stock = 0
             if df_master_cache is not None:
-                # Filtrar items con stock > 0
                 stock_items = df_master_cache[pd.to_numeric(df_master_cache['Physical_Qty'], errors='coerce').fillna(0) > 0]
                 bin_1_locations = stock_items['Bin_1'].dropna().unique()
                 total_locations_with_stock = len(bin_1_locations)
 
+            # --- NUEVO: Añadir 'current_stage' a la respuesta ---
             return JSONResponse(content={
+                "current_stage": current_stage, 
                 "total_items_with_stock": total_items_with_stock,
                 "counted_locations": counted_locations,
                 "total_items_counted": total_items_counted,
@@ -1541,16 +1722,235 @@ def logout(request: Request):
     response.delete_cookie("admin_logged_in")
     return response
 
-@app.get('/admin/users', response_class=HTMLResponse)
-async def admin_users_get(request: Request):
+@app.get('/admin_inventory', response_class=RedirectResponse)
+async def redirect_admin_inventory():
+    return RedirectResponse(url='/admin/inventory')
+
+def admin_login_required(request: Request):
     if not request.cookies.get("admin_logged_in"):
-        return templates.TemplateResponse("admin_login.html", {"request": request})
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
+    return True
+
+@app.get('/api/export_recount_list/{stage_number}', name='export_recount_list')
+async def export_recount_list(request: Request, stage_number: int, admin: bool = Depends(admin_login_required)):
+    """Exporta la lista de items a recontar para una etapa específica."""
+    if not admin:
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
+
+    async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+        cursor = await conn.execute(
+            "SELECT item_code FROM recount_list WHERE stage_to_count = ?",
+            (stage_number,)
+        )
+        items_to_recount = await cursor.fetchall()
+
+    if not items_to_recount:
+        raise HTTPException(status_code=404, detail=f"No hay items en la lista de reconteo para la Etapa {stage_number}.")
+
+    enriched_data = []
+    for item in items_to_recount:
+        item_code = item['item_code']
+        details = await get_item_details_from_master_csv(item_code)
+        if details:
+            enriched_data.append({
+                'Código de Item': item_code,
+                'Descripción': details.get('Item_Description', 'N/A'),
+                'Ubicación en Sistema': details.get('Bin_1', 'N/A')
+            })
+        else:
+            # Para items "fantasma" que no están en el maestro
+            enriched_data.append({
+                'Código de Item': item_code,
+                'Descripción': 'ITEM NO ENCONTRADO EN MAESTRO',
+                'Ubicación en Sistema': 'N/A'
+            })
+
+    df = pd.DataFrame(enriched_data)
+    
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name=f'Reconteo_Etapa_{stage_number}')
+        worksheet = writer.sheets[f'Reconteo_Etapa_{stage_number}']
+        for i, col_name in enumerate(df.columns):
+            column_letter = get_column_letter(i + 1)
+            max_len = max(df[col_name].astype(str).map(len).max(), len(col_name)) + 2
+            worksheet.column_dimensions[column_letter].width = max_len
+    
+    output.seek(0)
+    timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"lista_reconteo_etapa_{stage_number}_{timestamp_str}.xlsx"
+    return Response(
+        content=output.getvalue(),
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@app.get('/admin/inventory', response_class=HTMLResponse, name='admin_inventory')
+async def admin_inventory_get(request: Request, admin: bool = Depends(admin_login_required)):
+    if not admin:
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
+
+    async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+        cursor = await conn.execute("SELECT * FROM app_state WHERE key = 'current_inventory_stage'")
+        stage = await cursor.fetchone()
+        if not stage:
+            # Si no existe, inicializamos a etapa 0 (inactivo)
+            await conn.execute("INSERT OR REPLACE INTO app_state (key, value) VALUES ('current_inventory_stage', '0')")
+            await conn.commit()
+            cursor = await conn.execute("SELECT * FROM app_state WHERE key = 'current_inventory_stage'")
+            stage = await cursor.fetchone()
+
+    message = request.query_params.get('message')
+    error = request.query_params.get('error')
+    
+    return templates.TemplateResponse('admin_inventory.html', {
+        "request": request, 
+        "stage": stage,
+        "message": message,
+        "error": error
+    })
+
+@app.post('/admin/inventory/start_stage_1', name='start_inventory_stage_1')
+async def start_inventory_stage_1(request: Request, admin: bool = Depends(admin_login_required)):
+    if not admin:
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
+    
+    try:
+        async with aiosqlite.connect(DB_FILE_PATH) as conn:
+            # --- INICIO DE LA CORRECCIÓN ---
+            # Limpiar todas las tablas relacionadas con el ciclo de conteo anterior
+            print("Limpiando tablas de inventario para un nuevo ciclo...")
+            await conn.execute('DELETE FROM stock_counts')
+            await conn.execute('DELETE FROM count_sessions')
+            await conn.execute('DELETE FROM session_locations')
+            await conn.execute('DELETE FROM recount_list')
+            
+            # --- NUEVO: Reiniciar los contadores de autoincremento ---
+            await conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('stock_counts', 'count_sessions', 'session_locations', 'recount_list')")
+            print("Tablas de inventario y contadores de ID reiniciados.")
+            # --- FIN DE LA CORRECCIÓN ---
+
+            # Establecer el estado a Etapa 1
+            await conn.execute("UPDATE app_state SET value = '1' WHERE key = 'current_inventory_stage'")
+            await conn.commit()
+        
+        query_params = urlencode({"message": "Inventario reiniciado en Etapa 1. Todos los datos y contadores han sido reseteados."})
+        return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
+    except aiosqlite.Error as e:
+        query_params = urlencode({"error": f"Error de base de datos: {e}"})
+        return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
+
+@app.post('/admin/inventory/advance/{next_stage}', name='advance_inventory_stage')
+async def advance_inventory_stage(request: Request, next_stage: int, admin: bool = Depends(admin_login_required)):
+    if not admin:
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
+
+    prev_stage = next_stage - 1
+    
+    try:
+        async with aiosqlite.connect(DB_FILE_PATH) as conn:
+            conn.row_factory = aiosqlite.Row
+            
+            # 1. Obtener todos los conteos de la etapa anterior
+            query = """
+                SELECT 
+                    sc.item_code, 
+                    SUM(sc.counted_qty) as total_counted
+                FROM 
+                    stock_counts sc
+                JOIN 
+                    count_sessions cs ON sc.session_id = cs.id
+                WHERE 
+                    cs.inventory_stage = ?
+                GROUP BY 
+                    sc.item_code
+            """
+            cursor = await conn.execute(query, (prev_stage,))
+            counted_items = await cursor.fetchall()
+            
+            # 2. Limpiar la lista de reconteo para la *próxima* etapa
+            await conn.execute("DELETE FROM recount_list WHERE stage_to_count = ?", (next_stage,))
+
+            # 3. Comparar con el maestro y generar la nueva lista de reconteo
+            items_for_recount = []
+            for item in counted_items:
+                item_code = item['item_code']
+                total_counted = item['total_counted']
+                
+                system_qty = master_qty_map.get(item_code)
+                system_qty = int(system_qty) if system_qty is not None else 0
+
+                if total_counted != system_qty:
+                    items_for_recount.append((item_code, next_stage))
+
+            # 4. Insertar los items en la lista de reconteo
+            if items_for_recount:
+                await conn.executemany(
+                    "INSERT INTO recount_list (item_code, stage_to_count) VALUES (?, ?)",
+                    items_for_recount
+                )
+
+            # 5. Actualizar el estado global a la nueva etapa
+            await conn.execute("UPDATE app_state SET value = ? WHERE key = 'current_inventory_stage'", (str(next_stage),))
+            
+            await conn.commit()
+
+        message = f"Proceso completado. Etapa de inventario avanzada a {next_stage}. Se encontraron {len(items_for_recount)} items con diferencias."
+        query_params = urlencode({"message": message})
+        return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
+
+    except aiosqlite.Error as e:
+        query_params = urlencode({"error": f"Error de base de datos: {e}"})
+        return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
+    except Exception as e:
+        query_params = urlencode({"error": f"Error inesperado: {e}"})
+        return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
+
+@app.post('/admin/inventory/finalize', name='finalize_inventory')
+async def finalize_inventory(request: Request, admin: bool = Depends(admin_login_required)):
+    if not admin:
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
+    
+    try:
+        async with aiosqlite.connect(DB_FILE_PATH) as conn:
+            # Cambiamos el estado a '0' para indicar que no hay un ciclo activo
+            await conn.execute("UPDATE app_state SET value = '0' WHERE key = 'current_inventory_stage'")
+            await conn.commit()
+        
+        query_params = urlencode({"message": "Ciclo de inventario finalizado y cerrado."})
+        return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
+    except aiosqlite.Error as e:
+        query_params = urlencode({"error": f"Error de base de datos: {e}"})
+        return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
+
+
+
+@app.get('/admin/login', response_class=HTMLResponse, name='admin_login_get')
+def admin_login_get(request: Request):
+    return templates.TemplateResponse("admin_login.html", {"request": request})
+
+@app.post('/admin/login', response_class=HTMLResponse, name='admin_login_post')
+def admin_login_post(request: Request, password: str = Form(...)):
+    if password == UPDATE_PASSWORD:
+        response = RedirectResponse(url=request.url_for('admin_inventory'), status_code=status.HTTP_302_FOUND)
+        response.set_cookie(key="admin_logged_in", value="true", httponly=True, samesite='lax', secure=(request.url.scheme == 'https'))
+        return response
+    else:
+        return templates.TemplateResponse("admin_login.html", {"request": request, "error": "Contraseña incorrecta"})
+
+@app.get('/admin/users', response_class=HTMLResponse, name='admin_users_get')
+async def admin_users_get(request: Request, admin: bool = Depends(admin_login_required)):
+    if not admin:
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
     
     async with aiosqlite.connect(DB_FILE_PATH) as conn:
         conn.row_factory = aiosqlite.Row
         cursor = await conn.execute("SELECT id, username, is_approved FROM users ORDER BY id DESC")
         users = await cursor.fetchall()
-    # Leer posibles parámetros para mostrar token de reset generado
+    
     reset_token = request.query_params.get('reset_token')
     reset_user = request.query_params.get('reset_user')
     return templates.TemplateResponse('admin_users.html', {"request": request, "users": users, "reset_token": reset_token, "reset_user": reset_user})
@@ -1572,16 +1972,6 @@ async def check_password(user_id: int, request: Request):
         return JSONResponse(content={"matches": True})
     else:
         return JSONResponse(content={"matches": False})
-
-@app.post('/admin/users', response_class=HTMLResponse)
-def admin_users_post(request: Request, password: str = Form(...)):
-    if password == UPDATE_PASSWORD:
-        response = RedirectResponse(url='/admin/users', status_code=status.HTTP_302_FOUND)
-        # Marcar secure sólo si la petición usa HTTPS
-        response.set_cookie(key="admin_logged_in", value="true", httponly=True, samesite='lax', secure=(request.url.scheme == 'https'))
-        return response
-    else:
-        return templates.TemplateResponse("admin_login.html", {"request": request, "error": "Contraseña incorrecta"})
 
 @app.post('/admin/approve/{user_id}')
 async def approve_user(user_id: int, request: Request):
@@ -1722,6 +2112,10 @@ async def set_password_post(request: Request, token: str = Form(...), new_passwo
 
 @app.post('/admin/reset_count_sessions/{user_id}', name='reset_count_sessions')
 async def reset_count_sessions(user_id: int, request: Request):
+    """
+    MODIFICADO: Esta función ahora CIERRA FORZOSAMENTE la sesión activa del usuario,
+    preservando los datos del conteo, en lugar de borrarlos.
+    """
     if not request.cookies.get("admin_logged_in"):
         return RedirectResponse(url=str(request.url.replace(path='/admin/users', query='')), status_code=status.HTTP_302_FOUND)
     
@@ -1731,20 +2125,15 @@ async def reset_count_sessions(user_id: int, request: Request):
         
         if user:
             username = user[0]
-            # CAMBIO IMPORTANTE: 
-            # En lugar de BORRAR (DELETE), ahora actualizamos el estado a 'completed'.
-            # Esto preserva los conteos (stock_counts) y el historial de la sesión.
-            
             now = datetime.datetime.now().isoformat(timespec='seconds')
             
-            # Solo cerramos las sesiones que estén 'in_progress' (activas)
+            # Cierra (Completa) la sesión activa
             await conn.execute(
                 "UPDATE count_sessions SET status = 'completed', end_time = ? WHERE user_username = ? AND status = 'in_progress'",
                 (now, username)
             )
             
-            # Nota: No tocamos la tabla 'stock_counts'. Los items permanecen seguros vinculados a la sesión (ahora cerrada).
-            
+            # NO BORRAMOS NADA de stock_counts. Los datos están seguros.
             await conn.commit()
     
     return RedirectResponse(url='/admin/users', status_code=status.HTTP_302_FOUND)
