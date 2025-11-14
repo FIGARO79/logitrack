@@ -900,13 +900,12 @@ async def get_item_for_counting(item_code: str, username: str = Depends(login_re
     current_stage = active_session['inventory_stage']
     print(f"User {username} counting item {item_code} for stage {current_stage}")
 
-    # 2. Aplicar lógica de etapa
+    # 2. Aplicar lógica de etapa de reconteo (si aplica)
     if current_stage > 1:
         # Es un reconteo, verificar si el item está en la lista de tareas
         async with aiosqlite.connect(DB_FILE_PATH) as conn:
             conn.row_factory = aiosqlite.Row
             cursor_recount = await conn.execute(
-                # Verificamos si el item existe en la lista para esta etapa (independiente de su status)
                 "SELECT 1 FROM recount_list WHERE item_code = ? AND stage_to_count = ?",
                 (item_code, current_stage)
             )
@@ -916,10 +915,10 @@ async def get_item_for_counting(item_code: str, username: str = Depends(login_re
             print(f"RECHAZADO: Item {item_code} no está en la lista de reconteo para la etapa {current_stage}.")
             raise HTTPException(status_code=404, detail=f"Item no requerido. Este item no está en la lista de reconteo para la Etapa {current_stage}.")
 
-    # 3. Si es Etapa 1 O el item está en la lista, obtener detalles (lógica original)
+    # 3. Obtener detalles del item del maestro
     details = await get_item_details_from_master_csv(item_code)
     if details:
-        # Inventario ciego - no devolvemos cantidad de stock
+        # Si el item existe, devolver sus datos para el conteo ciego.
         response_data = {
             'item_code': details.get('Item_Code'),
             'description': details.get('Item_Description'),
@@ -927,7 +926,21 @@ async def get_item_for_counting(item_code: str, username: str = Depends(login_re
         }
         return JSONResponse(content=response_data)
     else:
-        raise HTTPException(status_code=404, detail="Artículo no encontrado en el maestro de items.")
+        # --- INICIO DE LA MODIFICACIÓN ---
+        # Si el item no se encuentra en el maestro...
+        if current_stage == 1:
+            # ... y estamos en Etapa 1, permitimos el conteo ciego de items no registrados.
+            print(f"Item {item_code} no encontrado en el maestro. Permitiendo conteo ciego para Etapa 1.")
+            response_data = {
+                'item_code': item_code,
+                'description': 'ITEM NO ENCONTRADO',
+                'bin_location': 'N/A'
+            }
+            return JSONResponse(content=response_data)
+        else:
+            # ... y estamos en una etapa de reconteo, un item no encontrado es un error.
+            raise HTTPException(status_code=404, detail="Artículo no encontrado en el maestro de items.")
+        # --- FIN DE LA MODIFICACIÓN ---
 
 @app.post('/api/save_count')
 async def save_count(data: StockCount, username: str = Depends(login_required)):
@@ -1747,14 +1760,24 @@ async def start_inventory_stage_1(request: Request, admin: bool = Depends(admin_
     
     try:
         async with aiosqlite.connect(DB_FILE_PATH) as conn:
-            # Limpiar lista de reconteo
+            # --- INICIO DE LA CORRECCIÓN ---
+            # Limpiar todas las tablas relacionadas con el ciclo de conteo anterior
+            print("Limpiando tablas de inventario para un nuevo ciclo...")
+            await conn.execute('DELETE FROM stock_counts')
+            await conn.execute('DELETE FROM count_sessions')
+            await conn.execute('DELETE FROM session_locations')
             await conn.execute('DELETE FROM recount_list')
-            # Opcional: archivar o limpiar conteos y sesiones anteriores
-            # Por ahora, solo cambiaremos el estado
+            
+            # --- NUEVO: Reiniciar los contadores de autoincremento ---
+            await conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('stock_counts', 'count_sessions', 'session_locations', 'recount_list')")
+            print("Tablas de inventario y contadores de ID reiniciados.")
+            # --- FIN DE LA CORRECCIÓN ---
+
+            # Establecer el estado a Etapa 1
             await conn.execute("UPDATE app_state SET value = '1' WHERE key = 'current_inventory_stage'")
             await conn.commit()
         
-        query_params = urlencode({"message": "Inventario iniciado en Etapa 1. Los contadores ya pueden empezar a escanear."})
+        query_params = urlencode({"message": "Inventario reiniciado en Etapa 1. Todos los datos y contadores han sido reseteados."})
         return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
     except aiosqlite.Error as e:
         query_params = urlencode({"error": f"Error de base de datos: {e}"})
