@@ -101,27 +101,27 @@
                                     class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-xs">Verificar
                                     Pass</button>
                                 {% if not user.is_approved %}
-                                <form action="{{ request.url_for('approve_user', user_id=user.id).path }}" method="post"
+                                <form action="{{ secure_url_for(request, 'approve_user', user_id=user.id) }}" method="post"
                                     onsubmit="return confirm('¿Seguro que quieres aprobar a este usuario?');">
                                     <button type="submit"
                                         class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-xs">Aprobar</button>
                                 </form>
                                 {% endif %}
-                                <form action="{{ request.url_for('reset_password', user_id=user.id).path }}"
+                                <form action="{{ secure_url_for(request, 'reset_password', user_id=user.id) }}"
                                     method="post"
                                     onsubmit="return confirm('¿Seguro que quieres resetear la contraseña de este usuario?');">
                                     <button type="submit"
                                         class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded text-xs">Reset
                                         Pass</button>
                                 </form>
-                                <form action="{{ request.url_for('reset_count_sessions', user_id=user.id).path }}"
+                                <form action="{{ secure_url_for(request, 'reset_count_sessions', user_id=user.id) }}"
                                     method="post"
                                     onsubmit="return confirm('¿Seguro que quieres resetear las sesiones de conteo de este usuario?');">
                                     <button type="submit"
                                         class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded text-xs">Reset
                                         Conteos</button>
                                 </form>
-                                <form action="{{ request.url_for('delete_user', user_id=user.id).path }}" method="post"
+                                <form action="{{ secure_url_for(request, 'delete_user', user_id=user.id) }}" method="post"
                                     onsubmit="return confirm('¡Atención! ¿Estás seguro de que quieres ELIMINAR a este usuario? Esta acción no se puede deshacer.');">
                                     <button type="submit"
                                         class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-xs">Eliminar</button>
@@ -165,14 +165,14 @@
                                 <span
                                     class="toggle-password absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
                                     id="togglePassword">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none"
+                                    <svg xmlns="https://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 hidden"
+                                    <svg xmlns="https://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 hidden"
                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .946-3.11 3.56-5.595 6.837-6.425M16.5 10.5a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />

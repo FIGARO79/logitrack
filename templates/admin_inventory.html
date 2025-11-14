@@ -60,7 +60,7 @@
                         <h3 class="font-bold text-lg">Etapa 1: Conteo Total</h3>
                         <p class="text-sm text-gray-600 mb-3">Inicia un nuevo ciclo de inventario. Esto limpiará los
                             conteos anteriores y preparará el sistema para un conteo completo (100% de los items).</p>
-                        <form action="{{ request.url_for('start_inventory_stage_1') }}" method="post"
+                        <form action="{{ secure_url_for(request, 'start_inventory_stage_1') }}" method="post"
                             onsubmit="return confirm('¿Estás seguro de que quieres iniciar la Etapa 1? Esto archivará los conteos anteriores y comenzará un nuevo ciclo de inventario.');">
                             <button type="submit"
                                 class="w-full bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded"
@@ -75,7 +75,7 @@
                         <h3 class="font-bold text-lg">Etapa 2: Primer Recuento de Diferencias</h3>
                         <p class="text-sm text-gray-600 mb-3">Calcula las diferencias de la Etapa 1 y genera una lista
                             de reconteo. Solo los items con discrepancias podrán ser contados.</p>
-                        <form action="{{ request.url_for('advance_inventory_stage', next_stage=2) }}" method="post"
+                        <form action="{{ secure_url_for(request, 'advance_inventory_stage', next_stage=2) }}" method="post"
                             onsubmit="return confirm('¿Estás seguro de que quieres avanzar a la Etapa 2? Se calcularán las diferencias y se creará la lista de reconteo.');">
                             <button type="submit"
                                 class="w-full bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
@@ -84,7 +84,7 @@
                             </button>
                         </form>
                         {% if stage.value == '2' %}
-                        <a href="{{ request.url_for('export_recount_list', stage_number=2) }}"
+                        <a href="{{ secure_url_for(request, 'export_recount_list', stage_number=2) }}"
                            class="mt-2 w-full block text-center bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded">
                            Exportar Lista de Reconteo (Etapa 2)
                         </a>
@@ -96,7 +96,7 @@
                         <h3 class="font-bold text-lg">Etapa 3: Segundo Recuento de Diferencias</h3>
                         <p class="text-sm text-gray-600 mb-3">Calcula las diferencias de la Etapa 2 y genera una nueva
                             lista de reconteo para los items que aún presentan discrepancias.</p>
-                        <form action="{{ request.url_for('advance_inventory_stage', next_stage=3) }}" method="post"
+                        <form action="{{ secure_url_for(request, 'advance_inventory_stage', next_stage=3) }}" method="post"
                             onsubmit="return confirm('¿Estás seguro de que quieres avanzar a la Etapa 3?');">
                             <button type="submit"
                                 class="w-full bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
@@ -105,7 +105,7 @@
                             </button>
                         </form>
                         {% if stage.value == '3' %}
-                        <a href="{{ request.url_for('export_recount_list', stage_number=3) }}"
+                        <a href="{{ secure_url_for(request, 'export_recount_list', stage_number=3) }}"
                            class="mt-2 w-full block text-center bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded">
                            Exportar Lista de Reconteo (Etapa 3)
                         </a>
@@ -117,7 +117,7 @@
                         <h3 class="font-bold text-lg">Etapa 4: Conteo Definitivo</h3>
                         <p class="text-sm text-gray-600 mb-3">Realiza un último conteo de las diferencias restantes. El
                             resultado de este conteo será considerado final.</p>
-                        <form action="{{ request.url_for('advance_inventory_stage', next_stage=4) }}" method="post"
+                        <form action="{{ secure_url_for(request, 'advance_inventory_stage', next_stage=4) }}" method="post"
                             onsubmit="return confirm('¿Estás seguro de que quieres avanzar a la Etapa 4 (Conteo Final)?');">
                             <button type="submit"
                                 class="w-full bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
@@ -126,7 +126,7 @@
                             </button>
                         </form>
                         {% if stage.value == '4' %}
-                        <a href="{{ request.url_for('export_recount_list', stage_number=4) }}"
+                        <a href="{{ secure_url_for(request, 'export_recount_list', stage_number=4) }}"
                            class="mt-2 w-full block text-center bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded">
                            Exportar Lista de Reconteo (Etapa 4)
                         </a>
@@ -136,7 +136,7 @@
                     <div class="p-4 border rounded-lg bg-green-50">
                         <h3 class="font-bold text-lg text-green-800">Finalizar Ciclo de Inventario</h3>
                         <p class="text-sm text-gray-600 mb-3">Marca el ciclo de inventario como completado. Esto permitirá iniciar un nuevo ciclo en el futuro.</p>
-                        <form action="{{ request.url_for('finalize_inventory') }}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres finalizar y cerrar el ciclo de inventario actual?');">
+                        <form action="{{ secure_url_for(request, 'finalize_inventory') }}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres finalizar y cerrar el ciclo de inventario actual?');">
                             <button type="submit" class="w-full bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded" {% if stage.value != '4' %}disabled{% endif %}>
                                 Finalizar y Cerrar Inventario
                             </button>
