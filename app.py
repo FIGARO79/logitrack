@@ -1503,7 +1503,7 @@ async def get_count_stats(username: str = Depends(login_required)):
                 WHERE cs.inventory_stage = ?
                 """, (current_stage,)
             )
-            counted_locations = (await cursor.fetchone())[0]
+            counted_locations = (await cursor.fetchone())[0] if await cursor.fetchone() is not None else 0
 
             # 2. Total de items contados (grupos de item/ubicación) (en esta etapa)
             cursor = await conn.execute(
