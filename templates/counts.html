@@ -404,7 +404,9 @@
                 success: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
                 error: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
                 info: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
-            }; function showToast(message, type = "info") {
+            };
+
+            function showToast(message, type = "info") {
                 const toast = document.createElement("div");
                 toast.className = `toast ${type}`;
                 toast.innerHTML = `<div class="toast-icon">${ICONS[type] || ICONS.info}</div><span>${message}</span>`;
@@ -436,6 +438,25 @@
                     countedLocationInput.value = '';
                 }
                 itemCodeInput.focus();
+            }
+
+            // --- NUEVA FUNCIÓN: RESETEO FORZADO DE UI ---
+            // Esta función limpia todo visualmente cuando la sesión se pierde o se resetea
+            function forceResetUI(message = null) {
+                activeSession = null;
+                sessionControlContainer.classList.remove('hidden');
+                countingView.classList.add('hidden');
+
+                // Limpiar listas visuales para que no quede basura
+                countedItemsList.innerHTML = '<p class="text-gray-500 text-xs text-center">Aún no hay items para esta ubicación.</p>';
+                sessionLocationsList.innerHTML = '';
+
+                // Limpiar inputs
+                clearForm(true);
+
+                if (message) {
+                    showToast(message, "info");
+                }
             }
 
             // --- RENDER FUNCTIONS ---
@@ -478,10 +499,26 @@
             // --- API & DATA FUNCTIONS ---
             async function updateSessionData() {
                 if (!activeSession) return;
+
+                // Verificar que la sesión siga viva antes de pedir datos
+                try {
+                    const checkRes = await fetch(`${API_BASE_URL}/sessions/active`);
+                    if (!checkRes.ok) {
+                        forceResetUI("La sesión fue cerrada o reseteada por el administrador.");
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("No se pudo verificar estado de sesión", e);
+                }
+
                 const locationCode = countedLocationInput.value.trim();
                 if (locationCode) {
                     try {
                         const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.id}/counts/${locationCode}`);
+                        if (res.status === 403 || res.status === 404) {
+                            forceResetUI("La sesión ya no es válida.");
+                            return;
+                        }
                         if (!res.ok) throw new Error('Failed to fetch counts');
                         const counts = await res.json();
                         renderLocationCounts(counts);
@@ -493,6 +530,10 @@
 
                 try {
                     const res = await fetch(`${API_BASE_URL}/sessions/${activeSession.id}/locations`);
+                    if (res.status === 403 || res.status === 404) {
+                        forceResetUI("La sesión ya no es válida.");
+                        return;
+                    }
                     if (!res.ok) throw new Error('Failed to fetch locations');
                     const locations = await res.json();
                     renderSessionLocations(locations);
@@ -511,7 +552,6 @@
 
                 toggleButtonSpinner(searchButton, true, '<span>Buscar</span>');
                 descriptionDiv.textContent = '';
-                // inventory is blind during counting: no stock quantity element
                 binLocationDiv.textContent = '';
                 currentItemData = {};
 
@@ -567,19 +607,25 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
+
                     const result = await response.json();
+
+                    // DETECCIÓN DE SESIÓN BORRADA/INVÁLIDA
+                    if (response.status === 403 || (result.detail && result.detail.includes("no es válida"))) {
+                        forceResetUI("Tu sesión ha sido reseteada por el administrador. Vuelve a comenzar.");
+                        return; // Detener ejecución
+                    }
+
                     if (!response.ok) throw new Error(result.detail || 'Error desconocido del servidor.');
 
                     showToast(result.message, 'success');
                     clearForm(false); // Don't clear location
                     await updateSessionData();
-                    // Después de guardar un conteo, devolver foco al campo de item para el siguiente escaneo/entrada
+
                     try {
                         itemCodeInput.focus();
-                        // Seleccionar texto para facilitar sobreescritura en caso de lectura manual
                         if (typeof itemCodeInput.select === 'function') itemCodeInput.select();
                     } catch (e) {
-                        // Ignorar errores de enfoque en navegadores/ambientes raros
                         console.warn('No se pudo focusear itemCodeInput:', e);
                     }
 
@@ -595,6 +641,13 @@
 
                 try {
                     const response = await fetch(`${API_BASE_URL}/counts/${countId}`, { method: 'DELETE' });
+
+                    // Chequear si la sesión murió mientras intentábamos borrar
+                    if (response.status === 403 || response.status === 404) {
+                        forceResetUI("Sesión no válida al intentar borrar.");
+                        return;
+                    }
+
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.detail || 'Error al eliminar');
                     showToast('Conteo eliminado.', 'success');
@@ -616,12 +669,11 @@
                         sessionIdDisplay.textContent = activeSession.id;
                         await updateSessionData();
                     } else {
-                        // Sesión no existe (posiblemente reseteada por admin)
-                        activeSession = null;
-                        sessionControlContainer.classList.remove('hidden');
-                        countingView.classList.add('hidden');
+                        // USAR FORCE RESET UI PARA LIMPIAR TODO SI NO HAY SESIÓN
+                        forceResetUI(response.status === 404 ? null : "Sesión finalizada o no válida");
+
                         if (response.status === 404) {
-                            showToast("Tu sesión fue reseteada por el administrador. Por favor, inicia una nueva sesión.", "info");
+                            // Mensaje silencioso o opcional si es carga inicial
                         }
                     }
                 } catch (error) {
@@ -630,13 +682,14 @@
             }
 
             async function handleStartSession() {
-                console.log("handleStartSession called");
                 toggleButtonSpinner(startSessionBtn, true, '<span>Iniciar...</span>');
+                // Limpiar listas visuales antes de empezar una nueva, por seguridad
+                countedItemsList.innerHTML = '';
+                sessionLocationsList.innerHTML = '';
+
                 try {
                     const response = await fetch(`${API_BASE_URL}/sessions/start`, { method: 'POST' });
-                    console.log("Response from /api/sessions/start:", response);
                     const data = await response.json();
-                    console.log("Data from /api/sessions/start:", data);
                     if (!response.ok) throw new Error(data.detail || 'No se pudo iniciar la sesión');
                     showToast(data.message, 'success');
                     await checkActiveSession();
@@ -656,8 +709,7 @@
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.detail || 'No se pudo cerrar la sesión');
                     showToast(data.message, 'success');
-                    activeSession = null;
-                    await checkActiveSession();
+                    forceResetUI("Sesión finalizada correctamente.");
                 } catch (error) {
                     showToast(`Error: ${error.message}`, 'error');
                 } finally {
@@ -681,6 +733,12 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
+
+                    if (response.status === 403) {
+                        forceResetUI("Sesión inválida al cerrar ubicación.");
+                        return;
+                    }
+
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.detail || 'No se pudo cerrar la ubicación');
                     showToast(data.message, 'success');
@@ -716,7 +774,8 @@
                             if (currentScanTargetInput === itemCodeInput) {
                                 fetchItemData();
                             } else if (currentScanTargetInput === countedLocationInput) {
-                                updateSessionData();
+                                // Validamos sesión al cambiar ubicación vía scanner
+                                checkActiveSession();
                             }
                         }
                     },
@@ -739,24 +798,20 @@
             cancelBtn.addEventListener('click', () => clearForm(true));
 
             itemCodeInput.addEventListener('keypress', e => e.key === 'Enter' && (e.preventDefault(), fetchItemData()));
+
             countedLocationInput.addEventListener('change', async () => {
-                // Verificar que la sesión siga siendo válida antes de actualizar datos
+                // Al cambiar ubicación manualmente, verificamos si la sesión sigue viva
                 try {
                     const res = await fetch(`${API_BASE_URL}/sessions/active`);
                     if (!res.ok) {
-                        // Sesión fue reseteada por admin
-                        activeSession = null;
-                        sessionControlContainer.classList.remove('hidden');
-                        countingView.classList.add('hidden');
-                        showToast("Tu sesión fue reseteada. Por favor, inicia una nueva sesión.", "info");
+                        forceResetUI("Tu sesión fue reseteada. Por favor, inicia una nueva sesión.");
                         return;
                     }
+                    await updateSessionData();
                 } catch (error) {
                     console.error("Error verifying session:", error);
                 }
-                // Si la sesión es válida, actualizar datos
-                await updateSessionData();
-            }); // Using 'change' to avoid too many requests
+            });
 
             minusBtn.addEventListener('click', () => {
                 let val = parseInt(countedQtyInput.value, 10);
