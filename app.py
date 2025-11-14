@@ -1705,6 +1705,10 @@ def logout(request: Request):
     response.delete_cookie("admin_logged_in")
     return response
 
+@app.get('/admin_inventory', response_class=RedirectResponse)
+async def redirect_admin_inventory():
+    return RedirectResponse(url='/admin/inventory')
+
 def admin_login_required(request: Request):
     if not request.cookies.get("admin_logged_in"):
         return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
@@ -1848,7 +1852,7 @@ def admin_login_get(request: Request):
 @app.post('/admin/login', response_class=HTMLResponse, name='admin_login_post')
 def admin_login_post(request: Request, password: str = Form(...)):
     if password == UPDATE_PASSWORD:
-        response = RedirectResponse(url='/admin/inventory', status_code=status.HTTP_302_FOUND)
+        response = RedirectResponse(url=request.url_for('admin_inventory'), status_code=status.HTTP_302_FOUND)
         response.set_cookie(key="admin_logged_in", value="true", httponly=True, samesite='lax', secure=(request.url.scheme == 'https'))
         return response
     else:
