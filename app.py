@@ -1557,9 +1557,9 @@ async def get_count_stats(username: str = Depends(login_required)):
             counted_locations_row = await cursor.fetchone()
             counted_locations = counted_locations_row[0] if counted_locations_row else 0
 
-            # 2. Total de items contados (grupos de item/ubicación, global)
+            # 2. Total de items contados (solo items únicos, global)
             cursor = await conn.execute(
-                "SELECT COUNT(*) FROM (SELECT DISTINCT item_code, counted_location FROM stock_counts)"
+                "SELECT COUNT(DISTINCT item_code) FROM stock_counts"
             )
             total_items_counted_row = await cursor.fetchone()
             total_items_counted = total_items_counted_row[0] if total_items_counted_row else 0
