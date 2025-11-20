@@ -1041,9 +1041,33 @@ async def export_reconciliation(username: str = Depends(login_required)):
 
         merged_df = pd.merge(grn_totals, item_totals, on='Item_Code', how='outer')
 
+        # --- INICIO DE LA MODIFICACIÓN: Obtener ubicación desde el LOG ---
+        if not logs_df.empty:
+            # Asegurarse que 'id' es numérico para ordenar correctamente
+            logs_df['id'] = pd.to_numeric(logs_df['id'])
+            # Obtener la última entrada de log para cada item
+            latest_logs = logs_df.sort_values('id', ascending=False).drop_duplicates('itemCode')
+            
+            # Determinar la ubicación efectiva: relocatedBin si existe, si no, binLocation
+            latest_logs['Ubicacion_Log'] = np.where(
+                latest_logs['relocatedBin'].notna() & (latest_logs['relocatedBin'] != ''),
+                latest_logs['relocatedBin'],
+                latest_logs['binLocation']
+            )
+            
+            # Seleccionar y renombrar columnas para el merge
+            locations_df = latest_logs[['itemCode', 'Ubicacion_Log']].rename(columns={'itemCode': 'Item_Code'})
+            
+            # Unir con el dataframe de conciliación
+            merged_df = pd.merge(merged_df, locations_df, on='Item_Code', how='left')
+        # --- FIN DE LA MODIFICACIÓN ---
+
         merged_df['Total_Recibido'] = merged_df['Total_Recibido'].fillna(0)
         merged_df['Total_Esperado'] = merged_df['Total_Esperado'].fillna(0)
         merged_df['Diferencia'] = merged_df['Total_Recibido'] - merged_df['Total_Esperado']
+
+        # Rellenar ubicaciones vacías
+        merged_df.fillna({'Ubicacion_Log': 'N/A'}, inplace=True)
 
         merged_df['Total_Recibido'] = merged_df['Total_Recibido'].astype(int)
         merged_df['Total_Esperado'] = merged_df['Total_Esperado'].astype(int)
@@ -1053,10 +1077,15 @@ async def export_reconciliation(username: str = Depends(login_required)):
             'GRN_Number': 'GRN',
             'Item_Code': 'Código de Ítem',
             'Item_Description': 'Descripción',
+            'Ubicacion_Log': 'Ubicación (Log)',
             'Total_Esperado': 'Cant. Esperada',
             'Total_Recibido': 'Cant. Recibida',
             'Diferencia': 'Diferencia'
         })
+        
+        # Reordenar columnas
+        cols_order = ['GRN', 'Código de Ítem', 'Descripción', 'Ubicación (Log)', 'Cant. Esperada', 'Cant. Recibida', 'Diferencia']
+        df_for_export = df_for_export[cols_order]
 
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -1659,9 +1688,26 @@ async def reconciliation_page(request: Request, username: str = Depends(login_re
 
         merged_df = pd.merge(grn_totals, item_totals, on='Item_Code', how='outer')
 
+        # --- INICIO DE LA MODIFICACIÓN: Obtener ubicación desde el LOG ---
+        if not logs_df.empty:
+            logs_df['id'] = pd.to_numeric(logs_df['id'])
+            latest_logs = logs_df.sort_values('id', ascending=False).drop_duplicates('itemCode')
+            
+            latest_logs['Ubicacion_Log'] = np.where(
+                latest_logs['relocatedBin'].notna() & (latest_logs['relocatedBin'] != ''),
+                latest_logs['relocatedBin'],
+                latest_logs['binLocation']
+            )
+            
+            locations_df = latest_logs[['itemCode', 'Ubicacion_Log']].rename(columns={'itemCode': 'Item_Code'})
+            merged_df = pd.merge(merged_df, locations_df, on='Item_Code', how='left')
+        # --- FIN DE LA MODIFICACIÓN ---
+
         merged_df['Total_Recibido'] = merged_df['Total_Recibido'].fillna(0)
         merged_df['Total_Esperado'] = merged_df['Total_Esperado'].fillna(0)
         merged_df['Diferencia'] = merged_df['Total_Recibido'] - merged_df['Total_Esperado']
+        
+        merged_df.fillna({'Ubicacion_Log': 'N/A'}, inplace=True)
 
         merged_df['Total_Recibido'] = merged_df['Total_Recibido'].astype(int)
         merged_df['Total_Esperado'] = merged_df['Total_Esperado'].astype(int)
@@ -1671,14 +1717,18 @@ async def reconciliation_page(request: Request, username: str = Depends(login_re
             'GRN_Number': 'GRN',
             'Item_Code': 'Código de Ítem',
             'Item_Description': 'Descripción',
+            'Ubicacion_Log': 'Ubicación (Log)',
             'Total_Esperado': 'Cant. Esperada',
             'Total_Recibido': 'Cant. Recibida',
             'Diferencia': 'Diferencia'
         })
 
+        cols_order = ['GRN', 'Código de Ítem', 'Descripción', 'Ubicación (Log)', 'Cant. Esperada', 'Cant. Recibida', 'Diferencia']
+        merged_df = merged_df[cols_order]
+
         return templates.TemplateResponse('reconciliation.html', {
             "request": request,
-            "tables": [merged_df.to_html(classes='min-w-full leading-normal', border=0, index=False)],
+            "tables": [merged_df.to_html(classes='min-w-full leading-normal dataframe', border=0, index=False)],
             "titles": merged_df.columns.values
         })
 
