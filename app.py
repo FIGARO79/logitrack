@@ -1571,7 +1571,7 @@ async def get_count_stats(username: str = Depends(login_required)):
                     if qty is not None and qty > 0:
                         total_items_with_stock += 1
             
-            # 4. Items con diferencias (global)
+            # 4. Items con diferencias (CORREGIDO: Solo ítems que se han contado)
             query = """
                 SELECT 
                     item_code, 
@@ -1585,13 +1585,9 @@ async def get_count_stats(username: str = Depends(login_required)):
             all_counted_items = await cursor.fetchall()
             counted_qty_map = {item['item_code']: item['total_counted'] for item in all_counted_items}
 
-            counted_item_codes = set(counted_qty_map.keys())
-            master_item_codes = set(master_qty_map.keys())
-            all_item_codes = counted_item_codes.union(master_item_codes)
-
+            # --- CAMBIO AQUÍ: Iteramos solo sobre lo que se ha contado ---
             items_with_differences = 0
-            for item_code in all_item_codes:
-                total_counted = counted_qty_map.get(item_code, 0)
+            for item_code, total_counted in counted_qty_map.items():
                 
                 system_qty_raw = master_qty_map.get(item_code)
                 system_qty = 0
@@ -1601,9 +1597,9 @@ async def get_count_stats(username: str = Depends(login_required)):
                     except (ValueError, TypeError):
                         system_qty = 0
                 
-                if system_qty > 0 or total_counted > 0:
-                    if total_counted != system_qty:
-                        items_with_differences += 1
+                # Comparamos solo si el item existe en los conteos
+                if total_counted != system_qty:
+                    items_with_differences += 1
 
             # 5. Ubicaciones con stock (contadas, global)
             cursor = await conn.execute(
