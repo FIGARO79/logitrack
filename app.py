@@ -2051,7 +2051,16 @@ async def admin_users_get(request: Request, admin: bool = Depends(admin_login_re
     
     reset_token = request.query_params.get('reset_token')
     reset_user = request.query_params.get('reset_user')
-    return templates.TemplateResponse('admin_users.html', {"request": request, "users": users, "reset_token": reset_token, "reset_user": reset_user})
+    message = request.query_params.get('message')
+    error = request.query_params.get('error')
+    return templates.TemplateResponse('admin_users.html', {
+        "request": request, 
+        "users": users, 
+        "reset_token": reset_token, 
+        "reset_user": reset_user,
+        "message": message,
+        "error": error
+    })
 
 @app.post('/admin/check_password/{user_id}')
 async def check_password(user_id: int, request: Request):
@@ -2074,20 +2083,38 @@ async def check_password(user_id: int, request: Request):
 @app.post('/admin/approve/{user_id}')
 async def approve_user(user_id: int, request: Request):
     if not request.cookies.get("admin_logged_in"):
-        return RedirectResponse(url=str(request.url.replace(path='/admin/users', query='')), status_code=status.HTTP_302_FOUND)
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
+    
     async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        cursor = await conn.execute("SELECT username FROM users WHERE id = ?", (user_id,))
+        user = await cursor.fetchone()
+        if not user:
+            query_params = urlencode({"error": f"Usuario con ID {user_id} no encontrado."})
+            return RedirectResponse(url=f"/admin/users?{query_params}", status_code=status.HTTP_302_FOUND)
+        
         await conn.execute("UPDATE users SET is_approved = 1 WHERE id = ?", (user_id,))
         await conn.commit()
-    return RedirectResponse(url=str(request.url.replace(path='/admin/users', query='')), status_code=status.HTTP_302_FOUND)
+        
+    query_params = urlencode({"message": f"Usuario '{user[0]}' aprobado con éxito."})
+    return RedirectResponse(url=f"/admin/users?{query_params}", status_code=status.HTTP_302_FOUND)
 
 @app.post('/admin/delete/{user_id}')
 async def delete_user(user_id: int, request: Request):
     if not request.cookies.get("admin_logged_in"):
-        return RedirectResponse(url=str(request.url.replace(path='/admin/users', query='')), status_code=status.HTTP_302_FOUND)
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
+    
     async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        cursor = await conn.execute("SELECT username FROM users WHERE id = ?", (user_id,))
+        user = await cursor.fetchone()
+        if not user:
+            query_params = urlencode({"error": f"Usuario con ID {user_id} no encontrado."})
+            return RedirectResponse(url=f"/admin/users?{query_params}", status_code=status.HTTP_302_FOUND)
+
         await conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
         await conn.commit()
-    return RedirectResponse(url=str(request.url.replace(path='/admin/users', query='')), status_code=status.HTTP_302_FOUND)
+
+    query_params = urlencode({"message": f"Usuario '{user[0]}' eliminado con éxito."})
+    return RedirectResponse(url=f"/admin/users?{query_params}", status_code=status.HTTP_302_FOUND)
 
 @app.post('/admin/reset_password/{user_id}')
 async def reset_password(user_id: int, request: Request):
