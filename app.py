@@ -1987,14 +1987,17 @@ async def advance_inventory_stage(request: Request, next_stage: int, admin: bool
 
         message = f"Proceso completado. Etapa de inventario avanzada a {next_stage}. Se encontraron {len(items_for_recount)} items con diferencias."
         query_params = urlencode({"message": message})
-        return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
+        redirect_url = secure_url_for(request, 'admin_inventory') + f"?{query_params}"
+        return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
 
     except aiosqlite.Error as e:
         query_params = urlencode({"error": f"Error de base de datos: {e}"})
-        return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
+        redirect_url = secure_url_for(request, 'admin_inventory') + f"?{query_params}"
+        return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
     except Exception as e:
         query_params = urlencode({"error": f"Error inesperado: {e}"})
-        return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
+        redirect_url = secure_url_for(request, 'admin_inventory') + f"?{query_params}"
+        return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
 
 @app.post('/admin/inventory/finalize', name='finalize_inventory')
 async def finalize_inventory(request: Request, admin: bool = Depends(admin_login_required)):
