@@ -5,8 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LogiTrack - Actualizar Bases de Datos</title>
-    <link rel="icon" type="image/svg+xml" href="{{ request.url_for('static', path='images/gear-wide-connected.svg') }}">
+    <link rel="icon" type="image/svg+xml"
+        href="{{ secure_url_for(request, 'static', path='images/gear-wide-connected.svg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/fallback.css">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -84,18 +86,6 @@
             background-color: #d1d5db;
         }
 
-        .password-container {
-            position: relative;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #9CA3AF;
-        }
     </style>
 </head>
 
@@ -154,11 +144,51 @@
                                 <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span>
                                     or drag and drop</p>
                                 <p class="text-xs text-gray-500">CSV files (250, 280, 240)</p>
-                            </div>
-                            <input id="file-input" type="file" class="hidden" multiple />
+                            </div><label for="file-input" class="sr-only">Seleccionar archivos</label>
+                            <input id="file-input" type="file" class="hidden" multiple title="Seleccionar archivos" />
                         </div>
 
                         <div id="file-list" class="mt-4"></div>
+
+                        <!-- Opciones para el archivo 280 -->
+                        <div id="update-options-280" class="hidden mt-4 p-4 border border-gray-200 rounded-lg">
+                            <p class="font-medium text-gray-700">Opción de actualización para el archivo 280:</p>
+                            <div class="flex items-center gap-x-6 mt-2">
+                                <div class="flex items-center">
+                                    <input id="option-replace" name="update_option_280" type="radio" value="replace"
+                                        checked class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <label for="option-replace"
+                                        class="ml-2 block text-sm font-medium leading-6 text-gray-900">Reemplazar</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input id="option-combine" name="update_option_280" type="radio" value="combine"
+                                        class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <label for="option-combine"
+                                        class="ml-2 block text-sm font-medium leading-6 text-gray-900">Combinar</label>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">"Reemplazar" borra los datos anteriores. "Combinar"
+                                añade los nuevos datos a los existentes.</p>
+
+                            <div id="grn-selection-container" class="mt-4 hidden border-t pt-4">
+                                <p class="font-medium text-gray-700 mb-2">Seleccionar GRNs a importar:</p>
+
+                                <div class="flex gap-2 mb-2">
+                                    <button type="button" id="btn-select-all"
+                                        class="text-xs text-blue-600 hover:underline">Seleccionar Todas</button>
+                                    <span class="text-xs text-gray-400">|</span>
+                                    <button type="button" id="btn-deselect-all"
+                                        class="text-xs text-blue-600 hover:underline">Deseleccionar Todas</button>
+                                </div>
+
+                                <div id="grn-checkbox-list"
+                                    class="max-h-48 overflow-y-auto bg-gray-50 p-3 rounded border border-gray-200 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    <p class="text-sm text-gray-500 col-span-full">Cargando lista de GRNs...</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Solo se importarán las filas correspondientes a
+                                    las GRNs marcadas.</p>
+                            </div>
+                        </div>
 
                     </div>
 
@@ -197,25 +227,20 @@
                                     <label for="password_clear"
                                         class="block mb-2 text-sm font-medium text-gray-900">Confirmar
                                         Contraseña:</label>
-                                    <div class="password-container">
+                                    <div class="relative">
                                         <input type="password" id="password_clear" name="password" required
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5">
-                                        <span class="toggle-password" id="togglePasswordClear">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        <button type="button" id="togglePasswordClear" class="absolute inset-y-0 right-0 pr-3 flex items-center" title="Mostrar/Ocultar contraseña">
+                                            <svg id="eyeIconClear" class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                             </svg>
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .946-3.11 3.56-5.595 6.837-6.425M16.5 10.5a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M3 3l18 18" />
+                                            <svg id="eyeOffIconClear" class="h-5 w-5 text-gray-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7 .95-3.11 3.824-5.585 7.44-6.325"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.94 17.94A1.5 1.5 0 0116.5 15a1.5 1.5 0 01-1.44-1.06M21 21l-6-6m-3.5-3.5L3 3"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1l22 22"></path>
                                             </svg>
-                                        </span>
+                                        </button>
                                     </div>
                                 </div>
                                 <button type="submit"
@@ -236,9 +261,28 @@
             const fileInput = document.getElementById('file-input');
             const fileList = document.getElementById('file-list');
             const uploadForm = document.getElementById('upload-form');
-            const passwordInput = document.getElementById('password');
+            const grnSelectionContainer = document.getElementById('grn-selection-container');
+            const grnCheckboxList = document.getElementById('grn-checkbox-list');
 
             let filesToUpload = [];
+
+            // --- Password Toggle for Clear DB ---
+            const togglePasswordClear = document.getElementById('togglePasswordClear');
+            const passwordClearInput = document.getElementById('password_clear');
+            const eyeIconClear = document.getElementById('eyeIconClear');
+            const eyeOffIconClear = document.getElementById('eyeOffIconClear');
+
+            if (togglePasswordClear) {
+                togglePasswordClear.addEventListener('click', function () {
+                    // toggle the type attribute
+                    const type = passwordClearInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordClearInput.setAttribute('type', type);
+                    
+                    // toggle the eye / eye off icon
+                    eyeIconClear.classList.toggle('hidden');
+                    eyeOffIconClear.classList.toggle('hidden');
+                });
+            }
 
             // --- Drag and Drop Event Listeners ---
             dropZone.addEventListener('dragenter', (e) => {
@@ -283,24 +327,33 @@
             function handleFiles(files) {
                 for (const file of files) {
                     if (isValidFile(file)) {
-                        filesToUpload.push(file);
+                        // Verificar si ya existe para no duplicar
+                        if (!filesToUpload.some(f => f.name === file.name)) {
+                            filesToUpload.push(file);
+
+                            // NUEVO: Si es el archivo 280, cargar previsualización
+                            if (file.name.includes('AURRSGLBD0280')) {
+                                fetchAndShowGRNs(file);
+                            }
+                        }
                     }
                 }
                 renderFileList();
             }
 
             function isValidFile(file) {
-                const validFileNames = [
-                    'AURRSGLBD0250 - Item Stockroom Balance.csv',
-                    'AURRSGLBD0280 - Stock In Goods Inwards And Inspection.csv',
-                    'AURRSGLBD0240 - Unconfirmed Picking Notes.csv'
-                ];
-                return validFileNames.includes(file.name);
+                return file.name.includes('AURRSGLBD0250') ||
+                    file.name.includes('AURRSGLBD0280') ||
+                    file.name.includes('AURRSGLBD0240');
             }
 
             function renderFileList() {
                 fileList.innerHTML = '';
+                let file280Exists = false;
                 filesToUpload.forEach((file, index) => {
+                    if (file.name.includes('AURRSGLBD0280')) {
+                        file280Exists = true;
+                    }
                     const fileElement = document.createElement('div');
                     fileElement.className = 'flex items-center justify-between p-2 bg-gray-100 rounded-md';
                     fileElement.innerHTML = `
@@ -309,6 +362,20 @@
                     `;
                     fileList.appendChild(fileElement);
                 });
+
+                // Show/hide the update options for file 280
+                const updateOptionsContainer = document.getElementById('update-options-280');
+                if (file280Exists) {
+                    updateOptionsContainer.classList.remove('hidden');
+                } else {
+                    updateOptionsContainer.classList.add('hidden');
+                }
+
+                // Si eliminamos el archivo 280, ocultar el selector (Lógica combinada)
+                if (!file280Exists) {
+                    grnSelectionContainer.classList.add('hidden');
+                    grnCheckboxList.innerHTML = '';
+                }
 
                 // Add event listeners to remove buttons
                 fileList.querySelectorAll('button').forEach(button => {
@@ -320,6 +387,61 @@
                 });
             }
 
+            // --- NUEVA FUNCIÓN: Obtener y mostrar GRNs ---
+            async function fetchAndShowGRNs(file) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                grnSelectionContainer.classList.remove('hidden');
+                grnCheckboxList.innerHTML = '<p class="text-sm text-gray-500 col-span-full">Analizando archivo...</p>';
+
+                try {
+                    const response = await fetch('/api/preview_grn_file', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.grns) {
+                        renderGRNCheckboxes(data.grns);
+                    } else {
+                        grnCheckboxList.innerHTML = `<p class="text-sm text-red-500 col-span-full">Error: ${data.error || 'No se pudieron cargar las GRNs'}</p>`;
+                    }
+                } catch (error) {
+                    console.error(error);
+                    grnCheckboxList.innerHTML = '<p class="text-sm text-red-500 col-span-full">Error de conexión al analizar archivo.</p>';
+                }
+            }
+
+            function renderGRNCheckboxes(grns) {
+                grnCheckboxList.innerHTML = '';
+
+                if (grns.length === 0) {
+                    grnCheckboxList.innerHTML = '<p class="text-sm text-gray-500 col-span-full">No se encontraron GRNs en el archivo.</p>';
+                    return;
+                }
+
+                grns.forEach(grn => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center';
+                    div.innerHTML = `
+                        <input type="checkbox" id="grn-${grn}" name="selected_grn" value="${grn}" checked class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <label for="grn-${grn}" class="ml-2 text-xs font-medium text-gray-700 truncate" title="${grn}">${grn}</label>
+                    `;
+                    grnCheckboxList.appendChild(div);
+                });
+
+                // Listeners para Botones de Seleccionar/Deseleccionar todo
+                document.getElementById('btn-select-all').onclick = () => {
+                    document.querySelectorAll('input[name="selected_grn"]').forEach(cb => cb.checked = true);
+                };
+                document.getElementById('btn-deselect-all').onclick = () => {
+                    document.querySelectorAll('input[name="selected_grn"]').forEach(cb => cb.checked = false);
+                };
+            }
+
+            // --- Función de Subida MODIFICADA ---
             async function uploadFiles() {
 
                 if (filesToUpload.length === 0) {
@@ -328,18 +450,45 @@
                 }
 
                 const formData = new FormData();
+                let file280Exists = false;
 
                 filesToUpload.forEach(file => {
-                    if (file.name === 'AURRSGLBD0250 - Item Stockroom Balance.csv') {
+                    if (file.name.includes('AURRSGLBD0250')) {
                         formData.append('item_master', file);
-                    } else if (file.name === 'AURRSGLBD0280 - Stock In Goods Inwards And Inspection.csv') {
+                    } else if (file.name.includes('AURRSGLBD0280')) {
                         formData.append('grn_file', file);
-                    } else if (file.name === 'AURRSGLBD0240 - Unconfirmed Picking Notes.csv') {
+                        file280Exists = true;
+                    } else if (file.name.includes('AURRSGLBD0240')) {
                         formData.append('picking_file', file);
                     }
                 });
 
+                // Append the update option AND selected GRNs for file 280 if it exists
+                if (file280Exists) {
+                    const updateOption = document.querySelector('input[name="update_option_280"]:checked').value;
+                    formData.append('update_option_280', updateOption);
+
+                    // --- NUEVO: Recopilar GRNs seleccionadas ---
+                    const selectedCheckboxes = document.querySelectorAll('input[name="selected_grn"]:checked');
+                    const selectedGRNs = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+                    // Enviamos como string JSON
+                    formData.append('selected_grns_280', JSON.stringify(selectedGRNs));
+
+                    if (selectedGRNs.length === 0) {
+                        if (!confirm("No has seleccionado ninguna GRN. ¿Estás seguro de que quieres continuar? (Se subirá el archivo vacío o no se actualizará nada).")) {
+                            return; // Cancelar subida
+                        }
+                    }
+                }
+
                 try {
+                    // Botón loading state...
+                    const submitBtn = uploadForm.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Procesando...';
+
                     const response = await fetch('/update', {
                         method: 'POST',
                         body: formData
@@ -351,11 +500,27 @@
                         showToast(result.message, 'success');
                         filesToUpload = [];
                         renderFileList();
+                        // Resetear la lista de GRNs
+                        grnCheckboxList.innerHTML = '';
+                        grnSelectionContainer.classList.add('hidden');
                     } else {
                         showToast(result.error, 'error');
                     }
                 } catch (error) {
                     showToast('An error occurred while uploading the files.', 'error');
+                } finally {
+                    // Restaurar botón
+                    const submitBtn = uploadForm.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H5.5z" />
+                                <path d="M9 13.5V9.25l-1.22 1.22a.75.75 0 01-1.06-1.06l2.5-2.5a.75.75 0 011.06 0l2.5 2.5a.75.75 0 11-1.06 1.06L11 9.25V13.5a.75.75 0 01-1.5 0z" />
+                            </svg>
+                            Subir y Actualizar Archivos
+                        `;
+                    }
                 }
             }
 

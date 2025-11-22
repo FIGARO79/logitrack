@@ -4,13 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LogiTrack - Conteo de Inventario</title>
-    <link rel="icon" type="image/svg+xml" href="{{ request.url_for('static', path='images/gear-wide-connected.svg') }}">
+    <title>Logix - Conteo de Inventario</title>
+    <link rel="icon" type="image/svg+xml"
+        href="{{ secure_url_for(request, 'static', path='images/gear-wide-connected.svg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/fallback.css">
     <style>
         body {
             font-family: "Inter", sans-serif;
@@ -204,7 +206,7 @@
 <body class="bg-gray-100">
     <header class="bg-white shadow-sm">
         <div class="container-wrapper mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <img src="/static/images/logo-clear.png" alt="Logitrack Logo" class="h-16 w-32 object-contain"
+            <img src="/static/images/logo-clear.png" alt="Logix Logo" class="h-16 w-32 object-contain"
                 onerror="this.onerror=null; this.src='https://placehold.co/64x64/fBBF24/1F2937?text=Logo';">
             <a href="/" class="btn btn-secondary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -274,7 +276,7 @@
                             <input type="text" id="itemCode" placeholder="Escanear o buscar Item Code..." class="w-full"
                                 oninput="this.value = this.value.toUpperCase()" required />
                         </div>
-                        <button id="scan-item-btn" title="Escanear código de barras"
+                        <button id="scan-item-btn" type="button" title="Escanear código de barras"
                             class="btn-secondary h-9 w-auto px-3 flex-shrink-0">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                 class="bi bi-qr-code-scan" viewBox="0 0 16 16">
@@ -286,8 +288,9 @@
                                     d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 2h-1v1h-2v1h3zm-4 2v-1H8v1z" />
                                 <path d="M12 9h2V8h-2z" />
                             </svg>
-                            <button id="search-btn"
-                                class="btn-secondary h-9 w-auto px-4 flex-shrink-0"><span>Buscar</span></button>
+                        </button>
+                        <button id="search-btn" type="button"
+                            class="btn-secondary h-9 w-auto px-4 flex-shrink-0"><span>Buscar</span></button>
                     </div>
 
                     <div>
@@ -432,7 +435,7 @@
                 itemCodeInput.value = '';
                 descriptionDiv.textContent = '';
                 binLocationDiv.textContent = '';
-                countedQtyInput.value = '1';
+                countedQtyInput.value = '';
                 currentItemData = {};
                 if (clearLocation) {
                     countedLocationInput.value = '';

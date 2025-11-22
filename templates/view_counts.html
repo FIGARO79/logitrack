@@ -5,8 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LogiTrack - Historial de Conteos</title>
-    <link rel="icon" type="image/svg+xml" href="{{ request.url_for('static', path='images/gear-wide-connected.svg') }}">
+    <link rel="icon" type="image/svg+xml"
+        href="{{ secure_url_for(request, 'static', path='images/gear-wide-connected.svg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/fallback.css">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -69,7 +71,7 @@
                 </div>
             </div>
 
-            <div id="stats-container" class="grid grid-cols-2 md:grid-cols-8 gap-2 mb-6">
+            <div id="stats-container" class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow text-center">
                     <h3 class="text-sm font-medium text-gray-500">Items con Stock</h3>
                     <p id="stats-total-items" class="text-2xl font-bold text-gray-800">-</p>
@@ -99,34 +101,37 @@
                         <thead class="bg-gray-800 text-white">
                             <tr>
                                 <th
-                                    class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                                    class="px-3 py-2 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                                    Etapa</th>
+                                <th
+                                    class="px-2 py-2 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
                                     ID Sesión</th>
                                 <th
-                                    class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                                    class="px-5 py-2 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
                                     Usuario</th>
                                 <th
-                                    class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                                    class="px-5 py-2 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
                                     Timestamp</th>
                                 <th
-                                    class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                                    class="px-5 py-2 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
                                     Item Code</th>
                                 <th
-                                    class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                                    class="px-5 py-2 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
                                     Descripción</th>
                                 <th
-                                    class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                                    class="px-5 py-2 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
                                     Ubic. Contada</th>
                                 <th
-                                    class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                                    class="px-5 py-2 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
                                     Cant. Sistema</th>
                                 <th
-                                    class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                                    class="px-5 py-2 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
                                     Cant. Contada</th>
                                 <th
-                                    class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                                    class="px-5 py-2 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
                                     Diferencia</th>
                                 <th
-                                    class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                                    class="px-5 py-2 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
                                     Ubic. Sistema</th>
                             </tr>
                         </thead>
@@ -135,24 +140,25 @@
                             {% for count in counts %}
                             <tr class="hover:bg-gray-50"
                                 data-username="{{ count.username if count.username is not none else '' }}">
-                                <td class="px-5 py-4 border-b border-gray-200 text-sm">{{ count.session_id }}</td>
-                                <td class="px-5 py-4 border-b border-gray-200 text-sm">{{ count.username if
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.inventory_stage }}</td>
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.session_id }}</td>
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.username if
                                     count.username is not none else '-' }}</td>
-                                <td class="px-5 py-4 border-b border-gray-200 text-sm">{{ count.timestamp }}</td>
-                                <td class="px-5 py-4 border-b border-gray-200 text-sm font-medium text-gray-800">{{
+                                <td class="px-3 py-2 border-b border-gray-200 text-sm">{{ count.timestamp }}</td>
+                                <td class="px-3 py-2 border-b border-gray-200 text-sm font-medium text-gray-800">{{
                                     count.item_code }}</td>
-                                <td class="px-5 py-4 border-b border-gray-200 text-sm">{{ count.item_description }}</td>
-                                <td class="px-5 py-4 border-b border-gray-200 text-sm font-semibold text-blue-600">{{
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.item_description }}</td>
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm font-semibold text-blue-600">{{
                                     count.counted_location }}</td>
-                                <td class="px-5 py-4 border-b border-gray-200 text-sm">{{ count.system_qty if
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.system_qty if
                                     count.system_qty is not none else '-' }}</td>
-                                <td class="px-5 py-4 border-b border-gray-200 text-sm font-bold text-green-600">{{
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm font-bold text-green-600">{{
                                     count.counted_qty }}</td>
                                 <td
-                                    class="px-5 py-4 border-b border-gray-200 text-sm font-bold {% if count.difference is not none and count.difference != 0 %}text-red-600{% else %}text-gray-700{% endif %}">
+                                    class="px-5 py-2 border-b border-gray-200 text-sm font-bold {% if count.difference is not none and count.difference != 0 %}text-red-600{% else %}text-gray-700{% endif %}">
                                     {{ count.difference if count.difference is not none else '-' }}
                                 </td>
-                                <td class="px-5 py-4 border-b border-gray-200 text-sm">{{ count.bin_location_system }}
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.bin_location_system }}
                                 </td>
                             </tr>
                             {% endfor %}
