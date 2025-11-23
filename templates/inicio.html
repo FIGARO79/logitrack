@@ -60,6 +60,14 @@
 </head>
 
 <body class="bg-gray-100">
+    <!-- Overlay que pide girar el dispositivo a modo vertical -->
+    <div id="rotate-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 text-white p-4">
+        <div class="max-w-sm text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-4" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4M12 18v4M4 12H2M22 12h-2M5 5l-1.5-1.5M20 20l1.5 1.5M19 5l1.5-1.5M4 20L2.5 21.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <h2 class="text-xl font-semibold">Gira el dispositivo</h2>
+            <p class="mt-2 text-sm">Para una mejor experiencia, usa esta pantalla en modo vertical (portrait).</p>
+        </div>
+    </div>
     <header class="bg-white shadow-md">
         <div class="container mx-auto px-6 py-2 flex justify-between items-center">
             <img src="/static/images/logo-clear.png" alt="Logix Logo" class="h-16 w-32 object-contain"
@@ -120,5 +128,24 @@
         });
     </script>
 </body>
+
+<script>
+    // Detección de orientación: mostrar overlay si está en landscape
+    (function () {
+        const overlay = document.getElementById('rotate-overlay');
+        if (!overlay) return;
+
+        function updateOverlay() {
+            // Mostrar overlay sólo en pantallas pequeñas / táctiles y en landscape
+            const isSmallScreen = window.matchMedia('(max-width: 1024px)').matches || window.matchMedia('(pointer: coarse)').matches;
+            const isLandscape = window.matchMedia('(orientation: landscape)').matches || window.innerWidth > window.innerHeight;
+            if (isSmallScreen && isLandscape) overlay.classList.remove('hidden'); else overlay.classList.add('hidden');
+        }
+
+        window.addEventListener('orientationchange', updateOverlay);
+        window.addEventListener('resize', updateOverlay);
+        updateOverlay();
+    })();
+</script>
 
 </html>
