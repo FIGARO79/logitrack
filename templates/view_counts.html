@@ -155,7 +155,7 @@
                                 <td class="px-5 py-2 border-b border-gray-200 text-sm font-bold text-green-600">{{
                                     count.counted_qty }}</td>
                                 <td
-                                    class="px-5 py-2 border-b border-gray-200 text-sm font-bold {% if count.difference is not none and count.difference != 0 %}text-red-600{% else %}text-gray-700{% endif %}">
+                                    class="px-5 py-2 border-b border-gray-200 text-sm font-bold {% if count.difference is not none %}{% if count.difference > 0 %}text-blue-600{% elif count.difference < 0 %}text-red-600{% else %}text-gray-700{% endif %}{% else %}text-gray-700{% endif %}">
                                     {{ count.difference if count.difference is not none else '-' }}
                                 </td>
                                 <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.bin_location_system }}
