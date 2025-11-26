@@ -1889,6 +1889,45 @@ def admin_login_required(request: Request):
         return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
     return True
 
+
+@app.post('/admin/reopen_location', name='reopen_location')
+async def reopen_location(request: Request, admin: bool = Depends(admin_login_required)):
+    if not admin:
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
+
+    try:
+        form = await request.form()
+        session_id = form.get('session_id')
+        location_code = form.get('location_code')
+
+        if not session_id or not location_code:
+            query_string = urlencode({'error': 'El ID de sesión y el código de ubicación son obligatorios.'})
+            return RedirectResponse(url=f'/admin/inventory?{query_string}', status_code=status.HTTP_302_FOUND)
+
+        async with aiosqlite.connect(DB_FILE_PATH) as conn:
+            cursor = await conn.execute(
+                "DELETE FROM session_locations WHERE session_id = ? AND location_code = ? AND status = 'closed'",
+                (int(session_id), location_code.strip().upper())
+            )
+            await conn.commit()
+
+        if cursor.rowcount > 0:
+            message = f"Ubicación '{location_code.strip().upper()}' reabierta con éxito para la sesión {session_id}."
+            query_string = urlencode({'message': message})
+        else:
+            error = f"No se encontró una ubicación cerrada que coincida con la sesión {session_id} y la ubicación '{location_code.strip().upper()}'."
+            query_string = urlencode({'error': error})
+
+        return RedirectResponse(url=f'/admin/inventory?{query_string}', status_code=status.HTTP_303_SEE_OTHER)
+
+    except (ValueError, TypeError):
+        query_string = urlencode({'error': 'El ID de sesión debe ser un número válido.'})
+        return RedirectResponse(url=f'/admin/inventory?{query_string}', status_code=status.HTTP_302_FOUND)
+    except Exception as e:
+        query_string = urlencode({'error': f'Error inesperado: {e}'})
+        return RedirectResponse(url=f'/admin/inventory?{query_string}', status_code=status.HTTP_302_FOUND)
+
+
 @app.get('/api/export_recount_list/{stage_number}', name='export_recount_list')
 async def export_recount_list(request: Request, stage_number: int, admin: bool = Depends(admin_login_required)):
     """Exporta la lista de items a recontar para una etapa específica."""

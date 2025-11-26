@@ -153,6 +153,33 @@
             </div>
 
             <div>
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Herramientas Administrativas</h2>
+                    <div class="p-4 border rounded-lg bg-yellow-50">
+                        <h3 class="font-bold text-lg text-yellow-800">Reabrir Ubicación Cerrada</h3>
+                        <p class="text-sm text-gray-600 mb-3">Si una ubicación fue cerrada por error en una sesión, puedes reabrirla aquí para permitir nuevos conteos.</p>
+                        <form action="{{ secure_url_for(request, 'reopen_location') }}" method="post" onsubmit="return confirm('¿Estás seguro de reabrir esta ubicación?');">
+                            <div class="space-y-3">
+                                <div>
+                                    <label for="session_id" class="block text-sm font-medium text-gray-700">ID de Sesión:</label>
+                                    <input type="number" name="session_id" id="session_id" required
+                                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500">
+                                </div>
+                                <div>
+                                    <label for="location_code" class="block text-sm font-medium text-gray-700">Código de Ubicación:</label>
+                                    <input type="text" name="location_code" id="location_code" required
+                                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                                           oninput="this.value = this.value.toUpperCase()">
+                                </div>
+                                <button type="submit"
+                                        class="w-full bg-yellow-600 hover:bg-yellow-800 text-white font-bold py-2 px-4 rounded">
+                                    Reabrir Ubicación
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <h2 class="text-xl font-semibold text-gray-700 mb-4">Resumen del Inventario</h2>
                 <div class="p-4 border rounded-lg bg-gray-50 space-y-6">
                     {% if summary and summary.general %}
