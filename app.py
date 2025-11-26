@@ -1897,6 +1897,123 @@ async def export_recount_list(request: Request, stage_number: int, admin: bool =
     )
 
 
+async def get_inventory_summary_stats():
+    """Calcula y devuelve un resumen de estadísticas para el panel de admin de inventario."""
+    summary = {
+        'general': {
+            'total_items_master': 0,
+        },
+        'stages': {}
+    }
+    
+    try:
+        # --- Estadísticas Generales (del maestro de items) ---
+        if master_qty_map:
+            total_items_with_stock = 0
+            for qty in master_qty_map.values():
+                if qty is not None and qty > 0:
+                    total_items_with_stock += 1
+            summary['general']['total_items_master'] = total_items_with_stock
+
+        async with aiosqlite.connect(DB_FILE_PATH) as conn:
+            conn.row_factory = aiosqlite.Row
+
+            # --- Estadísticas por Etapa ---
+            for stage_num in range(1, 5):
+                # Items contados en esta etapa
+                cursor = await conn.execute("""
+                    SELECT 
+                        COUNT(DISTINCT sc.item_code)
+                    FROM stock_counts sc
+                    JOIN count_sessions cs ON sc.session_id = cs.id
+                    WHERE cs.inventory_stage = ?
+                """, (stage_num,))
+                items_counted_row = await cursor.fetchone()
+                items_counted = items_counted_row[0] if items_counted_row else 0
+
+                # Si no se contó nada en esta etapa, podemos saltarla
+                if items_counted == 0:
+                    continue
+
+                # Total de unidades contadas
+                cursor = await conn.execute("""
+                    SELECT SUM(sc.counted_qty)
+                    FROM stock_counts sc
+                    JOIN count_sessions cs ON sc.session_id = cs.id
+                    WHERE cs.inventory_stage = ?
+                """, (stage_num,))
+                total_units_row = await cursor.fetchone()
+                total_units_counted = total_units_row[0] if total_units_row and total_units_row[0] is not None else 0
+                
+                # Calcular diferencias para esta etapa
+                cursor = await conn.execute("""
+                    SELECT sc.item_code, SUM(sc.counted_qty) as total_counted
+                    FROM stock_counts sc
+                    JOIN count_sessions cs ON sc.session_id = cs.id
+                    WHERE cs.inventory_stage = ?
+                    GROUP BY sc.item_code
+                """, (stage_num,))
+                counted_items_map = {row['item_code']: row['total_counted'] for row in await cursor.fetchall()}
+
+                items_with_discrepancy = 0
+                for item_code, total_counted in counted_items_map.items():
+                    system_qty_raw = master_qty_map.get(item_code)
+                    system_qty = 0
+                    if system_qty_raw is not None:
+                        try:
+                            system_qty = int(float(system_qty_raw))
+                        except (ValueError, TypeError):
+                            system_qty = 0
+                    
+                    if total_counted != system_qty:
+                        items_with_discrepancy += 1
+                
+                # Precisión del conteo
+                accuracy = 0
+                if items_counted > 0:
+                    accuracy = ((items_counted - items_with_discrepancy) / items_counted) * 100
+                
+                # NUEVO: Efectividad de Cobertura
+                coverage_effectiveness = 0
+                total_items_master_with_stock = summary['general'].get('total_items_master', 0)
+                if total_items_master_with_stock > 0:
+                    items_correctly_counted = items_counted - items_with_discrepancy
+                    coverage_effectiveness = (items_correctly_counted / total_items_master_with_stock) * 100
+
+                # Guardar estadísticas de la etapa
+                summary['stages'][stage_num] = {
+                    'items_counted': items_counted,
+                    'total_units_counted': total_units_counted,
+                    'items_with_discrepancy': items_with_discrepancy,
+                    'accuracy': f"{accuracy:.2f}%",
+                    'coverage_effectiveness': f"{coverage_effectiveness:.2f}%" # NUEVO
+                }
+
+            # --- Items en lista de reconteo (para etapas futuras) ---
+            for stage_to_check in range(2, 5):
+                cursor = await conn.execute(
+                    "SELECT COUNT(item_code) FROM recount_list WHERE stage_to_count = ?",
+                    (stage_to_check,)
+                )
+                recount_row = await cursor.fetchone()
+                items_in_recount_list = recount_row[0] if recount_row else 0
+                if stage_to_check in summary['stages']:
+                    summary['stages'][stage_to_check]['items_in_recount_list'] = items_in_recount_list
+                elif items_in_recount_list > 0:
+                     # Si la etapa aún no tiene conteos pero ya hay lista de reconteo
+                    summary['stages'][stage_to_check] = { 'items_in_recount_list': items_in_recount_list }
+
+
+    except aiosqlite.Error as e:
+        print(f"Error al calcular estadísticas de inventario: {e}")
+        return None # Retornar None o un dict vacío en caso de error
+    except Exception as e:
+        print(f"Error inesperado al calcular estadísticas: {e}")
+        return None
+
+    return summary
+
+
 @app.get('/admin/inventory', response_class=HTMLResponse, name='admin_inventory')
 async def admin_inventory_get(request: Request, admin: bool = Depends(admin_login_required)):
     if not admin:
@@ -1916,11 +2033,15 @@ async def admin_inventory_get(request: Request, admin: bool = Depends(admin_logi
     message = request.query_params.get('message')
     error = request.query_params.get('error')
     
+    # --- NUEVO: Calcular estadísticas ---
+    summary_stats = await get_inventory_summary_stats()
+
     return templates.TemplateResponse('admin_inventory.html', {
         "request": request, 
         "stage": stage,
         "message": message,
-        "error": error
+        "error": error,
+        "summary": summary_stats # --- NUEVO: Pasar estadísticas a la plantilla ---
     })
 
 @app.post('/admin/inventory/start_stage_1', name='start_inventory_stage_1')
