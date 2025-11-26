@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logix - Editar Conteo</title>
+    <link rel="icon" type="image/svg+xml"
+        href="{{ secure_url_for(request, 'static', path='images/gear-wide-connected.svg') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0.5 flex justify-between items-center">
+            <img src="/static/images/logo-clear.png" alt="Logix Logo" class="h-16 w-32 object-contain">
+            <a href="{{ secure_url_for(request, 'home_page') }}" class="text-sm text-gray-600 hover:text-gray-900">Volver al Inicio</a>
+        </div>
+    </header>
+
+    <main class="py-10">
+        <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden p-8">
+                <h1 class="text-2xl font-semibold text-gray-900 mb-6">Editar Conteo #{{ count.id }}</h1>
+                
+                <form action="/edit_count/{{ count.id }}" method="post" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Item Code</label>
+                        <p class="mt-1 text-lg font-mono p-2 bg-gray-100 rounded-md">{{ count.item_code }}</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Descripción</label>
+                        <p class="mt-1 p-2 bg-gray-100 rounded-md">{{ count.item_description }}</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Ubicación Contada</label>
+                        <p class="mt-1 p-2 bg-gray-100 rounded-md">{{ count.counted_location }}</p>
+                    </div>
+
+                    <div>
+                        <label for="counted_qty" class="block text-sm font-medium text-gray-700">Cantidad Contada</label>
+                        <input type="number" name="counted_qty" id="counted_qty" value="{{ count.counted_qty }}"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
+                               required>
+                    </div>
+                    
+                    <div class="flex items-center justify-end space-x-4 pt-4">
+                        <a href="{{ secure_url_for(request, 'manage_counts_page') }}"
+                           class="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                           Cancelar
+                        </a>
+                        <button type="submit"
+                                class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-900 bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

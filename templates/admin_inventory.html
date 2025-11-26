@@ -223,6 +223,20 @@
             </div>
         </div>
 
+        <div class="mt-8 border-t pt-6">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Datos y Reportes</h2>
+            <div class="flex space-x-4">
+                <a href="{{ secure_url_for(request, 'manage_counts_page') }}"
+                   class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+                   Gestionar y Editar Conteos Individuales
+                </a>
+                <a href="{{ secure_url_for(request, 'view_counts_page') }}"
+                   class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+                   Ver Vista Agrupada de Conteos
+                </a>
+            </div>
+        </div>
+
         <div class="mt-8 border-t pt-4">
             <a href="{{ secure_url_for(request, 'home_page') }}" class="text-blue-600 hover:underline">&larr; Volver a
                 la aplicación</a>

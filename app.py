@@ -1420,7 +1420,55 @@ async def load_picking_audits_from_db():
             audits.append(audit)
     return audits
 
-@app.get('/view_counts', response_class=HTMLResponse)
+@app.get('/manage_counts', response_class=HTMLResponse, name='manage_counts_page')
+async def manage_counts_page(request: Request, username: str = Depends(login_required)):
+    if not isinstance(username, str):
+        return username
+    
+    async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+        cursor = await conn.execute(
+            "SELECT id, session_id, timestamp, item_code, item_description, counted_qty, counted_location, username FROM stock_counts ORDER BY id DESC"
+        )
+        all_counts = await cursor.fetchall()
+    
+    return templates.TemplateResponse('manage_counts.html', {"request": request, "counts": [dict(row) for row in all_counts]})
+
+
+@app.get('/edit_count/{count_id}', response_class=HTMLResponse)
+@app.post('/edit_count/{count_id}', response_class=HTMLResponse)
+async def edit_count_page(request: Request, count_id: int, username: str = Depends(login_required)):
+    if not isinstance(username, str):
+        return username
+
+    async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+
+        if request.method == "POST":
+            form_data = await request.form()
+            new_qty = form_data.get('counted_qty')
+            if new_qty is not None:
+                try:
+                    await conn.execute(
+                        "UPDATE stock_counts SET counted_qty = ? WHERE id = ?",
+                        (int(new_qty), count_id)
+                    )
+                    await conn.commit()
+                except (ValueError, aiosqlite.Error) as e:
+                    print(f"Error al actualizar el conteo {count_id}: {e}")
+            
+            return RedirectResponse(url=request.url_for('manage_counts_page'), status_code=status.HTTP_303_SEE_OTHER)
+
+        cursor = await conn.execute("SELECT * FROM stock_counts WHERE id = ?", (count_id,))
+        count = await cursor.fetchone()
+
+        if not count:
+            raise HTTPException(status_code=404, detail="Conteo no encontrado")
+
+        return templates.TemplateResponse('edit_count.html', {"request": request, "count": dict(count)})
+
+
+@app.get('/view_counts', response_class=HTMLResponse, name='view_counts_page')
 async def view_counts_page(request: Request, username: str = Depends(login_required)):
     async with async_engine.connect() as conn:
         all_counts = await conn.run_sync(
