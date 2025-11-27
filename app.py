@@ -1495,11 +1495,16 @@ async def view_counts_page(request: Request, username: str = Depends(login_requi
     # Agrupar conteos por item, ubicación Y etapa
     grouped_counts = {}
     for count in all_counts_list:
-        key = (count['item_code'], count['counted_location'], count['inventory_stage'])
+        # Normalizar la ubicación para evitar problemas con espacios o mayúsculas/minúsculas
+        normalized_location = (count.get('counted_location') or '').strip().upper()
+        
+        key = (count['item_code'], normalized_location, count['inventory_stage'])
+        
         if key not in grouped_counts:
             grouped_counts[key] = {
                 **count,
-                'counted_qty': 0
+                'counted_qty': 0,
+                'counted_location': normalized_location  # Guardar la ubicación normalizada
             }
         grouped_counts[key]['counted_qty'] += count['counted_qty']
         
