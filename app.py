@@ -1631,7 +1631,44 @@ async def export_counts(username: str = Depends(login_required)):
         enriched_rows.append(enriched)
 
     # Construir DataFrame y exportar a Excel
-    df = pd.DataFrame(enriched_rows)
+        df = pd.DataFrame(enriched_rows)
+
+        # Sanear caracteres no válidos para Excel (openpyxl rechaza ciertos controles)
+        def _clean_for_excel(val):
+            # Mantener tipos no-string
+            if val is None:
+                return val
+            if isinstance(val, (int, float, bool, complex)):
+                return val
+            # Convertir bytes a string si aparece
+            if isinstance(val, (bytes, bytearray)):
+                try:
+                    val = val.decode('utf-8', errors='ignore')
+                except Exception:
+                    val = str(val)
+            # Solo procesar strings
+            if isinstance(val, str):
+                # Eliminar caracteres de control no permitidos por openpyxl
+                # openpyxl permite \t (9), \n (10), \r (13) pero no otros < 32
+                cleaned_chars = []
+                for ch in val:
+                    oc = ord(ch)
+                    if oc >= 32 or oc in (9, 10, 13):
+                        cleaned_chars.append(ch)
+                    else:
+                        # reemplazar por espacio para preservar separación
+                        cleaned_chars.append(' ')
+                return ''.join(cleaned_chars)
+            # Fallback
+            return val
+
+        # Aplicar limpieza a todas las celdas (no-string quedan intactos)
+        try:
+            df = df.applymap(_clean_for_excel)
+        except Exception:
+            # En caso de cualquier error inesperado, seguir sin crash pero intentar forzar strings
+            for col in df.columns:
+                df[col] = df[col].astype(str).apply(lambda v: _clean_for_excel(v))
     # Reordenar columnas para la exportación
     columns_order = ['id', 'session_id', 'inventory_stage', 'username', 'timestamp', 'item_code', 'item_description', 'counted_location', 'counted_qty', 'system_qty', 'difference', 'bin_location_system']
     df = df[columns_order]
