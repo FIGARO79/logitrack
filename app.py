@@ -1677,7 +1677,7 @@ async def get_count_stats(username: str = Depends(login_required)):
                     if qty is not None and qty > 0:
                         total_items_with_stock += 1
             
-            # 4. Items con diferencias (CORREGIDO: Solo ítems que se han contado)
+            # 4. Items con diferencias
             query = """
                 SELECT 
                     item_code, 
@@ -1691,8 +1691,10 @@ async def get_count_stats(username: str = Depends(login_required)):
             all_counted_items = await cursor.fetchall()
             counted_qty_map = {item['item_code']: item['total_counted'] for item in all_counted_items}
 
-            # --- CAMBIO AQUÍ: Iteramos solo sobre lo que se ha contado ---
             items_with_differences = 0
+            items_with_positive_differences = 0
+            items_with_negative_differences = 0
+
             for item_code, total_counted in counted_qty_map.items():
                 
                 system_qty_raw = master_qty_map.get(item_code)
@@ -1703,9 +1705,13 @@ async def get_count_stats(username: str = Depends(login_required)):
                     except (ValueError, TypeError):
                         system_qty = 0
                 
-                # Comparamos solo si el item existe en los conteos
                 if total_counted != system_qty:
                     items_with_differences += 1
+                    if total_counted > system_qty:
+                        items_with_positive_differences += 1
+                    else:
+                        items_with_negative_differences += 1
+
 
             # 5. Ubicaciones con stock (contadas, global)
             cursor = await conn.execute(
@@ -1728,6 +1734,8 @@ async def get_count_stats(username: str = Depends(login_required)):
                 "counted_locations": counted_locations,
                 "total_items_counted": total_items_counted,
                 "items_with_differences": items_with_differences,
+                "items_with_positive_differences": items_with_positive_differences,
+                "items_with_negative_differences": items_with_negative_differences,
                 "locations_with_stock": locations_with_stock,
                 "total_locations_with_stock": total_locations_with_stock
             })

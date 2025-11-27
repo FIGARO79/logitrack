@@ -71,7 +71,7 @@
                 </div>
             </div>
 
-            <div id="stats-container" class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+            <div id="stats-container" class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow text-center">
                     <h3 class="text-sm font-medium text-gray-500">Items con Stock</h3>
                     <p id="stats-total-items" class="text-2xl font-bold text-gray-800">-</p>
@@ -85,6 +85,14 @@
                     <p id="stats-items-with-diff" class="text-2xl font-bold text-red-500">-</p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow text-center">
+                    <h3 class="text-sm font-medium text-gray-500">Items con Dif. Positiva</h3>
+                    <p id="stats-items-with-pos-diff" class="text-2xl font-bold text-blue-600">-</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow text-center">
+                    <h3 class="text-sm font-medium text-gray-500">Items con Dif. Negativa</h3>
+                    <p id="stats-items-with-neg-diff" class="text-2xl font-bold text-red-600">-</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow text-center">
                     <h3 class="text-sm font-medium text-gray-500">Ubicaciones en uso</h3>
                     <p id="stats-total-locations-with-stock" class="text-2xl font-bold text-gray-800">-</p>
                 </div>
@@ -92,7 +100,6 @@
                     <h3 class="text-sm font-medium text-gray-500">Ubicaciones Contadas</h3>
                     <p id="stats-counted-locations" class="text-2xl font-bold text-gray-800">-</p>
                 </div>
-
             </div>
 
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
@@ -214,6 +221,8 @@
                     document.getElementById('stats-counted-locations').textContent = stats.counted_locations;
                     document.getElementById('stats-total-counted').textContent = stats.total_items_counted;
                     document.getElementById('stats-items-with-diff').textContent = stats.items_with_differences;
+                    document.getElementById('stats-items-with-pos-diff').textContent = stats.items_with_positive_differences;
+                    document.getElementById('stats-items-with-neg-diff').textContent = stats.items_with_negative_differences;
                     document.getElementById('stats-total-locations-with-stock').textContent = stats.total_locations_with_stock;
 
                 } catch (error) {
@@ -223,6 +232,8 @@
                     document.getElementById('stats-counted-locations').textContent = 'Error';
                     document.getElementById('stats-total-counted').textContent = 'Error';
                     document.getElementById('stats-items-with-diff').textContent = 'Error';
+                    document.getElementById('stats-items-with-pos-diff').textContent = 'Error';
+                    document.getElementById('stats-items-with-neg-diff').textContent = 'Error';
                     document.getElementById('stats-total-locations-with-stock').textContent = 'Error';
                 }
             }
