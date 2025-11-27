@@ -370,8 +370,12 @@
         <div class="bg-white rounded-lg p-4 max-w-lg w-full">
             <h3 class="text-lg font-bold mb-4 text-center">Apunta la cámara al código de barras</h3>
             <div id="reader" class="w-full rounded-md overflow-hidden border"></div>
-            <button id="close-scanner-btn"
-                class="mt-4 w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700">Cancelar</button>
+            <div class="flex items-center gap-4 mt-4">
+                <button id="flash-btn"
+                    class="hidden w-full bg-gray-500 text-white py-2 rounded-md hover:bg-gray-600">Activar Flash</button>
+                <button id="close-scanner-btn"
+                    class="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700">Cancelar</button>
+            </div>
         </div>
     </div>
 
@@ -411,10 +415,13 @@
             const toastContainer = document.getElementById("toast-container");
             const scannerModal = document.getElementById('scanner-modal');
             const closeScannerButton = document.getElementById('close-scanner-btn');
+            const flashBtn = document.getElementById('flash-btn');
 
             let html5QrCode = null;
             let currentItemData = {};
             let currentScanTargetInput = null;
+            let isFlashOn = false;
+
 
             const ICONS = {
                 spinner: '<div class="spinner"></div>',
@@ -772,6 +779,10 @@
                     html5QrCode.stop().catch(err => console.error("Fallo al detener el escáner.", err));
                 }
                 scannerModal.classList.add('hidden');
+                // Reset flash state
+                flashBtn.classList.add('hidden');
+                isFlashOn = false;
+                flashBtn.textContent = 'Activar Flash';
             };
 
             const startScanner = (targetInput) => {
@@ -790,17 +801,39 @@
                             if (currentScanTargetInput === itemCodeInput) {
                                 fetchItemData();
                             } else if (currentScanTargetInput === countedLocationInput) {
-                                // Validamos sesión al cambiar ubicación vía scanner
                                 checkActiveSession();
                             }
                         }
                     },
                     (errorMessage) => { /* Ignorar errores continuos */ }
-                ).catch(err => {
+                ).then(() => {
+                    const track = html5QrCode.getRunningTrack();
+                    const capabilities = track.getCapabilities();
+                    if (capabilities.torch) {
+                        flashBtn.classList.remove('hidden');
+                    }
+                }).catch(err => {
                     showToast("No se pudo iniciar la cámara. Asegúrate de dar los permisos.", "error");
                     stopScanning();
                 });
             };
+
+            const toggleFlash = async () => {
+                try {
+                    isFlashOn = !isFlashOn;
+                    await html5QrCode.applyVideoConstraints({
+                        torch: isFlashOn,
+                        advanced: [{ torch: isFlashOn }]
+                    });
+                    flashBtn.textContent = isFlashOn ? 'Desactivar Flash' : 'Activar Flash';
+                } catch (err) {
+                    console.error("Error al controlar el flash:", err);
+                    showToast("No se pudo controlar el flash.", "error");
+                    isFlashOn = false; // reset state
+                    flashBtn.classList.add('hidden');
+                }
+            };
+
 
             // --- EVENT LISTENERS ---
             startSessionBtn.addEventListener('click', handleStartSession);
@@ -811,6 +844,7 @@
             searchButton.addEventListener('click', fetchItemData);
             form.addEventListener('submit', saveCount);
             closeScannerButton.addEventListener('click', stopScanning);
+            flashBtn.addEventListener('click', toggleFlash);
             cancelBtn.addEventListener('click', () => clearForm(true));
 
             itemCodeInput.addEventListener('keypress', e => e.key === 'Enter' && (e.preventDefault(), fetchItemData()));
@@ -830,11 +864,11 @@
             });
 
             minusBtn.addEventListener('click', () => {
-                let val = parseInt(countedQtyInput.value, 10);
-                if (val > 1) countedQtyInput.value = val - 1;
+                let val = parseInt(countedQtyInput.value, 10) || 0;
+                if (val > 0) countedQtyInput.value = val - 1;
             });
             plusBtn.addEventListener('click', () => {
-                let val = parseInt(countedQtyInput.value, 10);
+                let val = parseInt(countedQtyInput.value, 10) || 0;
                 countedQtyInput.value = val + 1;
             });
 
