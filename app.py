@@ -8,7 +8,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse, JSONResponse
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -18,6 +18,8 @@ import sqlite3
 import aiosqlite
 import secrets
 from io import BytesIO
+import csv
+import io
 import openpyxl
 from openpyxl.utils import get_column_letter
 from typing import Optional, List
@@ -848,6 +850,74 @@ async def export_log(username: str = Depends(login_required)):
     timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"inbound_log_completo_{timestamp_str}.xlsx"
     return Response(content=output.getvalue(), media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@app.get('/api/export_counts_csv')
+async def export_counts_csv(tz: Optional[str] = None, limit: Optional[int] = None, username: str = Depends(login_required)):
+    """Exporta todos los conteos en formato CSV usando streaming para evitar cargar todo en memoria.
+    Acepta parámetros opcionales:
+    - `tz`: zona horaria destino para mostrar timestamps (por fila). Si no se puede convertir, se deja el valor original.
+    - `limit`: número máximo de filas a exportar (útil para pruebas).
+    """
+    # Manejar redirect de la dependencia de login
+    if not isinstance(username, str):
+        return username
+
+    async def row_generator():
+        # Cabecera CSV
+        header = ['id', 'session_id', 'inventory_stage', 'username', 'timestamp', 'item_code', 'item_description', 'counted_location', 'counted_qty', 'bin_location_system']
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(header)
+        yield buf.getvalue()
+        buf.seek(0)
+        buf.truncate(0)
+
+        async with aiosqlite.connect(DB_FILE_PATH) as conn:
+            conn.row_factory = aiosqlite.Row
+            base_query = ("SELECT sc.id, sc.session_id, cs.inventory_stage, sc.username, sc.timestamp, "
+                          "sc.item_code, sc.item_description, sc.counted_location, sc.counted_qty, sc.bin_location_system "
+                          "FROM stock_counts sc JOIN count_sessions cs ON sc.session_id = cs.id ORDER BY sc.id DESC")
+            params = ()
+            if limit and isinstance(limit, int) and limit > 0:
+                base_query = base_query + " LIMIT ?"
+                params = (limit,)
+
+            cur = await conn.execute(base_query, params) if params else await conn.execute(base_query)
+
+            while True:
+                rows = await cur.fetchmany(500)
+                if not rows:
+                    break
+                for r in rows:
+                    raw_ts = r['timestamp']
+                    exported_ts = raw_ts
+                    if tz and raw_ts:
+                        try:
+                            dt = dateutil_parser.parse(raw_ts)
+                            if dt.tzinfo is None:
+                                dt = dt.replace(tzinfo=pytz.UTC)
+                            try:
+                                target_tz = pytz.timezone(tz)
+                                exported_dt = dt.astimezone(target_tz)
+                                exported_ts = exported_dt.strftime("%Y-%m-%d %H:%M:%S")
+                            except Exception:
+                                exported_ts = dt.strftime("%Y-%m-%d %H:%M:%S")
+                        except Exception:
+                            exported_ts = raw_ts
+
+                    row_vals = [
+                        r['id'], r['session_id'], r.get('inventory_stage'), r.get('username'), exported_ts,
+                        r.get('item_code'), r.get('item_description'), r.get('counted_location'), r.get('counted_qty'), r.get('bin_location_system')
+                    ]
+                    writer.writerow(row_vals)
+                    yield buf.getvalue()
+                    buf.seek(0)
+                    buf.truncate(0)
+
+    timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"conteos_export_{timestamp_str}.csv"
+    return StreamingResponse(row_generator(), media_type='text/csv', headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 @app.delete('/api/delete_log/{log_id}')
 async def delete_log_api(log_id: int, username: str = Depends(login_required)):
