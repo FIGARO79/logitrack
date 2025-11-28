@@ -1628,7 +1628,7 @@ async def export_counts(tz: Optional[str] = None, username: str = Depends(login_
                 # Usar pandas para parsear y convertir. Si la fecha es "naive" se asumirá UTC.
                 ts = pd.to_datetime(raw_ts, utc=True, errors='coerce')
                 if not pd.isna(ts):
-                    exported_ts = ts.tz_convert(tz).strftime("%Y-%m-%d %H:%M:%S %Z")
+                    exported_ts = ts.tz_convert(tz).strftime("%Y-%m-%d %H:%M:%S")
             except Exception:
                 # Si falla la conversión, dejar el valor original
                 exported_ts = raw_ts
@@ -1683,7 +1683,7 @@ async def export_counts(tz: Optional[str] = None, username: str = Depends(login_
 
         # Aplicar limpieza a todas las celdas (no-string quedan intactos)
         try:
-            df = df.applymap(_clean_for_excel)
+            df = df.apply(lambda col: col.map(_clean_for_excel))
         except Exception:
             # En caso de cualquier error inesperado, seguir sin crash pero intentar forzar strings
             for col in df.columns:

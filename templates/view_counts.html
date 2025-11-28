@@ -259,6 +259,25 @@
                 exportBtn.setAttribute('href', base + tz);
             }
             if (exportTz) {
+                // Seleccionar por defecto la zona del navegador si la lista está en su valor por defecto (sin conversión)
+                try {
+                    const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+                    const hasBrowserOption = Array.from(exportTz.options).some(o => o.value === browserTz);
+                    if (!hasBrowserOption) {
+                        const opt = document.createElement('option');
+                        opt.value = browserTz;
+                        opt.textContent = `Mi zona (${browserTz})`;
+                        exportTz.insertBefore(opt, exportTz.firstChild);
+                    }
+                    // Si el select viene en su estado por defecto (valor vacío), establecer la zona del navegador
+                    if (!exportTz.value) {
+                        exportTz.value = browserTz;
+                    }
+                } catch (e) {
+                    // Si Intl falla por alguna razón, no hacemos nada y dejamos la opción por defecto
+                    console.warn('No se pudo detectar la zona del navegador', e);
+                }
+
                 exportTz.addEventListener('change', updateExportHref);
             }
             updateExportHref();
