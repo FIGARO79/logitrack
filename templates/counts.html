@@ -500,8 +500,11 @@
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'flex justify-between items-center text-sm p-1 border-b';
                     itemDiv.innerHTML = `
-                        <span>${count.item_code}</span>
-                        <span class="font-bold">${count.counted_qty}</span>
+                        <span class="flex-grow">${count.item_code}</span>
+                        <span class="font-bold mr-4">${count.counted_qty}</span>
+                        <button data-count-id="${count.id}" class="delete-count-btn text-red-500 hover:text-red-700 font-bold">
+                            &#10005;
+                        </button>
                     `;
                     countedItemsList.appendChild(itemDiv);
                 });
