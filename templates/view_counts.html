@@ -58,6 +58,16 @@
                         <option value="{{ u }}">{{ u }}</option>
                         {% endfor %}
                     </select>
+                    <label for="exportTz" class="text-sm text-gray-700">Zona:</label>
+                    <select id="exportTz" class="p-2 border rounded">
+                        <option value="">(sin conversión)</option>
+                        <option value="UTC">UTC</option>
+                        <option value="Europe/Madrid">Europe/Madrid</option>
+                        <option value="America/Argentina/Buenos_Aires">America/Argentina/Buenos_Aires</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="Asia/Kolkata">Asia/Kolkata</option>
+                    </select>
+
                     <a href="/api/export_counts" id="exportCountsBtn"
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
@@ -151,7 +161,8 @@
                                 <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.session_id }}</td>
                                 <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.username if
                                     count.username is not none else '-' }}</td>
-                                <td class="px-3 py-2 border-b border-gray-200 text-sm">{{ count.timestamp }}</td>
+                                <td class="px-3 py-2 border-b border-gray-200 text-sm"
+                                    data-timestamp="{{ count.timestamp }}">{{ count.timestamp }}</td>
                                 <td class="px-3 py-2 border-b border-gray-200 text-sm font-medium text-gray-800">{{
                                     count.item_code }}</td>
                                 <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.item_description }}</td>
@@ -239,6 +250,41 @@
             }
 
             fetchStats();
+            // Preparar la URL de export con la zona seleccionada
+            const exportBtn = document.getElementById('exportCountsBtn');
+            const exportTz = document.getElementById('exportTz');
+            function updateExportHref() {
+                const base = '/api/export_counts';
+                const tz = exportTz && exportTz.value ? `?tz=${encodeURIComponent(exportTz.value)}` : '';
+                exportBtn.setAttribute('href', base + tz);
+            }
+            if (exportTz) {
+                exportTz.addEventListener('change', updateExportHref);
+            }
+            updateExportHref();
+            // Formatear los timestamps ISO almacenados a la hora local del navegador
+            function formatTimestampsToLocal() {
+                const tsCells = Array.from(document.querySelectorAll('td[data-timestamp]'));
+                if (!tsCells.length) return;
+                const opts = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+                tsCells.forEach(td => {
+                    const iso = td.getAttribute('data-timestamp');
+                    if (!iso) return;
+                    try {
+                        const d = new Date(iso);
+                        if (isNaN(d.getTime())) return; // invalid date
+                        // Mostrar en formato local del navegador y dejar el ISO como tooltip
+                        td.textContent = d.toLocaleString(navigator.language || 'es-ES', opts);
+                        td.title = iso;
+                    } catch (e) {
+                        // Si falla, dejar el valor original
+                        console.warn('Formato timestamp falló para', iso, e);
+                    }
+                });
+            }
+
+            // Ejecutar formateo al cargar
+            formatTimestampsToLocal();
         });
     </script>
 </body>

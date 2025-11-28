@@ -167,6 +167,10 @@ class StockCount(BaseModel):
     counted_location: str
     description: Optional[str] = ''
     bin_location_system: Optional[str] = ''
+    # Timestamp enviado por el cliente (ISO string), opcional. Si no viene, se usará la hora del servidor.
+    timestamp: Optional[str] = None
+    # Zona horaria del cliente (p. ej. 'Europe/Madrid'), opcional.
+    timezone: Optional[str] = None
 
 class CloseLocationRequest(BaseModel):
     session_id: int
@@ -1004,13 +1008,15 @@ async def save_count(data: StockCount, username: str = Depends(login_required)):
 
             # 3. (Original) Insertar el conteo
             counted_qty = int(data.counted_qty)
+            # Usar timestamp enviado por el cliente si está presente; si no, usar hora del servidor
+            timestamp_to_store = data.timestamp if (hasattr(data, 'timestamp') and data.timestamp) else datetime.datetime.now().isoformat(timespec='seconds')
             await conn.execute(
                 '''
                 INSERT INTO stock_counts (session_id, timestamp, item_code, item_description, counted_qty, counted_location, bin_location_system, username)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ''',
                 (
-                    data.session_id, datetime.datetime.now().isoformat(timespec='seconds'), data.item_code,
+                    data.session_id, timestamp_to_store, data.item_code,
                     data.description, counted_qty, data.counted_location, data.bin_location_system, username
                 )
             )
@@ -1557,7 +1563,7 @@ async def view_counts_page(request: Request, username: str = Depends(login_requi
 
 
 @app.get('/api/export_counts')
-async def export_counts(username: str = Depends(login_required)):
+async def export_counts(tz: Optional[str] = None, username: str = Depends(login_required)):
     """Exporta todos los conteos enriquecidos a Excel (incluye usuario, system_qty y diferencia)."""
     
     # --- NUEVO: Traer la etapa de inventario en la consulta ---
@@ -1614,12 +1620,25 @@ async def export_counts(username: str = Depends(login_required)):
 
         difference = (counted_qty - system_qty) if system_qty is not None else None
 
+        # Procesar timestamp: si se solicitó una zona (`tz`), convertirlo para mostrar en esa zona.
+        raw_ts = count.get('timestamp')
+        exported_ts = raw_ts
+        if tz and raw_ts:
+            try:
+                # Usar pandas para parsear y convertir. Si la fecha es "naive" se asumirá UTC.
+                ts = pd.to_datetime(raw_ts, utc=True, errors='coerce')
+                if not pd.isna(ts):
+                    exported_ts = ts.tz_convert(tz).strftime("%Y-%m-%d %H:%M:%S %Z")
+            except Exception:
+                # Si falla la conversión, dejar el valor original
+                exported_ts = raw_ts
+
         enriched = {
             'id': count.get('id'),
             'session_id': count.get('session_id'),
             'inventory_stage': count.get('inventory_stage'), # --- NUEVO: Añadir etapa al reporte ---
             'username': count.get('username') or (session_map.get(count.get('session_id')) if session_map else None),
-            'timestamp': count.get('timestamp'),
+            'timestamp': exported_ts,
             'item_code': item_code,
             'item_description': count.get('item_description'),
             'counted_location': count.get('counted_location'),

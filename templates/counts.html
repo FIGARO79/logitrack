@@ -224,7 +224,8 @@
         <div id="session-control-container" class="bg-white p-6 rounded-lg shadow text-center">
             {% if etapa_conteo_actual == 0 %}
             <h2 class="text-xl font-semibold text-red-700">Conteo no iniciado por Administrador</h2>
-            <p class="text-gray-500 mt-2">No es posible iniciar una sesión de conteo porque el administrador aún no ha generado la <strong>Etapa 1</strong>.</p>
+            <p class="text-gray-500 mt-2">No es posible iniciar una sesión de conteo porque el administrador aún no ha
+                generado la <strong>Etapa 1</strong>.</p>
             <p class="text-gray-500 mt-1">Por favor, contacta al administrador.</p>
             <button id="start-session-btn-disabled" class="btn btn-primary mt-4" disabled>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -373,8 +374,10 @@
             <div class="flex gap-2 mt-4">
                 <button id="toggle-flash-btn" title="Activar/Desactivar Flash"
                     class="bg-gray-700 text-white p-3 rounded-md hover:bg-gray-600 flex items-center justify-center transition-colors duration-200">
-                    <svg id="flash-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M2 6a6 6 0 1 1 10.174 4.31c-.203.196-.359.4-.453.619l-.762 1.769A.5.5 0 0 1 10.5 13a.5.5 0 0 1 0 1 .5.5 0 0 1 0 1l-.224.447a1 1 0 0 1-.894.553H6.618a1 1 0 0 1-.894-.553L5.5 15a.5.5 0 0 1 0-1 .5.5 0 0 1 0-1 .5.5 0 0 1-.46-.302l-.761-1.77a2 2 0 0 0-.453-.618A5.98 5.98 0 0 1 2 6m6-5a5 5 0 0 0-3.479 8.592c.263.254.514.564.676.941L5.83 12h4.342l.632-1.467c.162-.377.413-.687.676-.941A5 5 0 0 0 8 1"/>
+                    <svg id="flash-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                        viewBox="0 0 16 16">
+                        <path
+                            d="M2 6a6 6 0 1 1 10.174 4.31c-.203.196-.359.4-.453.619l-.762 1.769A.5.5 0 0 1 10.5 13a.5.5 0 0 1 0 1 .5.5 0 0 1 0 1l-.224.447a1 1 0 0 1-.894.553H6.618a1 1 0 0 1-.894-.553L5.5 15a.5.5 0 0 1 0-1 .5.5 0 0 1 0-1 .5.5 0 0 1-.46-.302l-.761-1.77a2 2 0 0 0-.453-.618A5.98 5.98 0 0 1 2 6m6-5a5 5 0 0 0-3.479 8.592c.263.254.514.564.676.941L5.83 12h4.342l.632-1.467c.162-.377.413-.687.676-.941A5 5 0 0 0 8 1" />
                     </svg>
                 </button>
                 <button id="close-scanner-btn"
@@ -629,7 +632,10 @@
                     description: currentItemData.description,
                     bin_location_system: currentItemData.bin_location,
                     counted_qty: parseInt(countedQty, 10),
-                    counted_location: countedLocation
+                    counted_location: countedLocation,
+                    // Enviar timestamp del cliente en formato ISO (UTC) y zona horaria
+                    timestamp: new Date().toISOString(),
+                    timezone: (Intl && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : null
                 };
 
                 toggleButtonSpinner(saveBtn, true, 'Guardar Conteo');
@@ -799,7 +805,7 @@
                     await track.applyConstraints({
                         advanced: [{ torch: isFlashOn }]
                     });
-                    
+
                     if (isFlashOn) {
                         toggleFlashButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
                         toggleFlashButton.classList.add('bg-yellow-500', 'hover:bg-yellow-400');
