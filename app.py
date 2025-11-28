@@ -8,7 +8,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse, JSONResponse
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -18,8 +18,6 @@ import sqlite3
 import aiosqlite
 import secrets
 from io import BytesIO
-import csv
-import io
 import openpyxl
 from openpyxl.utils import get_column_letter
 from typing import Optional, List
@@ -27,8 +25,6 @@ from pydantic import BaseModel
 from urllib.parse import urlencode
 import shutil
 import json
-from dateutil import parser as dateutil_parser
-import pytz
 
 # --- Cache para DataFrames ---
 df_master_cache = None
@@ -355,7 +351,6 @@ async def init_db():
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     session_id INTEGER NOT NULL,
                     timestamp TEXT NOT NULL,
-                    client_timezone TEXT,
                     item_code TEXT NOT NULL,
                     item_description TEXT,
                     counted_qty INTEGER NOT NULL,
@@ -374,12 +369,6 @@ async def init_db():
                     await conn.execute("ALTER TABLE stock_counts ADD COLUMN username TEXT;")
                 except aiosqlite.Error as e:
                     print(f"DB Warning: no se pudo añadir columna 'username' a stock_counts: {e}")
-            # Asegurarse de que la columna 'client_timezone' exista para tablas creadas en versiones antiguas
-            if 'client_timezone' not in existing_cols:
-                try:
-                    await conn.execute("ALTER TABLE stock_counts ADD COLUMN client_timezone TEXT;")
-                except aiosqlite.Error as e:
-                    print(f"DB Warning: no se pudo añadir columna 'client_timezone' a stock_counts: {e}")
 
             # --- Índices ---
             await conn.execute("CREATE INDEX IF NOT EXISTS idx_importReference_itemCode ON logs (importReference, itemCode)")
@@ -851,74 +840,6 @@ async def export_log(username: str = Depends(login_required)):
     filename = f"inbound_log_completo_{timestamp_str}.xlsx"
     return Response(content=output.getvalue(), media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers={"Content-Disposition": f"attachment; filename={filename}"})
 
-
-@app.get('/api/export_counts_csv')
-async def export_counts_csv(tz: Optional[str] = None, limit: Optional[int] = None, username: str = Depends(login_required)):
-    """Exporta todos los conteos en formato CSV usando streaming para evitar cargar todo en memoria.
-    Acepta parámetros opcionales:
-    - `tz`: zona horaria destino para mostrar timestamps (por fila). Si no se puede convertir, se deja el valor original.
-    - `limit`: número máximo de filas a exportar (útil para pruebas).
-    """
-    # Manejar redirect de la dependencia de login
-    if not isinstance(username, str):
-        return username
-
-    async def row_generator():
-        # Cabecera CSV
-        header = ['id', 'session_id', 'inventory_stage', 'username', 'timestamp', 'item_code', 'item_description', 'counted_location', 'counted_qty', 'bin_location_system']
-        buf = io.StringIO()
-        writer = csv.writer(buf)
-        writer.writerow(header)
-        yield buf.getvalue()
-        buf.seek(0)
-        buf.truncate(0)
-
-        async with aiosqlite.connect(DB_FILE_PATH) as conn:
-            conn.row_factory = aiosqlite.Row
-            base_query = ("SELECT sc.id, sc.session_id, cs.inventory_stage, sc.username, sc.timestamp, "
-                          "sc.item_code, sc.item_description, sc.counted_location, sc.counted_qty, sc.bin_location_system "
-                          "FROM stock_counts sc JOIN count_sessions cs ON sc.session_id = cs.id ORDER BY sc.id DESC")
-            params = ()
-            if limit and isinstance(limit, int) and limit > 0:
-                base_query = base_query + " LIMIT ?"
-                params = (limit,)
-
-            cur = await conn.execute(base_query, params) if params else await conn.execute(base_query)
-
-            while True:
-                rows = await cur.fetchmany(500)
-                if not rows:
-                    break
-                for r in rows:
-                    raw_ts = r['timestamp']
-                    exported_ts = raw_ts
-                    if tz and raw_ts:
-                        try:
-                            dt = dateutil_parser.parse(raw_ts)
-                            if dt.tzinfo is None:
-                                dt = dt.replace(tzinfo=pytz.UTC)
-                            try:
-                                target_tz = pytz.timezone(tz)
-                                exported_dt = dt.astimezone(target_tz)
-                                exported_ts = exported_dt.strftime("%Y-%m-%d %H:%M:%S")
-                            except Exception:
-                                exported_ts = dt.strftime("%Y-%m-%d %H:%M:%S")
-                        except Exception:
-                            exported_ts = raw_ts
-
-                    row_vals = [
-                        r['id'], r['session_id'], r.get('inventory_stage'), r.get('username'), exported_ts,
-                        r.get('item_code'), r.get('item_description'), r.get('counted_location'), r.get('counted_qty'), r.get('bin_location_system')
-                    ]
-                    writer.writerow(row_vals)
-                    yield buf.getvalue()
-                    buf.seek(0)
-                    buf.truncate(0)
-
-    timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"conteos_export_{timestamp_str}.csv"
-    return StreamingResponse(row_generator(), media_type='text/csv', headers={"Content-Disposition": f"attachment; filename={filename}"})
-
 @app.delete('/api/delete_log/{log_id}')
 async def delete_log_api(log_id: int, username: str = Depends(login_required)):
     if await delete_log_entry_db_async(log_id):
@@ -1085,44 +1006,17 @@ async def save_count(data: StockCount, username: str = Depends(login_required)):
             if location_status and location_status['status'] == 'closed':
                 raise HTTPException(status_code=400, detail=f"La ubicación {data.counted_location} ya está cerrada y no se puede modificar.")
 
-            # 3. Insertar el conteo (normalizar timestamp a UTC y guardar client_timezone)
+            # 3. (Original) Insertar el conteo
             counted_qty = int(data.counted_qty)
-
-            client_tz = data.timezone if (hasattr(data, 'timezone') and data.timezone) else None
-            # Determinar y normalizar timestamp
-            if hasattr(data, 'timestamp') and data.timestamp:
-                try:
-                    dt = dateutil_parser.parse(data.timestamp)
-                    # Si la fecha no tiene zona, intentar aplicar la zona enviada por el cliente
-                    if dt.tzinfo is None:
-                        if client_tz:
-                            try:
-                                tzobj = pytz.timezone(client_tz)
-                                dt = tzobj.localize(dt)
-                            except Exception:
-                                # Si la zona no es válida, asumir UTC
-                                dt = dt.replace(tzinfo=pytz.UTC)
-                        else:
-                            # No se indicó zona: asumir UTC
-                            dt = dt.replace(tzinfo=pytz.UTC)
-                    # Convertir a UTC
-                    dt_utc = dt.astimezone(pytz.UTC)
-                    # Formato ISO canónico con 'Z' para UTC (ej: 2025-01-02T15:04:05Z)
-                    timestamp_to_store = dt_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
-                except Exception:
-                    # En caso de fallo en el parseo, guardar la cadena original
-                    timestamp_to_store = data.timestamp
-            else:
-                # Si no se envió timestamp, usar hora del servidor en UTC
-                timestamp_to_store = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-
+            # Usar timestamp enviado por el cliente si está presente; si no, usar hora del servidor
+            timestamp_to_store = data.timestamp if (hasattr(data, 'timestamp') and data.timestamp) else datetime.datetime.now().isoformat(timespec='seconds')
             await conn.execute(
                 '''
-                INSERT INTO stock_counts (session_id, timestamp, client_timezone, item_code, item_description, counted_qty, counted_location, bin_location_system, username)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO stock_counts (session_id, timestamp, item_code, item_description, counted_qty, counted_location, bin_location_system, username)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ''',
                 (
-                    data.session_id, timestamp_to_store, client_tz, data.item_code,
+                    data.session_id, timestamp_to_store, data.item_code,
                     data.description, counted_qty, data.counted_location, data.bin_location_system, username
                 )
             )
