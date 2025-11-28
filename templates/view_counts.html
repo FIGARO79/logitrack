@@ -281,23 +281,74 @@
                 exportTz.addEventListener('change', updateExportHref);
             }
             updateExportHref();
-            // Formatear los timestamps ISO almacenados a la hora local del navegador
+            // Formatear los timestamps almacenados a la hora local del navegador (robusto)
             function formatTimestampsToLocal() {
                 const tsCells = Array.from(document.querySelectorAll('td[data-timestamp]'));
                 if (!tsCells.length) return;
-                const opts = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+
+                const locale = navigator.language || 'es-ES';
+                const dateOpts = { day: '2-digit', month: '2-digit', year: 'numeric' };
+                const timeOpts = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+
                 tsCells.forEach(td => {
-                    const iso = td.getAttribute('data-timestamp');
-                    if (!iso) return;
+                    let raw = td.getAttribute('data-timestamp');
+                    if (!raw) return;
+
+                    // Intentos de parsing ordenados por probabilidad
+                    let d = null;
+
+                    // 1) Si ya está en formato ISO completo (con T), Date puede parsearlo
+                    try { d = new Date(raw); } catch (e) { d = null; }
+
+                    // 2) Si no válido, intentar convertir 'YYYY-MM-DD HH:MM:SS' -> 'YYYY-MM-DDTHH:MM:SSZ' (asumir UTC)
+                    if (!d || isNaN(d.getTime())) {
+                        const spaceIso = raw.replace(' ', 'T');
+                        try { d = new Date(spaceIso); } catch (e) { d = null; }
+                    }
+
+                    if (!d || isNaN(d.getTime())) {
+                        // Si aún inválido, forzar añadiendo Z (UTC)
+                        try {
+                            const forceZ = raw.includes('T') ? raw + 'Z' : raw.replace(' ', 'T') + 'Z';
+                            d = new Date(forceZ);
+                        } catch (e) {
+                            d = null;
+                        }
+                    }
+
+                    if (!d || isNaN(d.getTime())) {
+                        // Último recurso: intentar parse manual 'YYYY-MM-DD HH:MM:SS' sin asumir UTC
+                        const m = raw.match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+                        if (m) {
+                            // Crear Date local usando componentes (year, monthIndex, day, hour, minute, second)
+                            const year = parseInt(m[1], 10);
+                            const month = parseInt(m[2], 10) - 1;
+                            const day = parseInt(m[3], 10);
+                            const hour = parseInt(m[4], 10);
+                            const minute = parseInt(m[5], 10);
+                            const second = parseInt(m[6], 10);
+                            d = new Date(year, month, day, hour, minute, second);
+                        }
+                    }
+
+                    if (!d || isNaN(d.getTime())) {
+                        // No se pudo parsear; dejar el valor original y tooltip
+                        td.title = raw;
+                        return;
+                    }
+
+                    // Mostrar en formato 'DD/MM/YYYY, HH:MM:SS' en hora local del navegador
                     try {
-                        const d = new Date(iso);
-                        if (isNaN(d.getTime())) return; // invalid date
-                        // Mostrar en formato local del navegador y dejar el ISO como tooltip
-                        td.textContent = d.toLocaleString(navigator.language || 'es-ES', opts);
-                        td.title = iso;
+                        const datePart = d.toLocaleDateString(locale, dateOpts);
+                        const timePart = d.toLocaleTimeString(locale, timeOpts);
+                        td.textContent = `${datePart}, ${timePart}`;
+                        td.title = raw; // dejar el original como tooltip
                     } catch (e) {
-                        // Si falla, dejar el valor original
-                        console.warn('Formato timestamp falló para', iso, e);
+                        // Fallback simple
+                        const pad = (n) => String(n).padStart(2, '0');
+                        const fallback = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+                        td.textContent = fallback;
+                        td.title = raw;
                     }
                 });
             }
