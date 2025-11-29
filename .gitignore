@@ -13,6 +13,10 @@ __pycache__/
 .env.*
 *.sqlite3
 inbound_log.db
+inbound_log.db-shm
+inbound_log.db-wal
+*.db-shm
+*.db-wal
 
 # VSCode
 .vscode/

@@ -167,6 +167,10 @@ class StockCount(BaseModel):
     counted_location: str
     description: Optional[str] = ''
     bin_location_system: Optional[str] = ''
+    # Timestamp enviado por el cliente (ISO string), opcional. Si no viene, se usará la hora del servidor.
+    timestamp: Optional[str] = None
+    # Zona horaria del cliente (p. ej. 'Europe/Madrid'), opcional.
+    timezone: Optional[str] = None
 
 class CloseLocationRequest(BaseModel):
     session_id: int
@@ -259,6 +263,9 @@ async def init_db():
     print("Inicializando y verificando el esquema de la base de datos...")
     try:
         async with aiosqlite.connect(DB_FILE_PATH) as conn:
+            # --- Activar modo WAL para concurrencia (evita "database is locked") ---
+            await conn.execute("PRAGMA journal_mode=WAL;")
+            
             # --- Migración de la tabla de Logs ---
             conn.row_factory = aiosqlite.Row
             cursor = await conn.execute("PRAGMA table_info(logs);")
@@ -553,14 +560,21 @@ async def start_new_session(username: str = Depends(login_required)):
     """Inicia una nueva sesión de conteo para el usuario actual."""
     print(f"Attempting to start a new session for user: {username}")
     async with aiosqlite.connect(DB_FILE_PATH) as conn:
-        conn.row_factory = aiosqlite.Row # Añadir row_factory para leer la etapa
+        conn.row_factory = aiosqlite.Row
         try:
-            # --- NUEVO: Obtener la etapa de inventario global actual ---
+            # Obtener la etapa de inventario global actual
             cursor_stage = await conn.execute("SELECT value FROM app_state WHERE key = 'current_inventory_stage'")
             stage_row = await cursor_stage.fetchone()
-            current_stage = int(stage_row['value']) if (stage_row and stage_row['value']) else 1 # Default a 1
+            current_stage = int(stage_row['value']) if (stage_row and stage_row['value']) else 0
             print(f"Global inventory stage is: {current_stage}")
-            # --- FIN NUEVO ---
+
+            # --- VALIDACIÓN DE ETAPA ---
+            if current_stage == 0:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="No se puede iniciar sesión: El administrador aún no ha generado la Etapa 1 del inventario."
+                )
+            # --- FIN VALIDACIÓN ---
 
             # Opcional: Finalizar sesiones anteriores del mismo usuario
             print("Closing previous sessions...")
@@ -571,17 +585,15 @@ async def start_new_session(username: str = Depends(login_required)):
             print("Previous sessions closed.")
 
             # Crear nueva sesión
-            print(f"Creating new session for stage {current_stage}...") # Modificado
+            print(f"Creating new session for stage {current_stage}...")
             cursor = await conn.execute(
-                # --- MODIFICADO: Añadir inventory_stage ---
                 "INSERT INTO count_sessions (user_username, start_time, status, inventory_stage) VALUES (?, ?, ?, ?)",
                 (username, datetime.datetime.now().isoformat(timespec='seconds'), 'in_progress', current_stage)
             )
             await conn.commit()
             session_id = cursor.lastrowid
-            print(f"New session created with ID: {session_id} for stage {current_stage}") # Modificado
+            print(f"New session created with ID: {session_id} for stage {current_stage}")
             
-            # --- MODIFICADO: Devolver la etapa al frontend ---
             return {"session_id": session_id, "inventory_stage": current_stage, "message": f"Sesión {session_id} (Etapa {current_stage}) iniciada."}
         
         except aiosqlite.Error as e:
@@ -999,13 +1011,15 @@ async def save_count(data: StockCount, username: str = Depends(login_required)):
 
             # 3. (Original) Insertar el conteo
             counted_qty = int(data.counted_qty)
+            # Usar timestamp enviado por el cliente si está presente; si no, usar hora del servidor
+            timestamp_to_store = data.timestamp if data.timestamp else datetime.datetime.now().isoformat(timespec='seconds')
             await conn.execute(
                 '''
                 INSERT INTO stock_counts (session_id, timestamp, item_code, item_description, counted_qty, counted_location, bin_location_system, username)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ''',
                 (
-                    data.session_id, datetime.datetime.now().isoformat(timespec='seconds'), data.item_code,
+                    data.session_id, timestamp_to_store, data.item_code,
                     data.description, counted_qty, data.counted_location, data.bin_location_system, username
                 )
             )
@@ -1276,10 +1290,17 @@ def label_page(request: Request):
     return templates.TemplateResponse('label.html', {"request": request})
 
 @app.get('/counts', response_class=HTMLResponse)
-def counts_page(request: Request, username: str = Depends(login_required)):
+async def counts_page(request: Request, username: str = Depends(login_required)):
     if not isinstance(username, str):
         return username
-    return templates.TemplateResponse('counts.html', {"request": request})
+    
+    async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+        cursor = await conn.execute("SELECT value FROM app_state WHERE key = 'current_inventory_stage'")
+        stage_row = await cursor.fetchone()
+        current_stage = int(stage_row['value']) if (stage_row and stage_row['value']) else 0
+        
+    return templates.TemplateResponse('counts.html', {"request": request, "etapa_conteo_actual": current_stage})
 
 @app.get('/stock', response_class=HTMLResponse)
 async def stock_page(request: Request): # <--- Se eliminó la dependencia 'Depends(login_required)'
@@ -1408,7 +1429,55 @@ async def load_picking_audits_from_db():
             audits.append(audit)
     return audits
 
-@app.get('/view_counts', response_class=HTMLResponse)
+@app.get('/manage_counts', response_class=HTMLResponse, name='manage_counts_page')
+async def manage_counts_page(request: Request, username: str = Depends(login_required)):
+    if not isinstance(username, str):
+        return username
+    
+    async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+        cursor = await conn.execute(
+            "SELECT id, session_id, timestamp, item_code, item_description, counted_qty, counted_location, username FROM stock_counts ORDER BY id DESC"
+        )
+        all_counts = await cursor.fetchall()
+    
+    return templates.TemplateResponse('manage_counts.html', {"request": request, "counts": [dict(row) for row in all_counts]})
+
+
+@app.get('/edit_count/{count_id}', response_class=HTMLResponse)
+@app.post('/edit_count/{count_id}', response_class=HTMLResponse)
+async def edit_count_page(request: Request, count_id: int, username: str = Depends(login_required)):
+    if not isinstance(username, str):
+        return username
+
+    async with aiosqlite.connect(DB_FILE_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+
+        if request.method == "POST":
+            form_data = await request.form()
+            new_qty = form_data.get('counted_qty')
+            if new_qty is not None:
+                try:
+                    await conn.execute(
+                        "UPDATE stock_counts SET counted_qty = ? WHERE id = ?",
+                        (int(new_qty), count_id)
+                    )
+                    await conn.commit()
+                except (ValueError, aiosqlite.Error) as e:
+                    print(f"Error al actualizar el conteo {count_id}: {e}")
+            
+            return RedirectResponse(url=request.url_for('manage_counts_page'), status_code=status.HTTP_303_SEE_OTHER)
+
+        cursor = await conn.execute("SELECT * FROM stock_counts WHERE id = ?", (count_id,))
+        count = await cursor.fetchone()
+
+        if not count:
+            raise HTTPException(status_code=404, detail="Conteo no encontrado")
+
+        return templates.TemplateResponse('edit_count.html', {"request": request, "count": dict(count)})
+
+
+@app.get('/view_counts', response_class=HTMLResponse, name='view_counts_page')
 async def view_counts_page(request: Request, username: str = Depends(login_required)):
     async with async_engine.connect() as conn:
         all_counts = await conn.run_sync(
@@ -1435,11 +1504,16 @@ async def view_counts_page(request: Request, username: str = Depends(login_requi
     # Agrupar conteos por item, ubicación Y etapa
     grouped_counts = {}
     for count in all_counts_list:
-        key = (count['item_code'], count['counted_location'], count['inventory_stage'])
+        # Normalizar la ubicación para evitar problemas con espacios o mayúsculas/minúsculas
+        normalized_location = (count.get('counted_location') or '').strip().upper()
+        
+        key = (count['item_code'], normalized_location, count['inventory_stage'])
+        
         if key not in grouped_counts:
             grouped_counts[key] = {
                 **count,
-                'counted_qty': 0
+                'counted_qty': 0,
+                'counted_location': normalized_location  # Guardar la ubicación normalizada
             }
         grouped_counts[key]['counted_qty'] += count['counted_qty']
         
@@ -1492,16 +1566,17 @@ async def view_counts_page(request: Request, username: str = Depends(login_requi
 
 
 @app.get('/api/export_counts')
-async def export_counts(username: str = Depends(login_required)):
+async def export_counts(tz: Optional[str] = None, username: str = Depends(login_required)):
     """Exporta todos los conteos enriquecidos a Excel (incluye usuario, system_qty y diferencia)."""
     
-    # --- NUEVO: Traer la etapa de inventario en la consulta ---
+    # 1. Obtener datos crudos de la BD (stock_counts + inventory_stage)
     async with async_engine.connect() as conn:
-        all_counts_df = await conn.run_sync(
+        df = await conn.run_sync(
             lambda sync_conn: pd.read_sql_query(
                 """
                 SELECT 
-                    sc.*, 
+                    sc.id, sc.session_id, sc.timestamp, sc.item_code, sc.item_description, 
+                    sc.counted_qty, sc.counted_location, sc.bin_location_system, sc.username,
                     cs.inventory_stage 
                 FROM 
                     stock_counts sc
@@ -1512,12 +1587,23 @@ async def export_counts(username: str = Depends(login_required)):
                 sync_conn
             )
         )
-    all_counts = all_counts_df.to_dict(orient='records')
 
+    if df.empty:
+        # Manejo de caso vacío para evitar errores posteriores
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            pd.DataFrame(columns=['Mensaje']).to_excel(writer, index=False, sheet_name='Conteos')
+        output.seek(0)
+        timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"conteos_vacio_{timestamp_str}.xlsx"
+        return Response(content=output.getvalue(), 
+                        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+                        headers={"Content-Disposition": f"attachment; filename={filename}"})
 
-    master_map = master_qty_map
+    # 2. Enriquecer con nombres de usuario de las sesiones (si falta en stock_counts)
+    #    Obtener mapa de session_id -> username
+    session_ids = df['session_id'].unique().tolist()
     session_map = {}
-    session_ids = list({c.get('session_id') for c in all_counts if c.get('session_id') is not None})
     if session_ids:
         try:
             async with aiosqlite.connect(DB_FILE_PATH) as conn:
@@ -1526,59 +1612,106 @@ async def export_counts(username: str = Depends(login_required)):
                 query = f"SELECT id, user_username FROM count_sessions WHERE id IN ({placeholders})"
                 async with conn.execute(query, tuple(session_ids)) as cursor:
                     rows = await cursor.fetchall()
-                    for r in rows:
-                        session_map[r['id']] = r['user_username']
-        except Exception:
-            session_map = {}
+                    session_map = {r['id']: r['user_username'] for r in rows}
+        except Exception as e:
+            print(f"Error fetching session usernames: {e}")
 
-    enriched_rows = []
-    for count in all_counts:
-        item_code = count.get('item_code')
-        raw_system = master_map.get(item_code) if master_map else None
-        system_qty = None
-        if raw_system not in (None, ''):
-            try:
-                system_qty = int(float(raw_system))
-            except (ValueError, TypeError):
-                system_qty = None
+    #    Aplicar el mapa vectorizado
+    #    Si 'username' es nulo, usar el del mapa de sesiones
+    df['username'] = df['username'].fillna(df['session_id'].map(session_map))
 
+    # 3. Enriquecer con System Qty (del maestro en memoria)
+    #    Convertir master_qty_map a Series para mapeo rápido
+    #    Nota: master_qty_map es {item_code: int_qty or None}
+    if master_qty_map:
+        # Crear un mapa seguro (item_code -> qty), asumiendo 0 si es None para cálculos, 
+        # pero queremos mantener None si no existe para mostrarlo vacío? 
+        # La lógica original ponía None si no existía.
+        
+        # Opción rápida: map directo. 
+        df['system_qty'] = df['item_code'].map(master_qty_map)
+        
+        # Asegurar tipos numéricos para cálculos
+        df['counted_qty'] = pd.to_numeric(df['counted_qty'], errors='coerce').fillna(0).astype(int)
+        
+        # system_qty puede tener Nones. Convertir a numérico donde sea posible para restar.
+        # Pandas resta Series - Series maneja NaNs correctamente (resultado es NaN).
+        df['system_qty_numeric'] = pd.to_numeric(df['system_qty'], errors='coerce')
+        
+        df['difference'] = df['counted_qty'] - df['system_qty_numeric']
+        
+        # Limpieza auxiliar
+        del df['system_qty_numeric']
+    else:
+        df['system_qty'] = None
+        df['difference'] = None
+
+    # 4. Procesar Timestamps (Vectorizado)
+    if tz:
         try:
-            counted_qty = int(count.get('counted_qty') or 0)
-        except (ValueError, TypeError):
-            counted_qty = 0
+            # Guardar original para fallback
+            original_ts = df['timestamp'].copy()
+            
+            # Convertir a datetime (asumiendo UTC si son naive, o ajustando)
+            df['timestamp_dt'] = pd.to_datetime(df['timestamp'], utc=True, errors='coerce', format='mixed')
+            
+            # Convertir a la zona horaria deseada
+            converted_ts = df['timestamp_dt'].dt.tz_convert(tz).dt.strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Usar el valor convertido donde sea válido, sino mantener el original
+            df['timestamp'] = converted_ts.fillna(original_ts)
+            
+        except Exception as e:
+            print(f"Error vectorizing timezone conversion: {e}")
+            # Fallback silencioso: se queda con el string original
 
-        difference = (counted_qty - system_qty) if system_qty is not None else None
+    # 5. Limpieza de caracteres ilegales para Excel (Vectorizado / Apply optimizado)
+    #    OpenPyXL odia caracteres de control < 32 excepto \t, \n, \r.
+    #    Regex para encontrar caracteres malos: [\x00-\x08\x0B\x0C\x0E-\x1F]
+    illegal_chars_pattern = r'[\x00-\x08\x0B\x0C\x0E-\x1F]'
+    
+    # Identificar columnas de tipo string (object)
+    str_cols = df.select_dtypes(include=['object']).columns
+    
+    if not str_cols.empty:
+        # Aplicar reemplazo solo en columnas de texto
+        df[str_cols] = df[str_cols].replace(illegal_chars_pattern, ' ', regex=True)
 
-        enriched = {
-            'id': count.get('id'),
-            'session_id': count.get('session_id'),
-            'inventory_stage': count.get('inventory_stage'), # --- NUEVO: Añadir etapa al reporte ---
-            'username': count.get('username') or (session_map.get(count.get('session_id')) if session_map else None),
-            'timestamp': count.get('timestamp'),
-            'item_code': item_code,
-            'item_description': count.get('item_description'),
-            'counted_location': count.get('counted_location'),
-            'counted_qty': counted_qty,
-            'system_qty': system_qty,
-            'difference': difference,
-            'bin_location_system': count.get('bin_location_system')
-        }
-        enriched_rows.append(enriched)
-
-    # Construir DataFrame y exportar a Excel
-    df = pd.DataFrame(enriched_rows)
-    # Reordenar columnas para la exportación
-    columns_order = ['id', 'session_id', 'inventory_stage', 'username', 'timestamp', 'item_code', 'item_description', 'counted_location', 'counted_qty', 'system_qty', 'difference', 'bin_location_system']
+    # 6. Reordenar columnas
+    columns_order = [
+        'id', 'session_id', 'inventory_stage', 'username', 'timestamp', 
+        'item_code', 'item_description', 'counted_location', 
+        'counted_qty', 'system_qty', 'difference', 'bin_location_system'
+    ]
+    # Asegurar que existan todas (por si acaso)
+    for col in columns_order:
+        if col not in df.columns:
+            df[col] = None
+            
     df = df[columns_order]
 
+    # 7. Exportar a Excel
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Conteos')
         worksheet = writer.sheets['Conteos']
+        
+        # Ajuste de ancho de columnas (Estimación rápida basada en longitud de header y primeros registros)
+        # Iterar filas es lento. Mejor usar un ancho fijo razonable o calcular sobre una muestra.
+        # Para optimizar, calculamos max len sobre una muestra de 100 filas si es muy grande.
+        sample_df = df.head(100).astype(str)
         for i, col_name in enumerate(df.columns):
             column_letter = get_column_letter(i + 1)
-            max_len = max(df[col_name].astype(str).map(len).max(), len(col_name)) + 2
-            worksheet.column_dimensions[column_letter].width = max_len
+            # Longitud del header
+            header_len = len(col_name)
+            # Longitud máxima en la muestra
+            max_val_len = sample_df[col_name].map(len).max() if not sample_df.empty else 0
+            # Ancho final
+            final_width = max(header_len, max_val_len) + 2
+            # Capar ancho máximo para no romper Excel visualmente
+            if final_width > 50: final_width = 50
+            
+            worksheet.column_dimensions[column_letter].width = final_width
 
     output.seek(0)
     timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1617,7 +1750,7 @@ async def get_count_stats(username: str = Depends(login_required)):
                     if qty is not None and qty > 0:
                         total_items_with_stock += 1
             
-            # 4. Items con diferencias (CORREGIDO: Solo ítems que se han contado)
+            # 4. Items con diferencias
             query = """
                 SELECT 
                     item_code, 
@@ -1631,8 +1764,10 @@ async def get_count_stats(username: str = Depends(login_required)):
             all_counted_items = await cursor.fetchall()
             counted_qty_map = {item['item_code']: item['total_counted'] for item in all_counted_items}
 
-            # --- CAMBIO AQUÍ: Iteramos solo sobre lo que se ha contado ---
             items_with_differences = 0
+            items_with_positive_differences = 0
+            items_with_negative_differences = 0
+
             for item_code, total_counted in counted_qty_map.items():
                 
                 system_qty_raw = master_qty_map.get(item_code)
@@ -1643,9 +1778,13 @@ async def get_count_stats(username: str = Depends(login_required)):
                     except (ValueError, TypeError):
                         system_qty = 0
                 
-                # Comparamos solo si el item existe en los conteos
                 if total_counted != system_qty:
                     items_with_differences += 1
+                    if total_counted > system_qty:
+                        items_with_positive_differences += 1
+                    else:
+                        items_with_negative_differences += 1
+
 
             # 5. Ubicaciones con stock (contadas, global)
             cursor = await conn.execute(
@@ -1668,6 +1807,8 @@ async def get_count_stats(username: str = Depends(login_required)):
                 "counted_locations": counted_locations,
                 "total_items_counted": total_items_counted,
                 "items_with_differences": items_with_differences,
+                "items_with_positive_differences": items_with_positive_differences,
+                "items_with_negative_differences": items_with_negative_differences,
                 "locations_with_stock": locations_with_stock,
                 "total_locations_with_stock": total_locations_with_stock
             })
@@ -1829,6 +1970,45 @@ def admin_login_required(request: Request):
         return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
     return True
 
+
+@app.post('/admin/reopen_location', name='reopen_location')
+async def reopen_location(request: Request, admin: bool = Depends(admin_login_required)):
+    if not admin:
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
+
+    try:
+        form = await request.form()
+        session_id = form.get('session_id')
+        location_code = form.get('location_code')
+
+        if not session_id or not location_code:
+            query_string = urlencode({'error': 'El ID de sesión y el código de ubicación son obligatorios.'})
+            return RedirectResponse(url=f'/admin/inventory?{query_string}', status_code=status.HTTP_302_FOUND)
+
+        async with aiosqlite.connect(DB_FILE_PATH) as conn:
+            cursor = await conn.execute(
+                "DELETE FROM session_locations WHERE session_id = ? AND location_code = ? AND status = 'closed'",
+                (int(session_id), location_code.strip().upper())
+            )
+            await conn.commit()
+
+        if cursor.rowcount > 0:
+            message = f"Ubicación '{location_code.strip().upper()}' reabierta con éxito para la sesión {session_id}."
+            query_string = urlencode({'message': message})
+        else:
+            error = f"No se encontró una ubicación cerrada que coincida con la sesión {session_id} y la ubicación '{location_code.strip().upper()}'."
+            query_string = urlencode({'error': error})
+
+        return RedirectResponse(url=f'/admin/inventory?{query_string}', status_code=status.HTTP_303_SEE_OTHER)
+
+    except (ValueError, TypeError):
+        query_string = urlencode({'error': 'El ID de sesión debe ser un número válido.'})
+        return RedirectResponse(url=f'/admin/inventory?{query_string}', status_code=status.HTTP_302_FOUND)
+    except Exception as e:
+        query_string = urlencode({'error': f'Error inesperado: {e}'})
+        return RedirectResponse(url=f'/admin/inventory?{query_string}', status_code=status.HTTP_302_FOUND)
+
+
 @app.get('/api/export_recount_list/{stage_number}', name='export_recount_list')
 async def export_recount_list(request: Request, stage_number: int, admin: bool = Depends(admin_login_required)):
     """Exporta la lista de items a recontar para una etapa específica."""
@@ -1885,6 +2065,123 @@ async def export_recount_list(request: Request, stage_number: int, admin: bool =
     )
 
 
+async def get_inventory_summary_stats():
+    """Calcula y devuelve un resumen de estadísticas para el panel de admin de inventario."""
+    summary = {
+        'general': {
+            'total_items_master': 0,
+        },
+        'stages': {}
+    }
+    
+    try:
+        # --- Estadísticas Generales (del maestro de items) ---
+        if master_qty_map:
+            total_items_with_stock = 0
+            for qty in master_qty_map.values():
+                if qty is not None and qty > 0:
+                    total_items_with_stock += 1
+            summary['general']['total_items_master'] = total_items_with_stock
+
+        async with aiosqlite.connect(DB_FILE_PATH) as conn:
+            conn.row_factory = aiosqlite.Row
+
+            # --- Estadísticas por Etapa ---
+            for stage_num in range(1, 5):
+                # Items contados en esta etapa
+                cursor = await conn.execute("""
+                    SELECT 
+                        COUNT(DISTINCT sc.item_code)
+                    FROM stock_counts sc
+                    JOIN count_sessions cs ON sc.session_id = cs.id
+                    WHERE cs.inventory_stage = ?
+                """, (stage_num,))
+                items_counted_row = await cursor.fetchone()
+                items_counted = items_counted_row[0] if items_counted_row else 0
+
+                # Si no se contó nada en esta etapa, podemos saltarla
+                if items_counted == 0:
+                    continue
+
+                # Total de unidades contadas
+                cursor = await conn.execute("""
+                    SELECT SUM(sc.counted_qty)
+                    FROM stock_counts sc
+                    JOIN count_sessions cs ON sc.session_id = cs.id
+                    WHERE cs.inventory_stage = ?
+                """, (stage_num,))
+                total_units_row = await cursor.fetchone()
+                total_units_counted = total_units_row[0] if total_units_row and total_units_row[0] is not None else 0
+                
+                # Calcular diferencias para esta etapa
+                cursor = await conn.execute("""
+                    SELECT sc.item_code, SUM(sc.counted_qty) as total_counted
+                    FROM stock_counts sc
+                    JOIN count_sessions cs ON sc.session_id = cs.id
+                    WHERE cs.inventory_stage = ?
+                    GROUP BY sc.item_code
+                """, (stage_num,))
+                counted_items_map = {row['item_code']: row['total_counted'] for row in await cursor.fetchall()}
+
+                items_with_discrepancy = 0
+                for item_code, total_counted in counted_items_map.items():
+                    system_qty_raw = master_qty_map.get(item_code)
+                    system_qty = 0
+                    if system_qty_raw is not None:
+                        try:
+                            system_qty = int(float(system_qty_raw))
+                        except (ValueError, TypeError):
+                            system_qty = 0
+                    
+                    if total_counted != system_qty:
+                        items_with_discrepancy += 1
+                
+                # Precisión del conteo
+                accuracy = 0
+                if items_counted > 0:
+                    accuracy = ((items_counted - items_with_discrepancy) / items_counted) * 100
+                
+                # NUEVO: Efectividad de Cobertura
+                coverage_effectiveness = 0
+                total_items_master_with_stock = summary['general'].get('total_items_master', 0)
+                if total_items_master_with_stock > 0:
+                    items_correctly_counted = items_counted - items_with_discrepancy
+                    coverage_effectiveness = (items_correctly_counted / total_items_master_with_stock) * 100
+
+                # Guardar estadísticas de la etapa
+                summary['stages'][stage_num] = {
+                    'items_counted': items_counted,
+                    'total_units_counted': total_units_counted,
+                    'items_with_discrepancy': items_with_discrepancy,
+                    'accuracy': f"{accuracy:.2f}%",
+                    'coverage_effectiveness': f"{coverage_effectiveness:.2f}%" # NUEVO
+                }
+
+            # --- Items en lista de reconteo (para etapas futuras) ---
+            for stage_to_check in range(2, 5):
+                cursor = await conn.execute(
+                    "SELECT COUNT(item_code) FROM recount_list WHERE stage_to_count = ?",
+                    (stage_to_check,)
+                )
+                recount_row = await cursor.fetchone()
+                items_in_recount_list = recount_row[0] if recount_row else 0
+                if stage_to_check in summary['stages']:
+                    summary['stages'][stage_to_check]['items_in_recount_list'] = items_in_recount_list
+                elif items_in_recount_list > 0:
+                     # Si la etapa aún no tiene conteos pero ya hay lista de reconteo
+                    summary['stages'][stage_to_check] = { 'items_in_recount_list': items_in_recount_list }
+
+
+    except aiosqlite.Error as e:
+        print(f"Error al calcular estadísticas de inventario: {e}")
+        return None # Retornar None o un dict vacío en caso de error
+    except Exception as e:
+        print(f"Error inesperado al calcular estadísticas: {e}")
+        return None
+
+    return summary
+
+
 @app.get('/admin/inventory', response_class=HTMLResponse, name='admin_inventory')
 async def admin_inventory_get(request: Request, admin: bool = Depends(admin_login_required)):
     if not admin:
@@ -1904,11 +2201,15 @@ async def admin_inventory_get(request: Request, admin: bool = Depends(admin_logi
     message = request.query_params.get('message')
     error = request.query_params.get('error')
     
+    # --- NUEVO: Calcular estadísticas ---
+    summary_stats = await get_inventory_summary_stats()
+
     return templates.TemplateResponse('admin_inventory.html', {
         "request": request, 
         "stage": stage,
         "message": message,
-        "error": error
+        "error": error,
+        "summary": summary_stats # --- NUEVO: Pasar estadísticas a la plantilla ---
     })
 
 @app.post('/admin/inventory/start_stage_1', name='start_inventory_stage_1')
@@ -2024,6 +2325,109 @@ async def finalize_inventory(request: Request, admin: bool = Depends(admin_login
         query_params = urlencode({"error": f"Error de base de datos: {e}"})
         return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
 
+
+@app.get('/admin/inventory/report', name='generate_inventory_report')
+async def generate_inventory_report(request: Request, admin: bool = Depends(admin_login_required)):
+    if not admin:
+        return RedirectResponse(url='/admin/login', status_code=status.HTTP_302_FOUND)
+
+    try:
+        async with async_engine.connect() as conn:
+            # Get all counts from all stages of the current inventory cycle
+            query = """
+                SELECT
+                    sc.item_code,
+                    sc.item_description,
+                    cs.inventory_stage,
+                    sc.counted_qty
+                FROM stock_counts sc
+                JOIN count_sessions cs ON sc.session_id = cs.id
+            """
+            all_counts_df = await conn.run_sync(lambda sync_conn: pd.read_sql_query(query, sync_conn))
+
+        if all_counts_df.empty:
+            query_params = urlencode({"error": "No hay datos de conteo para generar un informe."})
+            return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
+
+        # Agrupar por item y etapa, sumando las cantidades
+        stage_counts = all_counts_df.groupby(['item_code', 'item_description', 'inventory_stage'])['counted_qty'].sum().reset_index()
+
+        # Pivotar la tabla para tener las etapas como columnas
+        pivot_df = stage_counts.pivot_table(
+            index=['item_code', 'item_description'],
+            columns='inventory_stage',
+            values='counted_qty',
+            aggfunc='sum'
+        ).fillna(0)
+
+        # Renombrar columnas a "Conteo Etapa X"
+        pivot_df.columns = [f'Conteo Etapa {int(col)}' for col in pivot_df.columns]
+        
+        # Obtener la cantidad del sistema del master_qty_map
+        system_qtys = pd.Series(master_qty_map, name='Cantidad Sistema').astype('float64').fillna(0)
+        
+        # Unir los datos pivotados con las cantidades del sistema
+        report_df = pivot_df.join(system_qtys, on='item_code').fillna(0)
+        report_df.rename_axis(index={'item_code': 'Item Code', 'item_description': 'Description'}, inplace=True)
+        report_df.reset_index(inplace=True)
+
+        # Determinar la cantidad final contada.
+        # La lógica es: el conteo de la etapa más alta para un item es el que vale.
+        report_df['Cantidad Final Contada'] = 0
+        if 'Conteo Etapa 4' in report_df.columns:
+            report_df['Cantidad Final Contada'] = np.where(report_df['Conteo Etapa 4'] != 0, report_df['Conteo Etapa 4'], report_df['Cantidad Final Contada'])
+        if 'Conteo Etapa 3' in report_df.columns:
+            report_df['Cantidad Final Contada'] = np.where(report_df['Conteo Etapa 3'] != 0, report_df['Conteo Etapa 3'], report_df['Cantidad Final Contada'])
+        if 'Conteo Etapa 2' in report_df.columns:
+            report_df['Cantidad Final Contada'] = np.where(report_df['Conteo Etapa 2'] != 0, report_df['Conteo Etapa 2'], report_df['Cantidad Final Contada'])
+        if 'Conteo Etapa 1' in report_df.columns:
+            report_df['Cantidad Final Contada'] = np.where(report_df['Conteo Etapa 1'] != 0, report_df['Conteo Etapa 1'], report_df['Cantidad Final Contada'])
+        
+        # Si un item se contó en etapa 1 y luego en la 2 (conteo 0), la lógica anterior falla.
+        # La correcta es ir de la etapa más alta a la más baja.
+        final_qty = pd.Series(0, index=report_df.index)
+        for stage in sorted([int(c.split()[-1]) for c in pivot_df.columns], reverse=True):
+            stage_col = f'Conteo Etapa {stage}'
+            final_qty = np.where(final_qty == 0, report_df.get(stage_col, 0), final_qty)
+        report_df['Cantidad Final Contada'] = final_qty
+
+
+        report_df['Diferencia Final'] = report_df['Cantidad Final Contada'] - report_df['Cantidad Sistema']
+
+        # Ordenar columnas
+        cols = ['Item Code', 'Description', 'Cantidad Sistema']
+        stage_cols = sorted([col for col in report_df.columns if 'Conteo Etapa' in col])
+        final_cols = ['Cantidad Final Contada', 'Diferencia Final']
+        report_df = report_df[cols + stage_cols + final_cols]
+
+        # Convertir a enteros
+        for col in report_df.columns:
+            if 'Cantidad' in col or 'Conteo' in col or 'Diferencia' in col:
+                report_df[col] = report_df[col].astype(int)
+
+        # Generar el archivo Excel
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            report_df.to_excel(writer, index=False, sheet_name='InformeFinalInventario')
+            worksheet = writer.sheets['InformeFinalInventario']
+            for i, col_name in enumerate(report_df.columns):
+                column_letter = get_column_letter(i + 1)
+                max_len = max(report_df[col_name].astype(str).map(len).max(), len(col_name)) + 2
+                worksheet.column_dimensions[column_letter].width = max_len
+        
+        output.seek(0)
+        timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"informe_final_inventario_{timestamp_str}.xlsx"
+        return Response(
+            content=output.getvalue(),
+            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+
+    except Exception as e:
+        print(f"Error generando el informe de inventario: {e}")
+        query_params = urlencode({"error": f"No se pudo generar el informe: {str(e)}"})
+        return RedirectResponse(url=f"/admin/inventory?{query_params}", status_code=status.HTTP_302_FOUND)
 
 
 @app.get('/admin/login', response_class=HTMLResponse, name='admin_login_get')

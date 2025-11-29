@@ -52,9 +52,17 @@
 </head>
 
 <body class="bg-gray-100 text-gray-800 flex justify-center px-2 pb-2 pt-24 md:px-4 md:pb-4 md:pt-28">
+    <!-- Overlay que pide girar el dispositivo a modo vertical -->
+    <div id="rotate-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 text-white p-4">
+        <div class="max-w-sm text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-4" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4M12 18v4M4 12H2M22 12h-2M5 5l-1.5-1.5M20 20l1.5 1.5M19 5l1.5-1.5M4 20L2.5 21.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <h2 class="text-xl font-semibold">Gira el dispositivo</h2>
+            <p class="mt-2 text-sm">Para una mejor experiencia, usa esta pantalla en modo vertical (portrait).</p>
+        </div>
+    </div>
     <header class="bg-white shadow-sm w-full fixed top-0 left-0 z-10">
         <div class="container mx-auto max-w-4xl p-4 flex justify-between items-center">
-            <img src="/static/images/logo-clear.png" alt="Logitrack Logo" class="h-6 w-135 object-contain"
+            <img src="/static/images/logo-clear.png" alt="Logix Logo" class="h-6 w-135 object-contain"
                 onerror="this.onerror=null; this.src='https://placehold.co/64x64/fBBF24/1F2937?text=Logo';">
             <a href="/"
                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
@@ -233,7 +241,7 @@
         <div class="bg-white rounded-lg shadow-xl max-w-sm w-full p-6">
             <h3 class="text-xl font-bold text-gray-800 mb-4" id="quantity-modal-item-name"></h3>
             <p class="text-gray-700 mb-4">Ingrese la cantidad alistada:</p>
-            <input type="number" id="quantity-input" inputmode="numeric"
+            <input type="number" id="quantity-input" inputmode="numeric" aria-label="Cantidad alistada" placeholder="0"
                 class="w-full text-center border border-gray-300 rounded-md shadow-sm py-2 text-2xl" />
             <div class="flex justify-end gap-4 mt-6">
                 <button id="cancel-quantity-btn"
@@ -687,5 +695,24 @@
     </script>
 
 </body>
+
+<script>
+    // Detección de orientación: mostrar overlay si está en landscape
+    (function () {
+        const overlay = document.getElementById('rotate-overlay');
+        if (!overlay) return;
+
+        function updateOverlay() {
+            // Mostrar overlay sólo en pantallas pequeñas / táctiles y en landscape
+            const isSmallScreen = window.matchMedia('(max-width: 1024px)').matches || window.matchMedia('(pointer: coarse)').matches;
+            const isLandscape = window.matchMedia('(orientation: landscape)').matches || window.innerWidth > window.innerHeight;
+            if (isSmallScreen && isLandscape) overlay.classList.remove('hidden'); else overlay.classList.add('hidden');
+        }
+
+        window.addEventListener('orientationchange', updateOverlay);
+        window.addEventListener('resize', updateOverlay);
+        updateOverlay();
+    })();
+</script>
 
 </html>
