@@ -263,6 +263,9 @@ async def init_db():
     print("Inicializando y verificando el esquema de la base de datos...")
     try:
         async with aiosqlite.connect(DB_FILE_PATH) as conn:
+            # --- Activar modo WAL para concurrencia (evita "database is locked") ---
+            await conn.execute("PRAGMA journal_mode=WAL;")
+            
             # --- Migración de la tabla de Logs ---
             conn.row_factory = aiosqlite.Row
             cursor = await conn.execute("PRAGMA table_info(logs);")
