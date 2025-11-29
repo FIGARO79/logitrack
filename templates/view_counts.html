@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LogiTrack - Historial de Conteos</title>
+    <title>Logix - Control de Conteos</title>
     <link rel="icon" type="image/svg+xml"
         href="{{ secure_url_for(request, 'static', path='images/gear-wide-connected.svg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -31,8 +31,8 @@
 
 <body class="bg-gray-100">
     <header class="bg-white shadow-sm">
-        <div class="max-w-auto mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <img src="/static/images/logo-clear.png" alt="Logitrack Logo" class="h-16 w-32 object-contain"
+        <div class="max-w-auto mx-auto px-4 sm:px-6 lg:px-8 py-0.5 flex justify-between items-center">
+            <img src="/static/images/logo-clear.png" alt="Logix Logo" class="h-16 w-32 object-contain"
                 onerror="this.onerror=null; this.src='https://placehold.co/64x64/fBBF24/1F2937?text=Logo';">
             <a href="/"
                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
@@ -49,7 +49,7 @@
     <main class="py-10">
         <div class="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-semibold text-gray-900">Historial de Conteos de Stock</h1>
+                <h1 class="text-2xl font-semibold text-gray-900">Control de Conteos</h1>
                 <div class="flex items-center gap-3">
                     <label for="userFilter" class="text-sm text-gray-700">Filtrar por usuario:</label>
                     <select id="userFilter" class="p-2 border rounded">
@@ -58,7 +58,11 @@
                         <option value="{{ u }}">{{ u }}</option>
                         {% endfor %}
                     </select>
-                    <a href="/api/export_counts" id="exportCountsBtn"
+
+                    <!-- Timezone selector removed as per user request -->
+                    <!-- Defaulting to America/Bogota -->
+
+                    <a href="/api/export_counts?tz=America/Bogota" id="exportCountsBtn"
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
                             fill="currentColor">
@@ -71,7 +75,7 @@
                 </div>
             </div>
 
-            <div id="stats-container" class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+            <div id="stats-container" class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
                 <div class="bg-white p-4 rounded-lg shadow text-center">
                     <h3 class="text-sm font-medium text-gray-500">Items con Stock</h3>
                     <p id="stats-total-items" class="text-2xl font-bold text-gray-800">-</p>
@@ -85,6 +89,14 @@
                     <p id="stats-items-with-diff" class="text-2xl font-bold text-red-500">-</p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow text-center">
+                    <h3 class="text-sm font-medium text-gray-500">Items con Dif. Positiva</h3>
+                    <p id="stats-items-with-pos-diff" class="text-2xl font-bold text-blue-600">-</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow text-center">
+                    <h3 class="text-sm font-medium text-gray-500">Items con Dif. Negativa</h3>
+                    <p id="stats-items-with-neg-diff" class="text-2xl font-bold text-red-600">-</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow text-center">
                     <h3 class="text-sm font-medium text-gray-500">Ubicaciones en uso</h3>
                     <p id="stats-total-locations-with-stock" class="text-2xl font-bold text-gray-800">-</p>
                 </div>
@@ -92,7 +104,6 @@
                     <h3 class="text-sm font-medium text-gray-500">Ubicaciones Contadas</h3>
                     <p id="stats-counted-locations" class="text-2xl font-bold text-gray-800">-</p>
                 </div>
-
             </div>
 
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
@@ -144,7 +155,8 @@
                                 <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.session_id }}</td>
                                 <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.username if
                                     count.username is not none else '-' }}</td>
-                                <td class="px-3 py-2 border-b border-gray-200 text-sm">{{ count.timestamp }}</td>
+                                <td class="px-3 py-2 border-b border-gray-200 text-sm"
+                                    data-timestamp="{{ count.timestamp }}">{{ count.timestamp }}</td>
                                 <td class="px-3 py-2 border-b border-gray-200 text-sm font-medium text-gray-800">{{
                                     count.item_code }}</td>
                                 <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.item_description }}</td>
@@ -155,7 +167,7 @@
                                 <td class="px-5 py-2 border-b border-gray-200 text-sm font-bold text-green-600">{{
                                     count.counted_qty }}</td>
                                 <td
-                                    class="px-5 py-2 border-b border-gray-200 text-sm font-bold {% if count.difference is not none and count.difference != 0 %}text-red-600{% else %}text-gray-700{% endif %}">
+                                    class="px-5 py-2 border-b border-gray-200 text-sm font-bold {% if count.difference is not none %}{% if count.difference > 0 %}text-blue-600{% elif count.difference < 0 %}text-red-600{% else %}text-gray-700{% endif %}{% else %}text-gray-700{% endif %}">
                                     {{ count.difference if count.difference is not none else '-' }}
                                 </td>
                                 <td class="px-5 py-2 border-b border-gray-200 text-sm">{{ count.bin_location_system }}
@@ -214,6 +226,8 @@
                     document.getElementById('stats-counted-locations').textContent = stats.counted_locations;
                     document.getElementById('stats-total-counted').textContent = stats.total_items_counted;
                     document.getElementById('stats-items-with-diff').textContent = stats.items_with_differences;
+                    document.getElementById('stats-items-with-pos-diff').textContent = stats.items_with_positive_differences;
+                    document.getElementById('stats-items-with-neg-diff').textContent = stats.items_with_negative_differences;
                     document.getElementById('stats-total-locations-with-stock').textContent = stats.total_locations_with_stock;
 
                 } catch (error) {
@@ -223,11 +237,69 @@
                     document.getElementById('stats-counted-locations').textContent = 'Error';
                     document.getElementById('stats-total-counted').textContent = 'Error';
                     document.getElementById('stats-items-with-diff').textContent = 'Error';
+                    document.getElementById('stats-items-with-pos-diff').textContent = 'Error';
+                    document.getElementById('stats-items-with-neg-diff').textContent = 'Error';
                     document.getElementById('stats-total-locations-with-stock').textContent = 'Error';
                 }
             }
 
             fetchStats();
+
+            // Timezone logic removed. Export button now has hardcoded href.
+
+            // Formatear los timestamps almacenados a la hora local del navegador (robusto)
+            function formatTimestampsToLocal() {
+                const tsCells = Array.from(document.querySelectorAll('td[data-timestamp]'));
+                if (!tsCells.length) return;
+
+                const locale = navigator.language || 'es-ES';
+                // Force Bogota time
+                const dateOpts = { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Bogota' };
+                const timeOpts = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'America/Bogota' };
+
+                tsCells.forEach(td => {
+                    let raw = td.getAttribute('data-timestamp');
+                    if (!raw) return;
+
+                    let d = null;
+
+                    // Estrategia: Asumir que los datos del servidor vienen en UTC si no tienen zona.
+                    // 1. Si ya tiene Z o offset, usarlo tal cual.
+                    if (raw.includes('Z') || raw.match(/[+-]\d{2}:?\d{2}$/)) {
+                        try { d = new Date(raw); } catch (e) { d = null; }
+                    }
+                    // 2. Si es string naive (ej: "2023-10-27 15:00:00"), forzar UTC agregando 'Z'.
+                    else {
+                        // Reemplazar espacio por T y agregar Z
+                        const isoUtc = raw.replace(' ', 'T') + 'Z';
+                        try { d = new Date(isoUtc); } catch (e) { d = null; }
+                    }
+
+                    if (!d || isNaN(d.getTime())) {
+                        // Fallback: intentar parseo directo si lo anterior falló (poco probable si el formato es estándar)
+                        try { d = new Date(raw); } catch (e) { d = null; }
+                    }
+
+                    if (!d || isNaN(d.getTime())) {
+                        td.title = raw;
+                        return;
+                    }
+
+                    // Mostrar en formato 'DD/MM/YYYY, HH:MM:SS' en hora de BOGOTA
+                    try {
+                        const datePart = d.toLocaleDateString(locale, dateOpts);
+                        const timePart = d.toLocaleTimeString(locale, timeOpts);
+                        td.textContent = `${datePart}, ${timePart}`;
+                        td.title = raw + " (UTC)"; // Tooltip informativo
+                    } catch (e) {
+                        console.error("Error formatting date", e);
+                        td.textContent = raw;
+                    }
+                });
+            }
+
+            // Ejecutar formateo al cargar
+            formatTimestampsToLocal();
         });
     </script>
 </body>
