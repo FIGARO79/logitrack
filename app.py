@@ -1012,7 +1012,7 @@ async def save_count(data: StockCount, username: str = Depends(login_required)):
             # 3. (Original) Insertar el conteo
             counted_qty = int(data.counted_qty)
             # Usar timestamp enviado por el cliente si está presente; si no, usar hora del servidor
-            timestamp_to_store = data.timestamp if (hasattr(data, 'timestamp') and data.timestamp) else datetime.datetime.now().isoformat(timespec='seconds')
+            timestamp_to_store = data.timestamp if data.timestamp else datetime.datetime.now().isoformat(timespec='seconds')
             await conn.execute(
                 '''
                 INSERT INTO stock_counts (session_id, timestamp, item_code, item_description, counted_qty, counted_location, bin_location_system, username)
