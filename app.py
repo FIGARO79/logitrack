@@ -1646,18 +1646,18 @@ async def export_counts(tz: Optional[str] = None, username: str = Depends(login_
     # 4. Procesar Timestamps (Vectorizado)
     if tz:
         try:
+            # Guardar original para fallback
+            original_ts = df['timestamp'].copy()
+            
             # Convertir a datetime (asumiendo UTC si son naive, o ajustando)
-            # La BD guarda strings ISO. pd.to_datetime es inteligente.
-            df['timestamp_dt'] = pd.to_datetime(df['timestamp'], utc=True, errors='coerce')
+            df['timestamp_dt'] = pd.to_datetime(df['timestamp'], utc=True, errors='coerce', format='mixed')
             
             # Convertir a la zona horaria deseada
-            df['timestamp'] = df['timestamp_dt'].dt.tz_convert(tz).dt.strftime("%Y-%m-%d %H:%M:%S")
+            converted_ts = df['timestamp_dt'].dt.tz_convert(tz).dt.strftime("%Y-%m-%d %H:%M:%S")
             
-            # Rellenar NaT (errores de parseo) con el string original
-            mask_nat = df['timestamp'].isna()
-            if mask_nat.any():
-                 # Fallback para los que fallaron (poco probable si son ISO generados por app)
-                 pass 
+            # Usar el valor convertido donde sea válido, sino mantener el original
+            df['timestamp'] = converted_ts.fillna(original_ts)
+            
         except Exception as e:
             print(f"Error vectorizing timezone conversion: {e}")
             # Fallback silencioso: se queda con el string original
