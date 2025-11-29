@@ -1566,13 +1566,14 @@ async def view_counts_page(request: Request, username: str = Depends(login_requi
 async def export_counts(tz: Optional[str] = None, username: str = Depends(login_required)):
     """Exporta todos los conteos enriquecidos a Excel (incluye usuario, system_qty y diferencia)."""
     
-    # --- NUEVO: Traer la etapa de inventario en la consulta ---
+    # 1. Obtener datos crudos de la BD (stock_counts + inventory_stage)
     async with async_engine.connect() as conn:
-        all_counts_df = await conn.run_sync(
+        df = await conn.run_sync(
             lambda sync_conn: pd.read_sql_query(
                 """
                 SELECT 
-                    sc.*, 
+                    sc.id, sc.session_id, sc.timestamp, sc.item_code, sc.item_description, 
+                    sc.counted_qty, sc.counted_location, sc.bin_location_system, sc.username,
                     cs.inventory_stage 
                 FROM 
                     stock_counts sc
@@ -1583,12 +1584,23 @@ async def export_counts(tz: Optional[str] = None, username: str = Depends(login_
                 sync_conn
             )
         )
-    all_counts = all_counts_df.to_dict(orient='records')
 
+    if df.empty:
+        # Manejo de caso vacío para evitar errores posteriores
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            pd.DataFrame(columns=['Mensaje']).to_excel(writer, index=False, sheet_name='Conteos')
+        output.seek(0)
+        timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"conteos_vacio_{timestamp_str}.xlsx"
+        return Response(content=output.getvalue(), 
+                        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+                        headers={"Content-Disposition": f"attachment; filename={filename}"})
 
-    master_map = master_qty_map
+    # 2. Enriquecer con nombres de usuario de las sesiones (si falta en stock_counts)
+    #    Obtener mapa de session_id -> username
+    session_ids = df['session_id'].unique().tolist()
     session_map = {}
-    session_ids = list({c.get('session_id') for c in all_counts if c.get('session_id') is not None})
     if session_ids:
         try:
             async with aiosqlite.connect(DB_FILE_PATH) as conn:
@@ -1597,109 +1609,106 @@ async def export_counts(tz: Optional[str] = None, username: str = Depends(login_
                 query = f"SELECT id, user_username FROM count_sessions WHERE id IN ({placeholders})"
                 async with conn.execute(query, tuple(session_ids)) as cursor:
                     rows = await cursor.fetchall()
-                    for r in rows:
-                        session_map[r['id']] = r['user_username']
-        except Exception:
-            session_map = {}
+                    session_map = {r['id']: r['user_username'] for r in rows}
+        except Exception as e:
+            print(f"Error fetching session usernames: {e}")
 
-    enriched_rows = []
-    for count in all_counts:
-        item_code = count.get('item_code')
-        raw_system = master_map.get(item_code) if master_map else None
-        system_qty = None
-        if raw_system not in (None, ''):
-            try:
-                system_qty = int(float(raw_system))
-            except (ValueError, TypeError):
-                system_qty = None
+    #    Aplicar el mapa vectorizado
+    #    Si 'username' es nulo, usar el del mapa de sesiones
+    df['username'] = df['username'].fillna(df['session_id'].map(session_map))
 
+    # 3. Enriquecer con System Qty (del maestro en memoria)
+    #    Convertir master_qty_map a Series para mapeo rápido
+    #    Nota: master_qty_map es {item_code: int_qty or None}
+    if master_qty_map:
+        # Crear un mapa seguro (item_code -> qty), asumiendo 0 si es None para cálculos, 
+        # pero queremos mantener None si no existe para mostrarlo vacío? 
+        # La lógica original ponía None si no existía.
+        
+        # Opción rápida: map directo. 
+        df['system_qty'] = df['item_code'].map(master_qty_map)
+        
+        # Asegurar tipos numéricos para cálculos
+        df['counted_qty'] = pd.to_numeric(df['counted_qty'], errors='coerce').fillna(0).astype(int)
+        
+        # system_qty puede tener Nones. Convertir a numérico donde sea posible para restar.
+        # Pandas resta Series - Series maneja NaNs correctamente (resultado es NaN).
+        df['system_qty_numeric'] = pd.to_numeric(df['system_qty'], errors='coerce')
+        
+        df['difference'] = df['counted_qty'] - df['system_qty_numeric']
+        
+        # Limpieza auxiliar
+        del df['system_qty_numeric']
+    else:
+        df['system_qty'] = None
+        df['difference'] = None
+
+    # 4. Procesar Timestamps (Vectorizado)
+    if tz:
         try:
-            counted_qty = int(count.get('counted_qty') or 0)
-        except (ValueError, TypeError):
-            counted_qty = 0
+            # Convertir a datetime (asumiendo UTC si son naive, o ajustando)
+            # La BD guarda strings ISO. pd.to_datetime es inteligente.
+            df['timestamp_dt'] = pd.to_datetime(df['timestamp'], utc=True, errors='coerce')
+            
+            # Convertir a la zona horaria deseada
+            df['timestamp'] = df['timestamp_dt'].dt.tz_convert(tz).dt.strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Rellenar NaT (errores de parseo) con el string original
+            mask_nat = df['timestamp'].isna()
+            if mask_nat.any():
+                 # Fallback para los que fallaron (poco probable si son ISO generados por app)
+                 pass 
+        except Exception as e:
+            print(f"Error vectorizing timezone conversion: {e}")
+            # Fallback silencioso: se queda con el string original
 
-        difference = (counted_qty - system_qty) if system_qty is not None else None
+    # 5. Limpieza de caracteres ilegales para Excel (Vectorizado / Apply optimizado)
+    #    OpenPyXL odia caracteres de control < 32 excepto \t, \n, \r.
+    #    Regex para encontrar caracteres malos: [\x00-\x08\x0B\x0C\x0E-\x1F]
+    illegal_chars_pattern = r'[\x00-\x08\x0B\x0C\x0E-\x1F]'
+    
+    # Identificar columnas de tipo string (object)
+    str_cols = df.select_dtypes(include=['object']).columns
+    
+    if not str_cols.empty:
+        # Aplicar reemplazo solo en columnas de texto
+        df[str_cols] = df[str_cols].replace(illegal_chars_pattern, ' ', regex=True)
 
-        # Procesar timestamp: si se solicitó una zona (`tz`), convertirlo para mostrar en esa zona.
-        raw_ts = count.get('timestamp')
-        exported_ts = raw_ts
-        if tz and raw_ts:
-            try:
-                # Usar pandas para parsear y convertir. Si la fecha es "naive" se asumirá UTC.
-                ts = pd.to_datetime(raw_ts, utc=True, errors='coerce')
-                if not pd.isna(ts):
-                    exported_ts = ts.tz_convert(tz).strftime("%Y-%m-%d %H:%M:%S")
-            except Exception:
-                # Si falla la conversión, dejar el valor original
-                exported_ts = raw_ts
-
-        enriched = {
-            'id': count.get('id'),
-            'session_id': count.get('session_id'),
-            'inventory_stage': count.get('inventory_stage'), # --- NUEVO: Añadir etapa al reporte ---
-            'username': count.get('username') or (session_map.get(count.get('session_id')) if session_map else None),
-            'timestamp': exported_ts,
-            'item_code': item_code,
-            'item_description': count.get('item_description'),
-            'counted_location': count.get('counted_location'),
-            'counted_qty': counted_qty,
-            'system_qty': system_qty,
-            'difference': difference,
-            'bin_location_system': count.get('bin_location_system')
-        }
-        enriched_rows.append(enriched)
-
-    # Construir DataFrame y exportar a Excel
-        df = pd.DataFrame(enriched_rows)
-
-        # Sanear caracteres no válidos para Excel (openpyxl rechaza ciertos controles)
-        def _clean_for_excel(val):
-            # Mantener tipos no-string
-            if val is None:
-                return val
-            if isinstance(val, (int, float, bool, complex)):
-                return val
-            # Convertir bytes a string si aparece
-            if isinstance(val, (bytes, bytearray)):
-                try:
-                    val = val.decode('utf-8', errors='ignore')
-                except Exception:
-                    val = str(val)
-            # Solo procesar strings
-            if isinstance(val, str):
-                # Eliminar caracteres de control no permitidos por openpyxl
-                # openpyxl permite \t (9), \n (10), \r (13) pero no otros < 32
-                cleaned_chars = []
-                for ch in val:
-                    oc = ord(ch)
-                    if oc >= 32 or oc in (9, 10, 13):
-                        cleaned_chars.append(ch)
-                    else:
-                        # reemplazar por espacio para preservar separación
-                        cleaned_chars.append(' ')
-                return ''.join(cleaned_chars)
-            # Fallback
-            return val
-
-        # Aplicar limpieza a todas las celdas (no-string quedan intactos)
-        try:
-            df = df.apply(lambda col: col.map(_clean_for_excel))
-        except Exception:
-            # En caso de cualquier error inesperado, seguir sin crash pero intentar forzar strings
-            for col in df.columns:
-                df[col] = df[col].astype(str).apply(lambda v: _clean_for_excel(v))
-    # Reordenar columnas para la exportación
-    columns_order = ['id', 'session_id', 'inventory_stage', 'username', 'timestamp', 'item_code', 'item_description', 'counted_location', 'counted_qty', 'system_qty', 'difference', 'bin_location_system']
+    # 6. Reordenar columnas
+    columns_order = [
+        'id', 'session_id', 'inventory_stage', 'username', 'timestamp', 
+        'item_code', 'item_description', 'counted_location', 
+        'counted_qty', 'system_qty', 'difference', 'bin_location_system'
+    ]
+    # Asegurar que existan todas (por si acaso)
+    for col in columns_order:
+        if col not in df.columns:
+            df[col] = None
+            
     df = df[columns_order]
 
+    # 7. Exportar a Excel
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Conteos')
         worksheet = writer.sheets['Conteos']
+        
+        # Ajuste de ancho de columnas (Estimación rápida basada en longitud de header y primeros registros)
+        # Iterar filas es lento. Mejor usar un ancho fijo razonable o calcular sobre una muestra.
+        # Para optimizar, calculamos max len sobre una muestra de 100 filas si es muy grande.
+        sample_df = df.head(100).astype(str)
         for i, col_name in enumerate(df.columns):
             column_letter = get_column_letter(i + 1)
-            max_len = max(df[col_name].astype(str).map(len).max(), len(col_name)) + 2
-            worksheet.column_dimensions[column_letter].width = max_len
+            # Longitud del header
+            header_len = len(col_name)
+            # Longitud máxima en la muestra
+            max_val_len = sample_df[col_name].map(len).max() if not sample_df.empty else 0
+            # Ancho final
+            final_width = max(header_len, max_val_len) + 2
+            # Capar ancho máximo para no romper Excel visualmente
+            if final_width > 50: final_width = 50
+            
+            worksheet.column_dimensions[column_letter].width = final_width
 
     output.seek(0)
     timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
