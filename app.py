@@ -644,6 +644,28 @@ async def close_location(data: CloseLocationRequest, username: str = Depends(log
         if not await cursor.fetchone():
             raise HTTPException(status_code=403, detail="La sesión no es válida o no te pertenece.")
 
+        # Obtener la etapa de la sesión actual
+        cursor_stage = await conn.execute("SELECT inventory_stage FROM count_sessions WHERE id = ?", (data.session_id,))
+        row_stage = await cursor_stage.fetchone()
+        if not row_stage:
+             raise HTTPException(status_code=404, detail="Sesión no encontrada.")
+        current_stage = row_stage['inventory_stage']
+
+        # Verificar si la ubicación ya está cerrada GLOBALMENTE para esta etapa
+        cursor_check = await conn.execute(
+            '''
+            SELECT 1 
+            FROM session_locations sl
+            JOIN count_sessions cs ON sl.session_id = cs.id
+            WHERE cs.inventory_stage = ? 
+              AND sl.location_code = ? 
+              AND sl.status = 'closed'
+            ''',
+            (current_stage, data.location_code)
+        )
+        if await cursor_check.fetchone():
+             return {"message": f"La ubicación {data.location_code} ya se encuentra cerrada globalmente."}
+
         # Insertar o actualizar el estado de la ubicación
         await conn.execute(
             """
@@ -653,7 +675,7 @@ async def close_location(data: CloseLocationRequest, username: str = Depends(log
             (data.session_id, data.location_code, datetime.datetime.now().isoformat(timespec='seconds'))
         )
         await conn.commit()
-        return {"message": f"Ubicación {data.location_code} cerrada para la sesión {data.session_id}."}
+        return {"message": f"Ubicación {data.location_code} cerrada globalmente para la etapa {current_stage}."}
 
 @app.get("/api/sessions/{session_id}/locations")
 async def get_session_locations(session_id: int, username: str = Depends(login_required)):
@@ -667,8 +689,22 @@ async def get_session_locations(session_id: int, username: str = Depends(login_r
         if not await cursor.fetchone():
             raise HTTPException(status_code=403, detail="No tienes permiso para ver esta sesión.")
 
+        # Obtener etapa de la sesión
+        cursor_stage = await conn.execute("SELECT inventory_stage FROM count_sessions WHERE id = ?", (session_id,))
+        row_stage = await cursor_stage.fetchone()
+        if not row_stage:
+             raise HTTPException(status_code=404, detail="Sesión no encontrada.")
+        current_stage = row_stage['inventory_stage']
+
+        # Obtener TODAS las ubicaciones cerradas en esta etapa (Global)
         cursor = await conn.execute(
-            "SELECT location_code, status FROM session_locations WHERE session_id = ?", (session_id,)
+            '''
+            SELECT DISTINCT sl.location_code, sl.status 
+            FROM session_locations sl
+            JOIN count_sessions cs ON sl.session_id = cs.id
+            WHERE cs.inventory_stage = ? AND sl.status = 'closed'
+            ''', 
+            (current_stage,)
         )
         locations = await cursor.fetchall()
         return [dict(row) for row in locations]
@@ -903,7 +939,6 @@ async def get_item_details_for_label(item_code: str, username: str = Depends(log
     else:
         raise HTTPException(status_code=404, detail="Artículo no encontrado")
 
-
 @app.get('/api/get_item_for_counting/{item_code}')
 async def get_item_for_counting(item_code: str, username: str = Depends(login_required)):
     
@@ -1000,14 +1035,22 @@ async def save_count(data: StockCount, username: str = Depends(login_required)):
                     raise HTTPException(status_code=400, detail=f"Item no requerido. Este item no está en la lista de reconteo (Etapa {current_stage}).")
             # --- FIN NUEVA VALIDACIÓN ---
 
-            # 2. (Original) Verificar que la ubicación no esté cerrada para esta sesión
+            # 2. Verificar que la ubicación no esté cerrada GLOBALMENTE para esta etapa
             cursor_loc = await conn.execute(
-                "SELECT status FROM session_locations WHERE session_id = ? AND location_code = ?",
-                (data.session_id, data.counted_location)
+                '''
+                SELECT sl.status 
+                FROM session_locations sl
+                JOIN count_sessions cs ON sl.session_id = cs.id
+                WHERE cs.inventory_stage = ? 
+                  AND sl.location_code = ? 
+                  AND sl.status = 'closed'
+                LIMIT 1
+                ''',
+                (current_stage, data.counted_location)
             )
             location_status = await cursor_loc.fetchone()
-            if location_status and location_status['status'] == 'closed':
-                raise HTTPException(status_code=400, detail=f"La ubicación {data.counted_location} ya está cerrada y no se puede modificar.")
+            if location_status:
+                raise HTTPException(status_code=400, detail=f"La ubicación {data.counted_location} ya está cerrada por otro usuario y no se puede modificar.")
 
             # 3. (Original) Insertar el conteo
             counted_qty = int(data.counted_qty)
@@ -1023,7 +1066,6 @@ async def save_count(data: StockCount, username: str = Depends(login_required)):
                     data.description, counted_qty, data.counted_location, data.bin_location_system, username
                 )
             )
-            
             # (Quitamos la lógica de UPDATE recount_list, eso lo hará el admin al cerrar la etapa)
             
             await conn.commit()
