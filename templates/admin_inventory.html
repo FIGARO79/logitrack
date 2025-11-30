@@ -73,7 +73,8 @@
                         <h3 class="font-bold text-lg">Etapa 2: Primer Recuento de Diferencias</h3>
                         <p class="text-sm text-gray-600 mb-3">Calcula las diferencias de la Etapa 1 y genera una lista
                             de reconteo. Solo los items con discrepancias podrán ser contados.</p>
-                        <form action="{{ secure_url_for(request, 'advance_inventory_stage', next_stage=2) }}" method="post"
+                        <form action="{{ secure_url_for(request, 'advance_inventory_stage', next_stage=2) }}"
+                            method="post"
                             onsubmit="return confirm('¿Estás seguro de que quieres avanzar a la Etapa 2? Se calcularán las diferencias y se creará la lista de reconteo.');">
                             <button type="submit"
                                 class="w-full bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
@@ -93,7 +94,8 @@
                         <h3 class="font-bold text-lg">Etapa 3: Segundo Recuento de Diferencias</h3>
                         <p class="text-sm text-gray-600 mb-3">Calcula las diferencias de la Etapa 2 y genera una nueva
                             lista de reconteo para los items que aún presentan discrepancias.</p>
-                        <form action="{{ secure_url_for(request, 'advance_inventory_stage', next_stage=3) }}" method="post"
+                        <form action="{{ secure_url_for(request, 'advance_inventory_stage', next_stage=3) }}"
+                            method="post"
                             onsubmit="return confirm('¿Estás seguro de que quieres avanzar a la Etapa 3?');">
                             <button type="submit"
                                 class="w-full bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
@@ -113,7 +115,8 @@
                         <h3 class="font-bold text-lg">Etapa 4: Conteo Definitivo</h3>
                         <p class="text-sm text-gray-600 mb-3">Realiza un último conteo de las diferencias restantes. El
                             resultado de este conteo será considerado final.</p>
-                        <form action="{{ secure_url_for(request, 'advance_inventory_stage', next_stage=4) }}" method="post"
+                        <form action="{{ secure_url_for(request, 'advance_inventory_stage', next_stage=4) }}"
+                            method="post"
                             onsubmit="return confirm('¿Estás seguro de que quieres avanzar a la Etapa 4 (Conteo Final)?');">
                             <button type="submit"
                                 class="w-full bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
@@ -132,11 +135,11 @@
                         <h3 class="font-bold text-lg text-green-800">Finalizar Ciclo de Inventario</h3>
                         <p class="text-sm text-gray-600 mb-3">Marca el ciclo de inventario como completado. Esto
                             permitirá iniciar un nuevo ciclo en el futuro.</p>
-                        
+
                         {% if stage.value == '4' %}
                         <a href="{{ secure_url_for(request, 'generate_inventory_report') }}"
-                           class="w-full block text-center bg-teal-600 hover:bg-teal-800 text-white font-bold py-2 px-4 rounded mb-3">
-                           Generar Informe de Conteos
+                            class="w-full block text-center bg-teal-600 hover:bg-teal-800 text-white font-bold py-2 px-4 rounded mb-3">
+                            Generar Informe de Conteos
                         </a>
                         {% endif %}
 
@@ -152,122 +155,90 @@
                 </div>
             </div>
 
-            <div>
-                <div class="mb-8">
-                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Herramientas Administrativas</h2>
-                    <div class="p-4 border rounded-lg bg-yellow-50">
-                        <h3 class="font-bold text-lg text-yellow-800">Reabrir Ubicación Cerrada</h3>
-                        <p class="text-sm text-gray-600 mb-3">Si una ubicación fue cerrada por error en una sesión, puedes reabrirla aquí para permitir nuevos conteos.</p>
-                        <form action="{{ secure_url_for(request, 'reopen_location') }}" method="post" onsubmit="return confirm('¿Estás seguro de reabrir esta ubicación?');">
-                            <div class="space-y-3">
-                                <div>
-                                    <label for="session_id" class="block text-sm font-medium text-gray-700">ID de Sesión:</label>
-                                    <input type="number" name="session_id" id="session_id" required
-                                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500">
-                                </div>
-                                <div>
-                                    <label for="location_code" class="block text-sm font-medium text-gray-700">Código de Ubicación:</label>
-                                    <input type="text" name="location_code" id="location_code" required
-                                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                                           oninput="this.value = this.value.toUpperCase()">
-                                </div>
-                                <button type="submit"
-                                        class="w-full bg-yellow-600 hover:bg-yellow-800 text-white font-bold py-2 px-4 rounded">
-                                    Reabrir Ubicación
-                                </button>
-                            </div>
-                        </form>
+
+
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Resumen del Inventario</h2>
+            <div class="p-4 border rounded-lg bg-gray-50 space-y-6">
+                {% if summary and summary.general %}
+                <div>
+                    <h3 class="font-semibold text-lg text-gray-800 border-b pb-2 mb-3">Resumen General</h3>
+                    <div class="flex justify-between items-center text-gray-700">
+                        <span>Total de Ítems en Maestro:</span>
+                        <span class="font-bold text-lg">{{ summary.general.total_items_master }}</span>
                     </div>
                 </div>
 
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">Resumen del Inventario</h2>
-                <div class="p-4 border rounded-lg bg-gray-50 space-y-6">
-                    {% if summary and summary.general %}
-                    <div>
-                        <h3 class="font-semibold text-lg text-gray-800 border-b pb-2 mb-3">Resumen General</h3>
-                        <div class="flex justify-between items-center text-gray-700">
-                            <span>Total de Ítems en Maestro:</span>
-                            <span class="font-bold text-lg">{{ summary.general.total_items_master }}</span>
-                        </div>
-                    </div>
-
-                    {% if summary.stages %}
-                    <div>
-                        <h3 class="font-semibold text-lg text-gray-800 border-b pb-2 mb-3">Resultados por Etapa</h3>
-                        <div class="space-y-4">
-                            {% for stage_num in range(1, 5) %}
-                                {% if stage_num in summary.stages %}
-                                <div class="p-3 border rounded-md bg-white">
-                                    <p class="font-bold text-md text-blue-700 mb-2">Etapa {{ stage_num }}</p>
-                                    <ul class="text-sm space-y-1 text-gray-600">
-                                        {% if 'items_counted' in summary.stages[stage_num] %}
-                                        <li class="flex justify-between">
-                                            <span>Ítems Contados:</span>
-                                            <span class="font-medium">{{ summary.stages[stage_num].items_counted }}</span>
-                                        </li>
-                                        {% endif %}
-                                        {% if 'total_units_counted' in summary.stages[stage_num] %}
-                                        <li class="flex justify-between">
-                                            <span>Unidades Totales Contadas:</span>
-                                            <span class="font-medium">{{ summary.stages[stage_num].total_units_counted }}</span>
-                                        </li>
-                                        {% endif %}
-                                        {% if 'items_with_discrepancy' in summary.stages[stage_num] %}
-                                        <li class="flex justify-between">
-                                            <span>Ítems con Diferencia:</span>
-                                            <span class="font-medium text-red-600">{{ summary.stages[stage_num].items_with_discrepancy }}</span>
-                                        </li>
-                                        {% endif %}
-                                        {% if 'accuracy' in summary.stages[stage_num] %}
-                                        <li class="flex justify-between">
-                                            <span>Precisión de Conteo:</span>
-                                            <span class="font-medium {% if summary.stages[stage_num].items_with_discrepancy > 0 %}text-yellow-600{% else %}text-green-600{% endif %}">{{ summary.stages[stage_num].accuracy }}</span>
-                                        </li>
-                                        {% endif %}
-                                        {% if 'coverage_effectiveness' in summary.stages[stage_num] %}
-                                        <li class="flex justify-between">
-                                            <span>Efectividad de Cobertura:</span>
-                                            <span class="font-medium text-blue-600">{{ summary.stages[stage_num].coverage_effectiveness }}</span>
-                                        </li>
-                                        {% endif %}
-                                        {% if 'items_in_recount_list' in summary.stages[stage_num] %}
-                                        <li class="flex justify-between mt-2 pt-2 border-t">
-                                            <span>Ítems para Reconteo (Etapa {{ stage_num + 1 }}):</span>
-                                            <span class="font-medium">{{ summary.stages[stage_num].items_in_recount_list }}</span>
-                                        </li>
-                                        {% endif %}
-                                    </ul>
-                                </div>
+                {% if summary.stages %}
+                <div>
+                    <h3 class="font-semibold text-lg text-gray-800 border-b pb-2 mb-3">Resultados por Etapa</h3>
+                    <div class="space-y-4">
+                        {% for stage_num in range(1, 5) %}
+                        {% if stage_num in summary.stages %}
+                        <div class="p-3 border rounded-md bg-white">
+                            <p class="font-bold text-md text-blue-700 mb-2">Etapa {{ stage_num }}</p>
+                            <ul class="text-sm space-y-1 text-gray-600">
+                                {% if 'items_counted' in summary.stages[stage_num] %}
+                                <li class="flex justify-between">
+                                    <span>Ítems Contados:</span>
+                                    <span class="font-medium">{{ summary.stages[stage_num].items_counted }}</span>
+                                </li>
                                 {% endif %}
-                            {% endfor %}
+                                {% if 'total_units_counted' in summary.stages[stage_num] %}
+                                <li class="flex justify-between">
+                                    <span>Unidades Totales Contadas:</span>
+                                    <span class="font-medium">{{ summary.stages[stage_num].total_units_counted }}</span>
+                                </li>
+                                {% endif %}
+                                {% if 'items_with_discrepancy' in summary.stages[stage_num] %}
+                                <li class="flex justify-between">
+                                    <span>Ítems con Diferencia:</span>
+                                    <span class="font-medium text-red-600">{{
+                                        summary.stages[stage_num].items_with_discrepancy }}</span>
+                                </li>
+                                {% endif %}
+                                {% if 'accuracy' in summary.stages[stage_num] %}
+                                <li class="flex justify-between">
+                                    <span>Precisión de Conteo:</span>
+                                    <span
+                                        class="font-medium {% if summary.stages[stage_num].items_with_discrepancy > 0 %}text-yellow-600{% else %}text-green-600{% endif %}">{{
+                                        summary.stages[stage_num].accuracy }}</span>
+                                </li>
+                                {% endif %}
+                                {% if 'coverage_effectiveness' in summary.stages[stage_num] %}
+                                <li class="flex justify-between">
+                                    <span>Efectividad de Cobertura:</span>
+                                    <span class="font-medium text-blue-600">{{
+                                        summary.stages[stage_num].coverage_effectiveness }}</span>
+                                </li>
+                                {% endif %}
+                                {% if 'items_in_recount_list' in summary.stages[stage_num] %}
+                                <li class="flex justify-between mt-2 pt-2 border-t">
+                                    <span>Ítems para Reconteo (Etapa {{ stage_num + 1 }}):</span>
+                                    <span class="font-medium">{{ summary.stages[stage_num].items_in_recount_list
+                                        }}</span>
+                                </li>
+                                {% endif %}
+                            </ul>
                         </div>
+                        {% endif %}
+                        {% endfor %}
                     </div>
-                    {% endif %}
-                {% else %}
-                    <p class="text-gray-600">No hay datos de inventario para mostrar. Inicie un nuevo ciclo para ver las estadísticas.</p>
-                {% endif %}
                 </div>
+                {% endif %}
+                {% else %}
+                <p class="text-gray-600">No hay datos de inventario para mostrar. Inicie un nuevo ciclo para ver las
+                    estadísticas.</p>
+                {% endif %}
             </div>
         </div>
+    </div>
 
-        <div class="mt-8 border-t pt-6">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Datos y Reportes</h2>
-            <div class="flex space-x-4">
-                <a href="{{ secure_url_for(request, 'manage_counts_page') }}"
-                   class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
-                   Gestionar y Editar Conteos Individuales
-                </a>
-                <a href="{{ secure_url_for(request, 'view_counts_page') }}"
-                   class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
-                   Ver Vista Agrupada de Conteos
-                </a>
-            </div>
-        </div>
 
-        <div class="mt-8 border-t pt-4">
-            <a href="{{ secure_url_for(request, 'home_page') }}" class="text-blue-600 hover:underline">&larr; Volver a
-                la aplicación</a>
-        </div>
+
+    <div class="mt-8 border-t pt-4">
+        <a href="{{ secure_url_for(request, 'home_page') }}" class="text-blue-600 hover:underline">&larr; Volver a
+            la aplicación</a>
+    </div>
     </div>
 </body>
 
