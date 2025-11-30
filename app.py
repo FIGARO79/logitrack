@@ -1721,7 +1721,7 @@ async def export_counts(tz: Optional[str] = None, username: str = Depends(login_
 
     # 6. Reordenar columnas
     columns_order = [
-        'id', 'session_id', 'inventory_stage', 'username', 'timestamp', 
+        'session_id', 'inventory_stage', 'username', 'timestamp', 
         'item_code', 'item_description', 'counted_location', 
         'counted_qty', 'system_qty', 'difference', 'bin_location_system'
     ]
