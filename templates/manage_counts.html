@@ -144,15 +144,15 @@
             </div>
 
             <div class="bg-white shadow-xl rounded-xl overflow-hidden card-shadow border border-gray-200">
-                <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+                <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-1.5 border-b border-gray-200">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600 mr-2" fill="none"
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600 mr-2" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
-                            <h2 class="text-lg font-bold text-gray-800">Tabla de Conteos</h2>
+                            <h2 class="text-base font-bold text-gray-800">Tabla de Conteos</h2>
                         </div>
                         <span class="badge bg-gray-800 text-white">{{ counts|length if counts else 0 }} registros</span>
                     </div>
@@ -194,29 +194,29 @@
                             {% if counts %}
                             {% for count in counts %}
                             <tr class="hover:bg-gray-50 transition-all duration-150">
-                                <td class="px-4 py-3 border-b border-gray-200 text-sm font-semibold text-gray-700">
+                                <td class="px-4 py-2 border-b border-gray-200 text-sm font-semibold text-gray-700">
                                     <span class="badge bg-gray-200 text-gray-800">{{ count.id }}</span>
                                 </td>
-                                <td class="px-3 py-3 border-b border-gray-200 text-sm">
+                                <td class="px-3 py-2 border-b border-gray-200 text-sm">
                                     <span class="badge bg-blue-100 text-blue-800">{{ count.session_id }}</span>
                                 </td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm font-medium text-gray-700">
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm font-medium text-gray-700">
                                     {{ count.username if count.username is not none else '-' }}
                                 </td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-xs text-gray-600">{{ count.timestamp
+                                <td class="px-5 py-2 border-b border-gray-200 text-xs text-gray-600">{{ count.timestamp
                                     }}</td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm font-bold text-gray-900">
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm font-bold text-gray-900">
                                     {{ count.item_code }}
                                 </td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm text-gray-600">{{
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm text-gray-600">{{
                                     count.item_description }}</td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm">
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm">
                                     <span class="badge bg-blue-500 text-white">{{ count.counted_location }}</span>
                                 </td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm">
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm">
                                     <span class="badge bg-green-500 text-white text-base">{{ count.counted_qty }}</span>
                                 </td>
-                                <td class="px-4 py-3 border-b border-gray-200 text-sm">
+                                <td class="px-4 py-2 border-b border-gray-200 text-sm">
                                     <div class="flex items-center justify-center space-x-3">
                                         <a href="/edit_count/{{ count.id }}"
                                             class="action-btn text-indigo-600 hover:text-indigo-900 p-1.5 rounded-lg hover:bg-indigo-50"
