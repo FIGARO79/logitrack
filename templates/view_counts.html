@@ -69,12 +69,12 @@
 
 <body class="bg-gray-100">
     <header class="bg-white shadow-md border-b-2 border-gray-200">
-        <div class="max-w-auto mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-            <img src="/static/images/logo-clear.png" alt="Logix Logo" class="h-16 w-32 object-contain"
+        <div class="max-w-auto mx-auto px-4 sm:px-6 lg:px-8 py-1 flex justify-between items-center">
+            <img src="/static/images/logo-clear.png" alt="Logix Logo" class="h-12 w-24 object-contain"
                 onerror="this.onerror=null; this.src='https://placehold.co/64x64/fBBF24/1F2937?text=Logo';">
             <a href="/"
-                class="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-semibold rounded-lg shadow-md text-white bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-semibold rounded-lg shadow-md text-white bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
                         d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
                         clip-rule="evenodd" />
@@ -84,7 +84,7 @@
         </div>
     </header>
 
-    <main class="py-8">
+    <main class="py-6">
         <div class="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center mb-6">
                 <div>
@@ -157,15 +157,15 @@
             </div>
 
             <div class="bg-white shadow-xl rounded-xl overflow-hidden card-shadow border border-gray-200">
-                <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+                <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-1.5 border-b border-gray-200">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600 mr-2" fill="none"
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600 mr-2" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
-                            <h2 class="text-lg font-bold text-gray-800">Tabla de Conteos Detallada</h2>
+                            <h2 class="text-base font-bold text-gray-800">Tabla de Conteos Detallada</h2>
                         </div>
                     </div>
                 </div>
@@ -213,39 +213,39 @@
                             {% for count in counts %}
                             <tr class="hover:bg-gray-50 transition-all duration-150"
                                 data-username="{{ count.username if count.username is not none else '' }}">
-                                <td class="px-4 py-3 border-b border-gray-200 text-sm">
+                                <td class="px-4 py-1 border-b border-gray-200 text-sm">
                                     <span class="badge bg-purple-100 text-purple-800">{{ count.inventory_stage }}</span>
                                 </td>
-                                <td class="px-3 py-3 border-b border-gray-200 text-sm">
+                                <td class="px-3 py-1 border-b border-gray-200 text-sm">
                                     <span class="badge bg-blue-100 text-blue-800">{{ count.session_id }}</span>
                                 </td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm font-medium text-gray-700">{{
+                                <td class="px-5 py-1 border-b border-gray-200 text-sm font-medium text-gray-700">{{
                                     count.username if
                                     count.username is not none else '-' }}</td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-xs text-gray-600"
+                                <td class="px-5 py-1 border-b border-gray-200 text-xs text-gray-600"
                                     data-timestamp="{{ count.timestamp }}">{{ count.timestamp }}</td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm font-bold text-gray-900">{{
+                                <td class="px-5 py-1 border-b border-gray-200 text-sm font-bold text-gray-900">{{
                                     count.item_code }}</td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm text-gray-600">{{
+                                <td class="px-5 py-1 border-b border-gray-200 text-sm text-gray-600">{{
                                     count.item_description }}</td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm">
+                                <td class="px-5 py-1 border-b border-gray-200 text-sm">
                                     <span class="badge bg-blue-500 text-white">{{
                                         count.counted_location }}</span>
                                 </td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm font-medium text-gray-700">{{
+                                <td class="px-5 py-1 border-b border-gray-200 text-sm font-medium text-gray-700">{{
                                     count.system_qty if
                                     count.system_qty is not none else '-' }}</td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm">
+                                <td class="px-5 py-1 border-b border-gray-200 text-sm">
                                     <span class="badge bg-green-500 text-white text-base">{{
                                         count.counted_qty }}</span>
                                 </td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm">
+                                <td class="px-5 py-1 border-b border-gray-200 text-sm">
                                     <span
                                         class="font-bold {% if count.difference is not none %}{% if count.difference > 0 %}text-blue-600{% elif count.difference < 0 %}text-red-600{% else %}text-gray-700{% endif %}{% else %}text-gray-700{% endif %}">
                                         {{ count.difference if count.difference is not none else '-' }}
                                     </span>
                                 </td>
-                                <td class="px-5 py-3 border-b border-gray-200 text-sm text-gray-600">{{
+                                <td class="px-5 py-2 border-b border-gray-200 text-sm text-gray-600">{{
                                     count.bin_location_system }}
                                 </td>
                             </tr>
