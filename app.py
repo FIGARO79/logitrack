@@ -55,20 +55,6 @@ COLUMNS_TO_READ_GRN = [GRN_COLUMN_NAME_IN_CSV, 'Item_Code', 'Quantity', 'Item_De
 # --- Inicialización de FastAPI ---
 app = FastAPI()
 
-# Middleware para loguear todas las peticiones y ayudar a identificar las "Invalid HTTP"
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    try:
-        # Intentar obtener información de la request
-        client_host = request.client.host if request.client else "unknown"
-        method = request.method
-        url = str(request.url)
-        print(f"📥 Request: {method} {url} from {client_host}")
-        response = await call_next(request)
-        return response
-    except Exception as e:
-        print(f"⚠️ Request handling error: {e}")
-        raise
 
 # Add this CORS middleware
 app.add_middleware(
