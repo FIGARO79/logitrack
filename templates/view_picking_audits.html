@@ -338,8 +338,9 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <button onclick="toggleDetails({{ audit.id }})"
-                                        class="text-blue-600 hover:text-blue-900">Ver Detalles</button>
+                                    <button data-audit-id="{{ audit.id }}"
+                                        class="toggle-details-btn text-blue-600 hover:text-blue-900">Ver
+                                        Detalles</button>
                                 </td>
                             </tr>
                             <tr class="details-row" id="details-{{ audit.id }}">
@@ -444,14 +445,18 @@
         }
         // --- FIN DEL CÓDIGO DEL MENÚ ---
 
-        function toggleDetails(auditId) {
-            const detailsRow = document.getElementById('details-' + auditId);
-            if (detailsRow.style.display === 'none' || detailsRow.style.display === '') {
-                detailsRow.style.display = 'table-row';
-            } else {
-                detailsRow.style.display = 'none';
+        // Event delegation for toggle details buttons
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('toggle-details-btn')) {
+                const auditId = e.target.getAttribute('data-audit-id');
+                const detailsRow = document.getElementById('details-' + auditId);
+                if (detailsRow.style.display === 'none' || detailsRow.style.display === '') {
+                    detailsRow.style.display = 'table-row';
+                } else {
+                    detailsRow.style.display = 'none';
+                }
             }
-        }
+        });
     </script>
 </body>
 
