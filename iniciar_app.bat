@@ -42,8 +42,19 @@ if errorlevel 1 (
 )
 
 echo.
-echo Iniciando servidor web...
-echo Presiona Ctrl+C para detener el servidor
+echo ============================================
+echo   Iniciando servidor web LogiTrack
+echo ============================================
 echo.
-uvicorn app:app --reload --host 127.0.0.1 --port 8000
+echo ^> El servidor se esta iniciando...
+echo ^> Una vez iniciado, abre tu navegador en:
+echo.
+echo     http://127.0.0.1:8000
+echo.
+echo ^> Presiona Ctrl+C para detener el servidor
+echo ============================================
+echo.
+uvicorn app:app --reload --host 127.0.0.1 --port 8000 --ws none --timeout-keep-alive 5
+echo.
+echo Servidor detenido.
 pause
