@@ -203,25 +203,13 @@
 
         {% if error %}
         <div class="fiori-message fiori-message-error" role="alert">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20"
-                fill="currentColor">
-                <path fill-rule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clip-rule="evenodd" />
-            </svg>
-            <span>{{ error }}</span>
+            <span>⚠️ {{ error }}</span>
         </div>
         {% endif %}
 
         {% if message %}
         <div class="fiori-message fiori-message-info" role="alert">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20"
-                fill="currentColor">
-                <path fill-rule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-9a1 1 0 00-1 1v3a1 1 0 102 0V2a1 1 0 00-1-1zm3.53 4.47a1 1 0 00-1.41-1.41l-9 9a1 1 0 001.41 1.41l9-9z"
-                    clip-rule="evenodd" />
-            </svg>
-            <span>{{ message }}</span>
+            <span>ℹ️ {{ message }}</span>
         </div>
         {% endif %}
 
@@ -237,19 +225,8 @@
                 <input type="password" id="password" name="password" required class="fiori-input"
                     placeholder="Ingresa tu contraseña" title="Contraseña">
                 <button type="button" id="togglePassword" class="toggle-password" title="Mostrar/Ocultar contraseña">
-                    <!-- Icono Ojo (Mostrar) -->
-                    <svg id="eyeIcon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <!-- Icono Ojo Tachado (Ocultar) -->
-                    <svg id="eyeOffIcon" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .946-3.11 3.56-5.595 6.837-6.425M16.5 10.5a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3l18 18" />
-                    </svg>
+                    <span id="eyeIcon">👁️</span>
+                    <span id="eyeOffIcon" class="hidden">🔒</span>
                 </button>
             </div>
 
