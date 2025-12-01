@@ -9,74 +9,277 @@
         href="{{ secure_url_for(request, 'static', path='images/gear-wide-connected.svg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/static/css/fallback.css">
+    <style>
+        /* Estilos inspirados en SAP Business One */
+        :root {
+            --sap-primary: #0070d2;
+            --sap-primary-dark: #005fb2;
+            --sap-header-bg: #2c3e50;
+            --sap-header-text: #ffffff;
+            --sap-border: #d0d7de;
+            --sap-hover: #f3f6f9;
+            --sap-text: #32383e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: var(--sap-text);
+        }
+
+        .sap-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .sap-header {
+            background: linear-gradient(135deg, var(--sap-header-bg) 0%, #34495e 100%);
+            color: var(--sap-header-text);
+            padding: 16px 24px;
+            border-radius: 4px 4px 0 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0;
+        }
+
+        .sap-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: 0.3px;
+        }
+
+        .sap-btn {
+            background-color: #5a6c7d;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 3px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #4a5c6d;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sap-btn:hover {
+            background-color: #4a5c6d;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .sap-toolbar {
+            background-color: #ffffff;
+            padding: 12px 24px;
+            border: 1px solid var(--sap-border);
+            border-top: none;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .sap-search {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--sap-border);
+            border-radius: 3px;
+            font-size: 13px;
+            background-color: #ffffff;
+            transition: border-color 0.2s;
+        }
+
+        .sap-search:focus {
+            outline: none;
+            border-color: var(--sap-primary);
+            box-shadow: 0 0 0 2px rgba(0, 112, 210, 0.1);
+        }
+
+        .sap-table-container {
+            background-color: #ffffff;
+            border: 1px solid var(--sap-border);
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .sap-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .sap-table thead {
+            background: linear-gradient(180deg, #4a5f7f 0%, #3d5068 100%);
+            color: var(--sap-header-text);
+        }
+
+        .sap-table thead th {
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            white-space: nowrap;
+        }
+
+        .sap-table thead th:last-child {
+            border-right: none;
+        }
+
+        .sap-table thead th.text-right {
+            text-align: right;
+        }
+
+        .sap-table tbody tr {
+            border-bottom: 1px solid #e8ecef;
+            transition: background-color 0.15s;
+        }
+
+        .sap-table tbody tr:hover {
+            background-color: var(--sap-hover);
+        }
+
+        .sap-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .sap-table tbody td {
+            padding: 10px 12px;
+            color: var(--sap-text);
+            border-right: 1px solid #f0f3f5;
+        }
+
+        .sap-table tbody td:last-child {
+            border-right: none;
+        }
+
+        .sap-table tbody td.text-right {
+            text-align: right;
+        }
+
+        .sap-table tbody td.font-mono {
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+        }
+
+        .sap-table tbody td.font-semibold {
+            font-weight: 600;
+        }
+
+        .sap-table tbody td.font-bold {
+            font-weight: 700;
+        }
+
+        .text-positive {
+            color: #0070d2;
+        }
+
+        .text-negative {
+            color: #c23934;
+        }
+
+        .sap-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sap-container {
+                padding: 10px;
+            }
+
+            .sap-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .sap-header h1 {
+                font-size: 16px;
+            }
+
+            .sap-table-container {
+                overflow-x: auto;
+            }
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100 font-sans">
-
-    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Historial de Registros de Inbound</h1>
-            <a href="/inbound"
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+<body>
+    <div class="sap-container">
+        <!-- Header -->
+        <div class="sap-header">
+            <h1>📋 Historial de Registros de Inbound</h1>
+            <a href="/inbound" class="sap-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
                         d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
                         clip-rule="evenodd" />
                 </svg>
-                ATRAS
+                Atrás
             </a>
         </div>
 
-        <!-- CAMPO DE BÚSQUEDA AÑADIDO -->
-        <div class="mb-6">
-            <input type="text" id="searchInput"
-                class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Buscar en los registros...">
+        <!-- Toolbar con búsqueda -->
+        <div class="sap-toolbar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="#6c757d">
+                <path fill-rule="evenodd"
+                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                    clip-rule="evenodd" />
+            </svg>
+            <input type="text" id="searchInput" class="sap-search" placeholder="Buscar en los registros...">
         </div>
 
-        <div class="bg-white shadow-md rounded-lg overflow-x-auto">
-            <table id="logsTable" class="min-w-full leading-normal">
+        <!-- Tabla -->
+        <div class="sap-table-container">
+            <table id="logsTable" class="sap-table">
                 <thead>
-                    <tr
-                        class="border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        <th class="px-3 py-2 whitespace-nowrap">ID</th>
-                        <th class="px-3 py-2 whitespace-nowrap">Timestamp</th>
-                        <th class="px-3 py-2 whitespace-nowrap">I.R.</th>
-                        <th class="px-3 py-2 whitespace-nowrap">Waybill</th>
-                        <th class="px-3 py-2 whitespace-nowrap">Item Code</th>
-                        <th class="px-3 py-2 whitespace-nowrap">Descripción</th>
-                        <th class="px-3 py-2 whitespace-nowrap">Ubicación </th>
-                        <th class="px-3 py-2 whitespace-nowrap">Ubicación Nueva</th>
-                        <th class="px-3 py-2 text-right whitespace-nowrap">Cant. Recibida</th>
-                        <th class="px-3 py-2 text-right whitespace-nowrap">Cant. GRN</th>
-                        <th class="px-3 py-2 text-right whitespace-nowrap">Diferencia</th>
+                    <tr>
+                        <th>ID</th>
+                        <th>Timestamp</th>
+                        <th>I.R.</th>
+                        <th>Waybill</th>
+                        <th>Item Code</th>
+                        <th>Descripción</th>
+                        <th>Ubicación</th>
+                        <th>Ubicación Nueva</th>
+                        <th class="text-right">Cant. Recibida</th>
+                        <th class="text-right">Cant. GRN</th>
+                        <th class="text-right">Diferencia</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for log in logs %}
-                    <tr class="border-b border-gray-200 hover:bg-gray-50">
-                        <td class="px-3 py-2 text-sm whitespace-nowrap">{{ log['id'] }}</td>
-                        <td class="px-3 py-2 text-sm whitespace-nowrap">{{ log['timestamp'] }}</td>
-                        <td class="px-3 py-2 text-sm whitespace-nowrap">{{ log['importReference'] }}</td>
-                        <td class="px-3 py-2 text-sm whitespace-nowrap">{{ log['waybill'] }}</td>
-                        <td class="px-3 py-2 text-sm font-mono whitespace-nowrap">{{ log['itemCode'] }}</td>
-                        <td class="px-3 py-2 text-sm max-w-xs truncate ">{{ log['itemDescription'] }}</td>
-                        <td class="px-3 py-2 text-sm whitespace-nowrap">{{ log['binLocation'] }}</td>
-                        <td class="px-3 py-2 text-sm whitespace-nowrap">{{ log['relocatedBin'] }}</td>
-                        <td class="px-3 py-2 text-sm text-right font-semibold whitespace-nowrap">{{ log['qtyReceived']
-                            }}</td>
-                        <td class="px-3 py-2 text-sm text-right whitespace-nowrap">{{ log['qtyGrn'] }}</td>
-                        <td class="px-3 py-2 text-sm text-right font-bold whitespace-nowrap 
-                            {% if log['difference'] > 0 %} text-blue-600 
-                            {% elif log['difference'] < 0 %} text-red-600 
-                            {% endif %}">
+                    <tr>
+                        <td>{{ log['id'] }}</td>
+                        <td>{{ log['timestamp'] }}</td>
+                        <td>{{ log['importReference'] }}</td>
+                        <td>{{ log['waybill'] }}</td>
+                        <td class="font-mono">{{ log['itemCode'] }}</td>
+                        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ log['itemDescription'] }}</td>
+                        <td>{{ log['binLocation'] }}</td>
+                        <td>{{ log['relocatedBin'] }}</td>
+                        <td class="text-right font-semibold">{{ log['qtyReceived'] }}</td>
+                        <td class="text-right">{{ log['qtyGrn'] }}</td>
+                        <td
+                            class="text-right font-bold {% if log['difference'] > 0 %}text-positive{% elif log['difference'] < 0 %}text-negative{% endif %}">
                             {{ log['difference'] }}
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="11" class="text-center py-10 text-gray-500">No hay registros en la base de datos.
-                        </td>
+                        <td colspan="11" class="sap-empty">No hay registros en la base de datos.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -84,8 +287,7 @@
         </div>
     </div>
 
-
-    <!-- SCRIPT DE BÚSQUEDA AÑADIDO -->
+    <!-- Script de búsqueda -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const searchInput = document.getElementById('searchInput');
@@ -115,7 +317,6 @@
             });
         });
     </script>
-
 </body>
 
 </html>
