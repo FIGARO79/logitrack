@@ -2479,7 +2479,7 @@ def admin_login_get(request: Request):
 @app.post('/admin/login', response_class=HTMLResponse, name='admin_login_post')
 def admin_login_post(request: Request, password: str = Form(...)):
     if password == UPDATE_PASSWORD:
-        response = RedirectResponse(url=request.url_for('admin_inventory'), status_code=status.HTTP_302_FOUND)
+        response = RedirectResponse(url=request.url_for('admin_users_get'), status_code=status.HTTP_302_FOUND)
         response.set_cookie(key="admin_logged_in", value="true", httponly=True, samesite='lax', secure=(request.url.scheme == 'https'))
         return response
     else:
