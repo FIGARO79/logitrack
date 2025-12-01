@@ -13,9 +13,148 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
+        /* ===== SAP Business One Inspired Styles ===== */
+        :root {
+            --sap-primary: #0070d2;
+            --sap-primary-dark: #005fb2;
+            --sap-header-bg: #2c3e50;
+            --sap-header-text: #ffffff;
+            --sap-border: #d0d7de;
+            --sap-hover: #f3f6f9;
+            --sap-text: #32383e;
+            --sap-yellow: #fbbf24;
+        }
+
         body {
-            font-family: "Inter", sans-serif;
-            background-color: #f9fafb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: var(--sap-text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        /* Header superior */
+        .top-header {
+            background: linear-gradient(135deg, var(--sap-header-bg) 0%, #34495e 100%);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            border-bottom: 2px solid #34495e;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .menu-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-toggle svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            margin: 0;
+        }
+
+        /* Menú desplegable */
+        .dropdown-menu {
+            position: fixed;
+            top: 66px;
+            left: 0;
+            width: 280px;
+            max-height: calc(100vh - 66px);
+            background: linear-gradient(180deg, var(--sap-header-bg) 0%, #1a252f 100%);
+            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            overflow-y: auto;
+            z-index: 999;
+            border-right: 2px solid #34495e;
+        }
+
+        .dropdown-menu.open {
+            transform: translateX(0);
+        }
+
+        .dropdown-menu nav {
+            padding: 16px;
+        }
+
+        .dropdown-menu a,
+        .dropdown-menu .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            transition: background-color 0.2s;
+            font-size: 14px;
+        }
+
+        .dropdown-menu a:hover,
+        .dropdown-menu .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-menu svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 66px;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 66px);
+            background-color: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 998;
+        }
+
+        .menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            overflow-y: auto;
         }
 
         /* --- Toast Notification Styles --- */
@@ -85,49 +224,146 @@
         input[type="file"]::file-selector-button:hover {
             background-color: #d1d5db;
         }
-
     </style>
 </head>
 
-<body class="bg-gray-100">
+<body>
+    <!-- Header superior con menú -->
+    <header class="top-header">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+        </button>
+        <h1 class="header-title">Logix - Actualizar Bases de Datos</h1>
+    </header>
+
+    <!-- Menú desplegable -->
+    <nav class="dropdown-menu" id="dropdownMenu">
+        <nav>
+            <a href="/">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                <span>Inicio</span>
+            </a>
+            <a href="/stock">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <span>Consultar Stock</span>
+            </a>
+            <a href="/inbound">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15M9 12l3 3m0 0l3-3m-3 3V2.25" />
+                </svg>
+                <span>Inbound</span>
+            </a>
+            <a href="/label">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+                </svg>
+                <span>Etiquetado</span>
+            </a>
+            <a href="/view_logs">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5M5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z" />
+                    <path
+                        d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1" />
+                </svg>
+                <span>Visualizar Logs</span>
+            </a>
+            <a href="/reconciliation">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z" />
+                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0" />
+                </svg>
+                <span>Ver conciliación</span>
+            </a>
+            <a href="/update">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M8 11a.5.5 0 0 0 .5-.5V6.707l1.146 1.147a.5.5 0 0 0 .708-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L7.5 6.707V10.5a.5.5 0 0 0 .5.5" />
+                    <path
+                        d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1" />
+                </svg>
+                <span>Actualizar Ficheros</span>
+            </a>
+            <a href="/counts">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2z" />
+                    <path
+                        d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0M7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0" />
+                </svg>
+                <span>Conteo de Items</span>
+            </a>
+            <a href="/view_counts">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v4h10V2a1 1 0 0 0-1-1zm9 6h-3v2h3zm0 3h-3v2h3zm0 3h-3v2h2a1 1 0 0 0 1-1zm-4 2v-2H6v2zm-4 0v-2H3v1a1 1 0 0 0 1 1zm-2-3h2v-2H3zm0-3h2V7H3zm3-2v2h3V7zm3 3H6v2h3z" />
+                </svg>
+                <span>Validar conteos</span>
+            </a>
+            <a href="/picking">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
+                </svg>
+                <span>Auditoría de Picking</span>
+            </a>
+            <a href="/view_picking_audits">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                        d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z" />
+                    <path
+                        d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
+                    <path
+                        d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
+                </svg>
+                <span>Confirmación Picking</span>
+            </a>
+            <button class="logout-btn" onclick="window.location.href='/logout'">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M7.5 1v7h1V1z" />
+                    <path
+                        d="M3 8.812a5 5 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812" />
+                </svg>
+                <span>Cerrar Sesión</span>
+            </button>
+        </nav>
+    </nav>
+
+    <!-- Overlay para cerrar el menú -->
+    <div class="menu-overlay" id="menuOverlay"></div>
 
     <div id="toast-container"></div>
 
-    <header class="bg-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6">
-            <div class="flex justify-between items-center h-16">
-                <!-- Logo -->
-                <img src="/static/images/logo-clear.png" alt="Logix Logo" class="h-16 w-32 object-contain"
-                    onerror="this.onerror=null; this.src='https://placehold.co/64x64/fBBF24/1F2937?text=Logo';">
-                <div>
-                    <a href="/"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
-                            fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        INICIO
-                    </a>
+    <!-- Contenido principal -->
+    <main class="main-content">
+        <div class="container-wrapper mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="bg-white rounded-md shadow-md p-6 md:p-8 max-w-3xl mx-auto"
+                style="border: 1px solid var(--sap-border);">
+                <div
+                    style="background: linear-gradient(135deg, var(--sap-header-bg) 0%, #34495e 100%); color: white; padding: 12px 16px; margin: -24px -24px 16px -24px; border-radius: 4px 4px 0 0;">
+                    <h1 class="text-base font-semibold" style="margin: 0; letter-spacing: 0.3px;">📁 Actualización de
+                        Archivos</h1>
                 </div>
-            </div>
-
-            <!-- Navigation Link -->
-
-        </div>
-        </div>
-    </header>
-
-    <main class="py-10">
-        <div class="container-wrapper mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 max-w-3xl mx-auto">
-                <div class="text-center mb-6">
-                    <h1 class="text-2xl font-bold text-gray-800">Página de Actualización de Archivos</h1>
-                    <p class="text-gray-500 mt-1">Suba los ficheros para actualizar la base de datos maestra y de GRN.
-                    </p>
-                </div>
-                <hr class="mb-6">
+                <p class="text-sm mb-6" style="color: var(--sap-text);">Suba los ficheros para actualizar la base de
+                    datos maestra y de GRN.</p>
 
                 <form id="upload-form" action="/update" method="post" enctype="multipart/form-data">
                     <div class="space-y-6">
@@ -193,7 +429,10 @@
                     </div>
 
                     <button type="submit"
-                        class="mt-8 w-full flex items-center justify-center gap-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-200">
+                        class="mt-8 w-full flex items-center justify-center gap-2 text-gray-900 font-medium rounded text-sm px-5 py-3 text-center transition-all duration-200"
+                        style="background-color: var(--sap-yellow); border: 1px solid #f59e0b; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);"
+                        onmouseover="this.style.backgroundColor='#f59e0b'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.15)';"
+                        onmouseout="this.style.backgroundColor='var(--sap-yellow)'; this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.1)';">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H5.5z" />
                             <path
@@ -203,9 +442,10 @@
                     </button>
                 </form>
 
-                <hr class="my-8">
+                <hr class="my-8" style="border-color: var(--sap-border);">
 
-                <div class="p-5 border-l-4 border-red-500 rounded-r-lg bg-red-50">
+                <div class="p-5 border-l-4 border-red-500 rounded bg-red-50"
+                    style="border: 1px solid #f87171; border-left-width: 4px;">
                     <div class="flex items-start">
                         <div class="flex-shrink-0">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" viewBox="0 0 20 20"
@@ -216,7 +456,8 @@
                             </svg>
                         </div>
                         <div class="ml-3">
-                            <h2 class="text-lg font-bold text-red-800">Zona de Peligro</h2>
+                            <h2 class="text-base font-bold text-red-800"
+                                style="text-transform: uppercase; letter-spacing: 0.3px;">⚠️ Zona de Peligro</h2>
                             <p class="text-sm text-red-700 mt-1 mb-4">
                                 Esta acción borrará permanentemente todos los registros del historial de inbound y no se
                                 puede deshacer.
@@ -224,27 +465,44 @@
                             <form action="/clear_database" method="post"
                                 onsubmit="return confirm('ADVERTENCIA: ¿Estás TOTALMENTE SEGURO de que quieres borrar TODOS los registros? Esta acción no se puede deshacer.');">
                                 <div class="mb-4">
-                                    <label for="password_clear"
-                                        class="block mb-2 text-sm font-medium text-gray-900">Confirmar
+                                    <label for="password_clear" class="block mb-2 text-xs font-semibold text-gray-900"
+                                        style="text-transform: uppercase; letter-spacing: 0.3px;">Confirmar
                                         Contraseña:</label>
                                     <div class="relative">
                                         <input type="password" id="password_clear" name="password" required
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5">
-                                        <button type="button" id="togglePasswordClear" class="absolute inset-y-0 right-0 pr-3 flex items-center" title="Mostrar/Ocultar contraseña">
-                                            <svg id="eyeIconClear" class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        <button type="button" id="togglePasswordClear"
+                                            class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                            title="Mostrar/Ocultar contraseña">
+                                            <svg id="eyeIconClear" class="h-5 w-5 text-gray-500" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                                                </path>
                                             </svg>
-                                            <svg id="eyeOffIconClear" class="h-5 w-5 text-gray-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7 .95-3.11 3.824-5.585 7.44-6.325"></path>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.94 17.94A1.5 1.5 0 0116.5 15a1.5 1.5 0 01-1.44-1.06M21 21l-6-6m-3.5-3.5L3 3"></path>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1l22 22"></path>
+                                            <svg id="eyeOffIconClear" class="h-5 w-5 text-gray-500 hidden" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7 .95-3.11 3.824-5.585 7.44-6.325">
+                                                </path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M17.94 17.94A1.5 1.5 0 0116.5 15a1.5 1.5 0 01-1.44-1.06M21 21l-6-6m-3.5-3.5L3 3">
+                                                </path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M1 1l22 22"></path>
                                             </svg>
                                         </button>
                                     </div>
                                 </div>
                                 <button type="submit"
-                                    class="w-full text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-200">
+                                    class="w-full text-white bg-red-700 hover:bg-red-800 font-medium rounded text-sm px-5 py-3 text-center transition-all duration-200"
+                                    style="box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);"
+                                    onmouseover="this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.2)';"
+                                    onmouseout="this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.1)';">
                                     Vaciar Base de Datos AHORA
                                 </button>
                             </form>
@@ -257,6 +515,36 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // --- CÓDIGO PARA EL MENÚ DESPLEGABLE ---
+            const menuToggle = document.getElementById('menuToggle');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const menuOverlay = document.getElementById('menuOverlay');
+
+            function toggleMenu() {
+                dropdownMenu.classList.toggle('open');
+                menuOverlay.classList.toggle('active');
+            }
+
+            if (menuToggle) {
+                menuToggle.addEventListener('click', toggleMenu);
+            }
+
+            if (menuOverlay) {
+                menuOverlay.addEventListener('click', toggleMenu);
+            }
+
+            if (dropdownMenu) {
+                const menuLinks = dropdownMenu.querySelectorAll('a, button');
+                menuLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        if (dropdownMenu.classList.contains('open')) {
+                            toggleMenu();
+                        }
+                    });
+                });
+            }
+            // --- FIN DEL CÓDIGO DEL MENÚ ---
+
             const dropZone = document.getElementById('drop-zone');
             const fileInput = document.getElementById('file-input');
             const fileList = document.getElementById('file-list');
@@ -277,7 +565,7 @@
                     // toggle the type attribute
                     const type = passwordClearInput.getAttribute('type') === 'password' ? 'text' : 'password';
                     passwordClearInput.setAttribute('type', type);
-                    
+
                     // toggle the eye / eye off icon
                     eyeIconClear.classList.toggle('hidden');
                     eyeOffIconClear.classList.toggle('hidden');
