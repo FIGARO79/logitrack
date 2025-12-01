@@ -14,9 +14,152 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/static/css/fallback.css">
     <style>
+        /* ===== SAP Business One Inspired Styles ===== */
+        :root {
+            --sap-primary: #0070d2;
+            --sap-primary-dark: #005fb2;
+            --sap-header-bg: #2c3e50;
+            --sap-header-text: #ffffff;
+            --sap-border: #d0d7de;
+            --sap-hover: #f3f6f9;
+            --sap-text: #32383e;
+            --sap-table-header: #4a5f7f;
+            --sap-yellow: #fbbf24;
+        }
+
         body {
-            font-family: "Inter", sans-serif;
-            background-color: #f9fafb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: var(--sap-text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        /* Header superior */
+        .top-header {
+            background: linear-gradient(135deg, var(--sap-header-bg) 0%, #34495e 100%);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            border-bottom: 2px solid #34495e;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .menu-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-toggle svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            margin: 0;
+        }
+
+        /* Menú desplegable */
+        .dropdown-menu {
+            position: fixed;
+            top: 66px;
+            left: 0;
+            width: 280px;
+            max-height: calc(100vh - 66px);
+            background: linear-gradient(180deg, var(--sap-header-bg) 0%, #1a252f 100%);
+            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            overflow-y: auto;
+            z-index: 999;
+            border-right: 2px solid #34495e;
+        }
+
+        .dropdown-menu.open {
+            transform: translateX(0);
+        }
+
+        .dropdown-menu nav {
+            padding: 16px;
+        }
+
+        .dropdown-menu a,
+        .dropdown-menu .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            transition: background-color 0.2s;
+            font-size: 14px;
+        }
+
+        .dropdown-menu a:hover,
+        .dropdown-menu .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-menu svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            text-align: left;
+            justify-content: flex-start;
+            text-align: left;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 66px;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 66px);
+            background-color: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 998;
+        }
+
+        .menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            overflow-y: auto;
         }
 
         .container-wrapper {
@@ -29,7 +172,7 @@
         input[type="text"],
         input[type="number"],
         select {
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--sap-border);
             padding: 6px 12px;
             border-radius: 0.375rem;
             width: 100%;
@@ -39,10 +182,9 @@
 
         input:focus,
         select:focus {
-            outline: 2px solid transparent;
-            outline-offset: 2px;
-            border-color: #ffbf24ed;
-            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.4);
+            outline: none;
+            border-color: var(--sap-primary);
+            box-shadow: 0 0 0 2px rgba(0, 112, 210, 0.1);
         }
 
         .form-label {
@@ -96,27 +238,27 @@
         }
 
         .btn-primary {
-            background-color: #fbbf24;
+            background-color: var(--sap-yellow);
             color: #1f2937;
-            border: 1px solid transparent;
+            border: 1px solid #f59e0b;
             text-decoration: none;
         }
 
         .btn-primary:hover:not(:disabled) {
             background-color: #f59e0b;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
         }
 
         .btn-secondary {
             background-color: #6b7280;
             color: white;
-            border: 1px solid transparent;
+            border: 1px solid #4b5563;
             text-decoration: none;
         }
 
         .btn-secondary:hover:not(:disabled) {
             background-color: #4b5563;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
         }
 
         /* Toast Notification Styles */
@@ -203,163 +345,276 @@
     </style>
 </head>
 
-<body class="bg-gray-100">
-    <header class="bg-white shadow-sm">
-        <div class="container-wrapper mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <img src="/static/images/logo-clear.png" alt="Logix Logo" class="h-16 w-32 object-contain"
-                onerror="this.onerror=null; this.src='https://placehold.co/64x64/fBBF24/1F2937?text=Logo';">
-            <a href="/" class="btn btn-secondary">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                        clip-rule="evenodd" />
-                </svg>
-                INICIO
-            </a>
-        </div>
+<body>
+    <!-- Header superior con menú -->
+    <header class="top-header">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+        </button>
+        <h1 class="header-title">Logix - Conteo de Inventario</h1>
     </header>
 
-    <main class="container-wrapper mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Session Control -->
-        <div id="session-control-container" class="bg-white p-6 rounded-lg shadow text-center">
-            {% if etapa_conteo_actual == 0 %}
-            <h2 class="text-xl font-semibold text-red-700">Conteo no iniciado por Administrador</h2>
-            <p class="text-gray-500 mt-2">No es posible iniciar una sesión de conteo porque el administrador aún no ha
-                generado la <strong>Etapa 1</strong>.</p>
-            <p class="text-gray-500 mt-1">Por favor, contacta al administrador.</p>
-            <button id="start-session-btn-disabled" class="btn btn-primary mt-4" disabled>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                        clip-rule="evenodd" />
+    <!-- Menú desplegable -->
+    <nav class="dropdown-menu" id="dropdownMenu">
+        <nav>
+            <a href="/">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                 </svg>
-                <span>Iniciar Nueva Sesión de Conteo</span>
-            </button>
-            {% else %}
-            <h2 class="text-xl font-semibold text-gray-700">No hay ninguna sesión de conteo activa.</h2>
-            <p class="text-gray-500 mt-2">Para empezar a contar, por favor inicia una nueva sesión.</p>
-            <button id="start-session-btn" class="btn btn-primary mt-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                        clip-rule="evenodd" />
+                <span>Inicio</span>
+            </a>
+            <a href="/stock">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
-                <span>Iniciar Nueva Sesión de Conteo</span>
+                <span>Consultar Stock</span>
+            </a>
+            <a href="/inbound">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15M9 12l3 3m0 0l3-3m-3 3V2.25" />
+                </svg>
+                <span>Inbound</span>
+            </a>
+            <a href="/label">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+                </svg>
+                <span>Etiquetado</span>
+            </a>
+            <a href="/view_logs">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5M5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z" />
+                    <path
+                        d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1" />
+                </svg>
+                <span>Visualizar Logs</span>
+            </a>
+            <a href="/reconciliation">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z" />
+                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0" />
+                </svg>
+                <span>Ver conciliación</span>
+            </a>
+            <a href="/update">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M8 11a.5.5 0 0 0 .5-.5V6.707l1.146 1.147a.5.5 0 0 0 .708-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L7.5 6.707V10.5a.5.5 0 0 0 .5.5" />
+                    <path
+                        d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1" />
+                </svg>
+                <span>Actualizar Ficheros</span>
+            </a>
+            <a href="/counts">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2z" />
+                    <path
+                        d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0M7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0" />
+                </svg>
+                <span>Conteo de Items</span>
+            </a>
+            <a href="/view_counts">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v4h10V2a1 1 0 0 0-1-1zm9 6h-3v2h3zm0 3h-3v2h3zm0 3h-3v2h2a1 1 0 0 0 1-1zm-4 2v-2H6v2zm-4 0v-2H3v1a1 1 0 0 0 1 1zm-2-3h2v-2H3zm0-3h2V7H3zm3-2v2h3V7zm3 3H6v2h3z" />
+                </svg>
+                <span>Validar conteos</span>
+            </a>
+            <a href="/picking">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
+                </svg>
+                <span>Auditoría de Picking</span>
+            </a>
+            <a href="/view_picking_audits">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                        d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z" />
+                    <path
+                        d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
+                    <path
+                        d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
+                </svg>
+                <span>Confirmación Picking</span>
+            </a>
+            <button class="logout-btn" onclick="window.location.href='/logout'">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M7.5 1v7h1V1z" />
+                    <path
+                        d="M3 8.812a5 5 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812" />
+                </svg>
+                <span>Cerrar Sesión</span>
             </button>
-            {% endif %}
-        </div>
+        </nav>
+    </nav>
 
-        <!-- Main Counting View (hidden by default) -->
-        <div id="counting-view" class="hidden grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- Left Column: Counting Form -->
-            <div class="md:col-span-2 bg-white p-6 rounded-lg shadow">
-                <div class="flex justify-between items-center border-b pb-2 mb-4">
-                    <h1 class="text-xl font-semibold text-gray-800">Realizar Conteo (<span id="username-display"></span>
-                        - Sesión: <span id="session-id-display"></span>)</h1>
-                    <button id="end-session-btn" class="btn btn-secondary">Finalizar Sesión</button>
-                </div>
+    <!-- Overlay para cerrar el menú -->
+    <div class="menu-overlay" id="menuOverlay"></div>
 
-                <!-- Formulario de Conteo -->
-                <form id="count-form" class="space-y-4 mt-6">
-                    <!-- Ubicación Contada - Movida arriba -->
-                    <div class="flex items-end gap-2 mb-4">
-                        <div class="flex-grow">
-                            <label for="counted_location" class="form-label">Ubicación Contada*</label>
-                            <input type="text" id="counted_location" class="w-full"
-                                placeholder="Escanear o ingresar ubicación..."
-                                oninput="this.value = this.value.toUpperCase()" required>
-                        </div>
-                        <button id="scan-location-btn" type="button" title="Escanear ubicación"
-                            class="btn-secondary h-9 w-auto px-3 flex-shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                class="bi bi-qr-code-scan" viewBox="0 0 16 16">
-                                <path
-                                    d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z" />
-                                <path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z" />
-                                <path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z" />
-                                <path
-                                    d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 2h-1v1h-2v1h3zm-4 2v-1H8v1z" />
-                                <path d="M12 9h2V8h-2z" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Controles de Búsqueda de Artículo -->
-                    <div class="flex items-end gap-2 mb-4">
-                        <div class="flex-grow">
-                            <label for="itemCode" class="form-label">Ingrese el código del artículo</label>
-                            <input type="text" id="itemCode" placeholder="Escanear o buscar Item Code..." class="w-full"
-                                oninput="this.value = this.value.toUpperCase()" required />
-                        </div>
-                        <button id="scan-item-btn" type="button" title="Escanear código de barras"
-                            class="btn-secondary h-9 w-auto px-3 flex-shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                class="bi bi-qr-code-scan" viewBox="0 0 16 16">
-                                <path
-                                    d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z" />
-                                <path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z" />
-                                <path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z" />
-                                <path
-                                    d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 2h-1v1h-2v1h3zm-4 2v-1H8v1z" />
-                                <path d="M12 9h2V8h-2z" />
-                            </svg>
-                        </button>
-                        <button id="search-btn" type="button"
-                            class="btn-secondary h-9 w-auto px-4 flex-shrink-0"><span>Buscar</span></button>
-                    </div>
-
-                    <div>
-                        <label class="form-label">Descripción</label>
-                        <div id="description" class="data-field"></div>
-                    </div>
-
-                    <div>
-                        <label class="form-label">Ubicación en Sistema</label>
-                        <div id="bin_location" class="data-field"></div>
-                    </div>
-
-
-
-                    <hr class="my-6">
-
-                    <div>
-                        <label for="counted_qty" class="form-label">Cantidad Contada*</label>
-                        <div class="mt-1 flex items-center">
-                            <button type="button" id="minus-btn"
-                                class="px-3 py-1.5 border border-gray-300 bg-gray-50 rounded-l-md hover:bg-gray-100">-</button>
-                            <input type="number" id="counted_qty"
-                                class="flex-grow text-center border-t border-b border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                value="" min="0">
-                            <button type="button" id="plus-btn"
-                                class="px-3 py-1.5 border border-gray-300 bg-gray-50 rounded-r-md hover:bg-gray-100">+</button>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end gap-4 pt-4">
-                        <button type="button" id="cancel-btn" class="btn btn-secondary">Cancelar</button>
-                        <button type="submit" id="save-btn" class="btn btn-primary">Guardar Conteo</button>
-                    </div>
-                </form>
+    <!-- Contenido principal -->
+    <main class="main-content">
+        <div class="container-wrapper mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Session Control -->
+            <div id="session-control-container" class="bg-white p-6 rounded-lg shadow text-center">
+                {% if etapa_conteo_actual == 0 %}
+                <h2 class="text-xl font-semibold text-red-700">Conteo no iniciado por Administrador</h2>
+                <p class="text-gray-500 mt-2">No es posible iniciar una sesión de conteo porque el administrador aún no
+                    ha
+                    generado la <strong>Etapa 1</strong>.</p>
+                <p class="text-gray-500 mt-1">Por favor, contacta al administrador.</p>
+                <button id="start-session-btn-disabled" class="btn btn-primary mt-4" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span>Iniciar Nueva Sesión de Conteo</span>
+                </button>
+                {% else %}
+                <h2 class="text-xl font-semibold text-gray-700">No hay ninguna sesión de conteo activa.</h2>
+                <p class="text-gray-500 mt-2">Para empezar a contar, por favor inicia una nueva sesión.</p>
+                <button id="start-session-btn" class="btn btn-primary mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span>Iniciar Nueva Sesión de Conteo</span>
+                </button>
+                {% endif %}
             </div>
 
-            <!-- Right Column: Session Info -->
-            <div class="md:col-span-1 space-y-6">
-                <!-- Counted Items in Location -->
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold text-gray-700 text-sm mb-2">Items Contados en esta Ubicación</h3>
-                    <div id="counted-items-list" class="max-h-60 overflow-y-auto">
-                        <!-- Items will be dynamically inserted here -->
-                        <p class="text-gray-500 text-xs text-center">Aún no hay items para esta ubicación.</p>
+            <!-- Main Counting View (hidden by default) -->
+            <div id="counting-view" class="hidden grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Left Column: Counting Form -->
+                <div class="md:col-span-2 bg-white p-6 rounded-lg shadow">
+                    <div class="flex justify-between items-center border-b pb-2 mb-4">
+                        <h1 class="text-xl font-semibold text-gray-800">Realizar Conteo (<span
+                                id="username-display"></span>
+                            - Sesión: <span id="session-id-display"></span>)</h1>
+                        <button id="end-session-btn" class="btn btn-secondary text-xs py-1.5 px-3">Finalizar
+                            Sesión</button>
                     </div>
+
+                    <!-- Formulario de Conteo -->
+                    <form id="count-form" class="space-y-4 mt-6">
+                        <!-- Ubicación Contada - Movida arriba -->
+                        <div class="flex items-end gap-2 mb-4">
+                            <div class="flex-grow">
+                                <label for="counted_location" class="form-label">Ubicación Contada*</label>
+                                <input type="text" id="counted_location" class="w-full"
+                                    placeholder="Escanear o ingresar ubicación..."
+                                    oninput="this.value = this.value.toUpperCase()" required>
+                            </div>
+                            <button id="scan-location-btn" type="button" title="Escanear ubicación"
+                                class="btn-secondary h-9 w-auto px-3 flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                    class="bi bi-qr-code-scan" viewBox="0 0 16 16">
+                                    <path
+                                        d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z" />
+                                    <path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z" />
+                                    <path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z" />
+                                    <path
+                                        d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 2h-1v1h-2v1h3zm-4 2v-1H8v1z" />
+                                    <path d="M12 9h2V8h-2z" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Controles de Búsqueda de Artículo -->
+                        <div class="flex items-end gap-2 mb-4">
+                            <div class="flex-grow">
+                                <label for="itemCode" class="form-label">Ingrese el código del artículo</label>
+                                <input type="text" id="itemCode" placeholder="Escanear o buscar Item Code..."
+                                    class="w-full" oninput="this.value = this.value.toUpperCase()" required />
+                            </div>
+                            <button id="scan-item-btn" type="button" title="Escanear código de barras"
+                                class="btn-secondary h-9 w-auto px-3 flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                    class="bi bi-qr-code-scan" viewBox="0 0 16 16">
+                                    <path
+                                        d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z" />
+                                    <path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z" />
+                                    <path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z" />
+                                    <path
+                                        d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 2h-1v1h-2v1h3zm-4 2v-1H8v1z" />
+                                    <path d="M12 9h2V8h-2z" />
+                                </svg>
+                            </button>
+                            <button id="search-btn" type="button"
+                                class="btn-secondary h-9 w-auto px-4 flex-shrink-0"><span>Buscar</span></button>
+                        </div>
+
+                        <div>
+                            <label class="form-label">Descripción</label>
+                            <div id="description" class="data-field"></div>
+                        </div>
+
+                        <div>
+                            <label class="form-label">Ubicación en Sistema</label>
+                            <div id="bin_location" class="data-field"></div>
+                        </div>
+
+
+
+                        <hr class="my-6">
+
+                        <div>
+                            <label for="counted_qty" class="form-label">Cantidad Contada*</label>
+                            <div class="mt-1 flex items-center">
+                                <button type="button" id="minus-btn"
+                                    class="px-3 py-1.5 border border-gray-300 bg-gray-50 rounded-l-md hover:bg-gray-100">-</button>
+                                <input type="number" id="counted_qty"
+                                    class="flex-grow text-center border-t border-b border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    value="" min="0">
+                                <button type="button" id="plus-btn"
+                                    class="px-3 py-1.5 border border-gray-300 bg-gray-50 rounded-r-md hover:bg-gray-100">+</button>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-4 pt-4">
+                            <button type="button" id="cancel-btn" class="btn btn-secondary">Cancelar</button>
+                            <button type="submit" id="save-btn" class="btn btn-primary">Guardar Conteo</button>
+                        </div>
+                    </form>
                 </div>
-                <!-- Locations in Session -->
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold text-gray-700 text-sm mb-2">Ubicaciones de la Sesión</h3>
-                    <div id="session-locations-list" class="max-h-60 overflow-y-auto">
-                        <!-- Location statuses will be dynamically inserted here -->
+
+                <!-- Right Column: Session Info -->
+                <div class="md:col-span-1 space-y-6">
+                    <!-- Counted Items in Location -->
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h3 class="font-semibold text-gray-700 text-sm mb-2">Items Contados en esta Ubicación</h3>
+                        <div id="counted-items-list" class="max-h-60 overflow-y-auto">
+                            <!-- Items will be dynamically inserted here -->
+                            <p class="text-gray-500 text-xs text-center">Aún no hay items para esta ubicación.</p>
+                        </div>
                     </div>
-                    <button id="close-location-btn" class="btn btn-primary w-full mt-2 text-sm">Cerrar Ubicación
-                        Actual</button>
+                    <!-- Locations in Session -->
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h3 class="font-semibold text-gray-700 text-sm mb-2">Ubicaciones de la Sesión</h3>
+                        <div id="session-locations-list" class="max-h-60 overflow-y-auto">
+                            <!-- Location statuses will be dynamically inserted here -->
+                        </div>
+                        <button id="close-location-btn" class="btn btn-primary w-full mt-2 text-sm">Cerrar Ubicación
+                            Actual</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -389,6 +644,36 @@
     <div id="toast-container"></div>
 
     <script>
+        // --- CÓDIGO PARA EL MENÚ DESPLEGABLE ---
+        const menuToggle = document.getElementById('menuToggle');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        const menuOverlay = document.getElementById('menuOverlay');
+
+        function toggleMenu() {
+            dropdownMenu.classList.toggle('open');
+            menuOverlay.classList.toggle('active');
+        }
+
+        if (menuToggle) {
+            menuToggle.addEventListener('click', toggleMenu);
+        }
+
+        if (menuOverlay) {
+            menuOverlay.addEventListener('click', toggleMenu);
+        }
+
+        if (dropdownMenu) {
+            const menuLinks = dropdownMenu.querySelectorAll('a, button');
+            menuLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (dropdownMenu.classList.contains('open')) {
+                        toggleMenu();
+                    }
+                });
+            });
+        }
+        // --- FIN DEL CÓDIGO DEL MENÚ ---
+
         document.addEventListener('DOMContentLoaded', function () {
             const API_BASE_URL = "/api";
 
