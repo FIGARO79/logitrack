@@ -14,18 +14,30 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
+        /* ===== SAP Business One Inspired Styles ===== */
+        :root {
+            --sap-primary: #0070d2;
+            --sap-primary-dark: #005fb2;
+            --sap-header-bg: #2c3e50;
+            --sap-header-text: #ffffff;
+            --sap-border: #d0d7de;
+            --sap-hover: #f3f6f9;
+            --sap-text: #32383e;
+            --sap-table-header: #4a5f7f;
+            --sap-yellow: #fbbf24;
+        }
+
         /* General styles */
         body {
-            font-family: "Inter", sans-serif;
-            background-color: #f9fafb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: var(--sap-text);
         }
 
         /* Adjust container-wrapper for more fluid behavior */
         .container-wrapper {
             width: 100%;
-            /* Make it take full width */
             max-width: 1200px;
-            /* Max width for larger screens */
             margin-left: auto;
             margin-right: auto;
         }
@@ -175,41 +187,41 @@
         input[type="text"],
         input[type="number"],
         select {
-            border: 1px solid #d1d5db;
-            padding: 6px 12px;
-            border-radius: 0.375rem;
+            border: 1px solid var(--sap-border);
+            padding: 8px 12px;
+            border-radius: 3px;
             width: 100%;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-            transition:
-                border-color 0.2s,
-                box-shadow 0.2s;
+            font-size: 13px;
+            background-color: #ffffff;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
         input:focus,
         select:focus {
-            outline: 2px solid transparent;
-            outline-offset: 2px;
-            border-color: #ffbf24ed;
-            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.4);
+            outline: none;
+            border-color: var(--sap-primary);
+            box-shadow: 0 0 0 2px rgba(0, 112, 210, 0.1);
         }
 
         .form-label {
-            font-weight: 500;
-            margin-bottom: 3px;
+            font-weight: 600;
+            margin-bottom: 4px;
             display: block;
-            color: #374151;
-            font-size: 0.875rem;
+            color: var(--sap-text);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
         .data-field {
-            background-color: #f3f4f6;
+            background-color: #f8f9fa;
             padding: 8px 12px;
-            border-radius: 0.375rem;
+            border-radius: 3px;
             min-height: 38px;
-            border: 1px solid #d1d5db;
-            color: #374151;
+            border: 1px solid var(--sap-border);
+            color: var(--sap-text);
             overflow-wrap: break-word;
-            font-size: 0.875rem;
+            font-size: 13px;
             line-height: 1.5;
             display: flex;
             align-items: center;
@@ -217,44 +229,43 @@
 
         th,
         td {
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--sap-border);
             padding: 10px 12px;
             text-align: left;
             vertical-align: middle;
-            font-size: 0.875rem;
+            font-size: 13px;
             line-height: 1.4;
         }
 
         th {
-            background-color: #f9fafb;
+            background: linear-gradient(180deg, var(--sap-table-header) 0%, #3d5068 100%);
+            color: var(--sap-header-text);
             font-weight: 600;
-            font-size: 0.75rem;
+            font-size: 11px;
             text-transform: uppercase;
-            color: #6b7280;
             white-space: nowrap;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.5px;
             position: relative;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         tbody tr:nth-child(even) {
-            background-color: #f9fafb;
+            background-color: #ffffff;
         }
 
         tbody tr:hover {
-            background-color: #f0f9ff;
+            background-color: var(--sap-hover);
         }
 
         button,
         .btn-secondary {
-            padding: 9px 15px;
-            border-radius: 0.375rem;
+            padding: 8px 16px;
+            border-radius: 3px;
             cursor: pointer;
-            transition:
-                background-color 0.2s,
-                box-shadow 0.2s;
+            transition: all 0.2s;
             font-weight: 500;
-            font-size: 0.875rem;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            font-size: 13px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -263,38 +274,37 @@
 
         button:focus,
         .btn-secondary:focus {
-            outline: 2px solid transparent;
-            outline-offset: 2px;
-            box-shadow: 0 0 0 3px rgba(13, 11, 7, 0.53);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 112, 210, 0.3);
         }
 
         button:disabled,
         .btn-secondary:disabled {
             cursor: not-allowed;
-            opacity: 0.6;
+            opacity: 0.5;
         }
 
         .btn-primary {
-            background-color: #fbbf24;
+            background-color: var(--sap-yellow);
             color: #1f2937;
-            border: 1px solid transparent;
+            border: 1px solid #f59e0b;
         }
 
         .btn-primary:hover:not(:disabled) {
             background-color: #f59e0b;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
         }
 
         .btn-secondary {
-            background-color: #6b7280;
+            background-color: #5a6c7d;
             color: white;
-            border: 1px solid transparent;
+            border: 1px solid #4a5c6d;
             text-decoration: none;
         }
 
         .btn-secondary:hover:not(:disabled) {
-            background-color: #4b5563;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            background-color: #4a5c6d;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .btn-print-label {
@@ -625,99 +635,145 @@
             }
         }
 
-        /* 1. El body vuelve a usar flexbox */
-        /* 1. El body vuelve a usar flexbox */
+        /* ===== NUEVO: Estilos para Header con Menú Desplegable ===== */
         body {
             display: flex;
+            flex-direction: column;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* 2. Estilos de la barra lateral */
-        .sidebar {
-            width: 240px;
-            background-color: #0c0c0c;
-            color: #ffffff;
-            padding: 1rem;
-            flex-shrink: 0;
-            transition: width 0.3s ease-in-out;
-            will-change: width;
-            /* Hint para el navegador */
-            /* ----- CORRECCIÓN 1: Añadido para alinear el botón de logout al fondo ----- */
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* ----- CORRECCIÓN 2: Reglas nuevas para alinear iconos y texto ----- */
-        .sidebar .desktop-nav a,
-        .sidebar .desktop-logout-btn {
+        /* Header superior */
+        .top-header {
+            background: linear-gradient(135deg, var(--sap-header-bg) 0%, #34495e 100%);
+            color: white;
+            padding: 12px 20px;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            /* 12px */
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            border-bottom: 2px solid #34495e;
         }
 
-        /* Ajustar padding solo para los enlaces de navegación (el botón de logout usa tailwind) */
-        .sidebar .desktop-nav a {
-            padding: 0.75rem 0.5rem;
-            /* 12px 8px */
-            border-radius: 0.375rem;
-            /* 6px */
-            margin-bottom: 0.25rem;
-            /* 4px */
+        /* Botón hamburguesa */
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color 0.2s;
         }
 
-        /* --- FIN REGLAS NUEVAS --- */
-
-
-        /* 3. Cuando está colapsada, se reduce su ancho */
-        .sidebar.sidebar-collapsed {
-            width: 72px;
+        .menu-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.1);
         }
 
-        /* 4. El contenido principal crece para ocupar el espacio restante */
+        .menu-toggle svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Logo en header */
+        .header-logo {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            margin: 0;
+        }
+
+        /* Menú desplegable */
+        .dropdown-menu {
+            position: fixed;
+            top: 66px;
+            left: 0;
+            width: 280px;
+            max-height: calc(100vh - 66px);
+            background: linear-gradient(180deg, var(--sap-header-bg) 0%, #1a252f 100%);
+            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            overflow-y: auto;
+            z-index: 999;
+            border-right: 2px solid #34495e;
+        }
+
+        .dropdown-menu.open {
+            transform: translateX(0);
+        }
+
+        .dropdown-menu nav {
+            padding: 16px;
+        }
+
+        .dropdown-menu a,
+        .dropdown-menu .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            transition: background-color 0.2s;
+            font-size: 14px;
+        }
+
+        .dropdown-menu a:hover,
+        .dropdown-menu .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-menu svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            margin-top: auto;
+        }
+
+        /* Overlay para cerrar el menú */
+        .menu-overlay {
+            position: fixed;
+            top: 66px;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 66px);
+            background-color: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 998;
+        }
+
+        .menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Contenido principal */
         .main-content {
             flex-grow: 1;
             overflow-y: auto;
-            /* Permite scroll vertical en el contenido */
         }
-
-        /* 5. Estilos para el texto y otros elementos que se ocultarán */
-        .sidebar .sidebar-text,
-        .sidebar .gadgets-heading,
-        .sidebar .text-xl.font-bold {
-            /* Modificado: transición simple */
-            transition: all 0.2s ease-in-out;
-            white-space: nowrap;
-        }
-
-        /* 6. Ocultar el texto cuando la barra está colapsada */
-        .sidebar.sidebar-collapsed .sidebar-text,
-        .sidebar.sidebar-collapsed .gadgets-heading,
-        .sidebar.sidebar-collapsed .text-xl.font-bold {
-            /* Modificado: Usamos display: none para ocultar completamente el texto */
-            display: none;
-        }
-
-        /* 7. Iconos */
-        .sidebar svg {
-            flex-shrink: 0;
-        }
-
-        /* MODIFICADO: Eliminadas las reglas de 'opacity' y 'visibility' para el SVG, ya no son necesarias */
-
-        /* 8. Centrar los iconos cuando la barra está colapsada */
-        /* ----- CORRECCIÓN 3: Modificada la regla para forzar el colapso del botón ----- */
-        .sidebar.sidebar-collapsed a,
-        .sidebar.sidebar-collapsed button {
-            justify-content: center;
-            padding-left: 0.5rem;
-            /* Añadido para anular padding de tailwind */
-            padding-right: 0.5rem;
-            /* Añadido para anular padding de tailwind */
-        }
-
-        /* --- FIN DE ESTILOS PARA LA BARRA LATERAL --- */
 
         /* Specific column width adjustments for better fit */
         #logTable th:nth-child(1),
@@ -797,25 +853,23 @@
 
         /* Responsive adjustments for smaller screens */
         @media (max-width: 1023px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                padding-bottom: 0;
+            .top-header {
+                padding: 10px 16px;
             }
 
-            .flex.h-screen.overflow-hidden {
-                flex-direction: column;
-                height: auto;
-                overflow: visible;
+            .header-logo {
+                height: 32px;
             }
 
-            .flex.flex-col.flex-1.overflow-auto {
-                overflow: visible;
+            .header-title {
+                font-size: 14px;
+            }
+
+            .dropdown-menu {
+                width: 260px;
             }
 
             .main-content {
-                padding-left: 0;
                 padding-top: 1rem;
             }
 
@@ -842,219 +896,93 @@
                 font-size: 0.75rem;
             }
         }
-
-        @media (max-width: 1023px) {
-
-            /* Ocultar la lógica de expandir/colapsar en móvil */
-            .sidebar.sidebar-collapsed {
-                width: 100%;
-            }
-
-            .sidebar.sidebar-collapsed .sidebar-text {
-                display: none;
-            }
-
-            .sidebar:not(.sidebar-collapsed) a,
-            .sidebar:not(.sidebar-collapsed) button {
-                justify-content: center;
-            }
-
-            /* 1. La barra lateral se convierte en barra superior fija */
-            .sidebar {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 64px;
-                padding: 0 1rem;
-                z-index: 50;
-                border-bottom: 1px solid #4a5568;
-            }
-
-            /* 2. Ocultar la navegación de escritorio y otros elementos */
-            .sidebar .desktop-nav,
-            .sidebar .desktop-logout-btn,
-            .sidebar .gadgets-heading,
-            .sidebar .flex.items-center,
-            .sidebar .text-xl.font-bold {
-                display: none;
-            }
-
-            /* 3. Ajustar logo y mostrar el botón de hamburguesa */
-            .sidebar img.mb-6 {
-                margin-bottom: 0;
-                height: 30px;
-            }
-
-            .hamburger-button {
-                display: block;
-                /* Mostrar el botón */
-                background: none;
-                border: none;
-                color: white;
-                cursor: pointer;
-                padding: 0.5rem;
-            }
-
-            /* 4. Estilos para el menú desplegable */
-            .mobile-menu-container {
-                display: none;
-                /* Oculto por defecto */
-                position: fixed;
-                top: 64px;
-                /* Justo debajo de la barra superior */
-                left: 0;
-                width: 100%;
-                height: calc(100vh - 64px);
-                background-color: #0c0c0c;
-                padding: 1rem;
-                overflow-y: auto;
-            }
-
-            .mobile-menu-container.is-open {
-                display: block;
-                /* Clase para mostrar el menú */
-            }
-
-            .mobile-menu-container a {
-                justify-content: flex-start;
-                /* Alinear texto e icono a la izquierda */
-                padding: 1rem;
-            }
-
-            .mobile-menu-container .sidebar-text {
-                display: inline;
-                /* Asegurarse de que el texto es visible */
-                font-size: 1.125rem;
-            }
-
-            /* 5. Ajustar el contenido principal para que no quede debajo de la barra */
-            .main-content {
-                padding-top: 80px;
-            }
-
-            /* Quitar la funcionalidad de hover en la barra en móvil */
-            .sidebar:hover {
-                width: 100%;
-            }
-        }
-
-        /* Ocultar el botón de hamburguesa en escritorio */
-        @media (min-width: 1024px) {
-            .hamburger-button {
-                display: none;
-            }
-        }
-
-        /* --- REGLA AÑADIDA --- */
-        /* Oculta el contenedor del menú móvil en escritorio para evitar duplicados */
-        .mobile-menu-container {
-            display: none;
-        }
     </style>
 </head>
 
-<body class="bg-white flex h-screen overflow-hidden">
-    <aside class="sidebar">
-        <!-- Logo (se mantiene igual) -->
-        <img src="/static/images/logo-clear.png" alt="Logix Logo" class="h-16 w-32 object-contain"
-            onerror="this.onerror=null; this.src='https://placehold.co/64x64/fBBF24/1F2937?text=Logo';">
-
-        <!-- =============================================================== -->
-        <!-- NUEVO: Botón de Hamburguesa (para ser visible solo en móviles) -->
-        <!-- =============================================================== -->
-        <button id="hamburger-btn" class="hamburger-button" aria-label="Abrir menú">
+<body>
+    <!-- Header superior con menú -->
+    <header class="top-header">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                stroke="currentColor" class="w-8 h-8">
+                stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
             </svg>
         </button>
+        <h1 class="header-title">Logix - Inbound</h1>
+    </header>
 
-
-
-        <h2 class="text-xl font-bold mb-6 text-yellow-400 sidebar-text">Menú Principal</h2>
-
-        <!-- MODIFICADO: Se añade la clase 'desktop-nav' para identificar la navegación de escritorio -->
-        <nav class="desktop-nav">
-            <a id="viewStockBtn" href="/stock" class="text-white hover:bg-gray-700">
+    <!-- Menú desplegable -->
+    <nav class="dropdown-menu" id="dropdownMenu">
+        <nav>
+            <a href="/stock">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="w-5 h-5">
+                    stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
-                <span class="sidebar-text">Consultar Stock</span>
+                <span>Consultar Stock</span>
             </a>
-            <a id="viewLabelBtn" href="/label" class="text-white hover:bg-gray-700">
+            <a href="/label">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="w-5 h-5">
+                    stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
                 </svg>
-                <span class="sidebar-text">Etiquetado</span>
+                <span>Etiquetado</span>
             </a>
-            <a id="viewLogsLinkBtn" href="/view_logs#" class="text-white hover:bg-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                    class="bi bi-file-text" viewBox="0 0 16 16">
+            <a href="/view_logs">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path
                         d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5M5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1z" />
                     <path
                         d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1" />
                 </svg>
-                <span class="sidebar-text">Visualizar Logs</span>
+                <span>Visualizar Logs</span>
             </a>
-            <a id="viewReconciliationBtn" href="/reconciliation" class="text-white hover:bg-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye"
-                    viewBox="0 0 16 16">
+            <a href="/reconciliation">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path
                         d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z" />
                     <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0" />
                 </svg>
-                <span class="sidebar-text">Ver conciliación</span>
+                <span>Ver conciliación</span>
             </a>
-            <a id="UpdateFilesBtn" href="/update" text-white hover:bg-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                    class="bi bi-file-arrow-up" viewBox="0 0 16 16">
+            <a href="/update">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path
                         d="M8 11a.5.5 0 0 0 .5-.5V6.707l1.146 1.147a.5.5 0 0 0 .708-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L7.5 6.707V10.5a.5.5 0 0 0 .5.5" />
                     <path
                         d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1" />
                 </svg>
-                <span class="sidebar-text">Actualizar Ficheros</span>
+                <span>Actualizar Ficheros</span>
             </a>
-            <a id="viewCountsBtn" href="/counts" class="text-white hover:bg-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                    class="bi bi-card-checklist" viewBox="0 0 16 16">
+            <a href="/counts">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path
                         d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2z" />
                     <path
                         d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0M7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0" />
                 </svg>
-                <span class="sidebar-text">Conteo de Items</span>
+                <span>Conteo de Items</span>
             </a>
-            <a id="viewcountsbtn" href="/view_counts" class="text-white hover:bg-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                    class="bi bi-file-spreadsheet" viewBox="0 0 16 16">
+            <a href="/view_counts">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path
                         d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v4h10V2a1 1 0 0 0-1-1zm9 6h-3v2h3zm0 3h-3v2h3zm0 3h-3v2h2a1 1 0 0 0 1-1zm-4 2v-2H6v2zm-4 0v-2H3v1a1 1 0 0 0 1 1zm-2-3h2v-2H3zm0-3h2V7H3zm3-2v2h3V7zm3 3H6v2h3z" />
                 </svg>
-                <span class="sidebar-text">Validar conteos</span>
+                <span>Validar conteos</span>
             </a>
-            <a id="viewPickingBtn" href="/picking" class="text-white hover:bg-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cart"
-                    viewBox="0 0 16 16">
+            <a href="/picking">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path
-                        d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2_0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
+                        d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
                 </svg>
-                <span class="sidebar-text">Auditoría de Picking</span>
+                <span>Auditoría de Picking</span>
             </a>
-            <a id="viewPickingAuditsBtn" href="/view_picking_audits" class="text-white hover:bg-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                    class="bi bi-clipboard-check" viewBox="0 0 16 16">
+            <a href="/view_picking_audits">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path fill-rule="evenodd"
                         d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z" />
                     <path
@@ -1062,31 +990,33 @@
                     <path
                         d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
                 </svg>
-                <span class="sidebar-text">Confirmación Picking</span>
+                <span>Confirmación Picking</span>
             </a>
+            <button class="logout-btn" onclick="window.location.href='/logout'">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M7.5 1v7h1V1z" />
+                    <path
+                        d="M3 8.812a5 5 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812" />
+                </svg>
+                <span>Cerrar Sesión</span>
+            </button>
         </nav>
+    </nav>
 
-        <!-- MODIFICADO: Se añade la clase 'desktop-logout-btn' y un icono para consistencia -->
-        <a href="/logout" class="desktop-logout-btn text-white hover:bg-gray-700 mt-auto">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5" viewBox="0 0 16 16">
-                <path d="M7.5 1v7h1V1z" />
-                <path d="M3 8.812a5 5 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812" />
-            </svg>
-            <span class="sidebar-text">Cerrar Sesión</span>
-        </a>
+    <!-- Overlay para cerrar el menú -->
+    <div class="menu-overlay" id="menuOverlay"></div>
 
-        <!-- =============================================================== -->
-        <!-- NUEVO: Contenedor para el menú que se desplegará en móviles   -->
-        <!-- =============================================================== -->
-        <div id="mobile-menu" class="mobile-menu-container"></div>
-    </aside>
-
-    <main class="main-content flex flex-col flex-1 overflow-auto">
+    <!-- Contenido principal -->
+    <main class="main-content">
         <div class="container-wrapper mx-auto px-4 sm:px-6 lg:px-8 py-2">
             <form id="main-form">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8 mb-2">
-                    <div class="lg:col-span-2 space-y-2 bg-white p-2 rounded-lg shadow">
-                        <h1 class="text-xl font-semibold text-gray-800 mb-2 border-b pb-1">Inbound</h1>
+                    <div class="lg:col-span-2 space-y-2 bg-white p-4 rounded-md shadow-md border border-gray-200">
+                        <div
+                            style="background: linear-gradient(135deg, var(--sap-header-bg) 0%, #34495e 100%); color: white; padding: 12px 16px; margin: -16px -16px 16px -16px; border-radius: 4px 4px 0 0;">
+                            <h1 class="text-base font-semibold" style="margin: 0; letter-spacing: 0.3px;">📦 Inbound -
+                                Recepción de Mercancía</h1>
+                        </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label for="importReference" class="form-label">Import Reference</label>
@@ -1148,9 +1078,11 @@
                             </div>
                         </div>
 
-                        <div class="bg-gray-50 p-4 rounded-md border border-gray-200 mt-2">
-                            <h3 class="text-base font-semibold text-gray-600 mb-3 uppercase tracking-wider">Resumen de
-                                Cantidades</h3>
+                        <div
+                            style="background-color: #f8f9fa; padding: 16px; border-radius: 3px; border: 1px solid var(--sap-border); margin-top: 8px;">
+                            <h3
+                                style="font-size: 12px; font-weight: 600; color: var(--sap-text); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--sap-primary); padding-bottom: 6px;">
+                                Resumen de Cantidades</h3>
                             <div class="grid grid-cols-3 gap-4">
                                 <div><label class="form-label text-xs">Qty. Received</label>
                                     <div id="qtyReceived" class="data-field text-sm"></div>
@@ -1179,7 +1111,11 @@
                     </div>
 
                     <div class="lg:col-span-1">
-                        <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Vista Previa Etiqueta</h2>
+                        <div
+                            style="background: linear-gradient(135deg, var(--sap-header-bg) 0%, #34495e 100%); color: white; padding: 10px 16px; border-radius: 4px 4px 0 0; text-align: center; margin-bottom: 12px;">
+                            <h2 style="font-size: 14px; font-weight: 600; margin: 0; letter-spacing: 0.3px;">🏷️ Vista
+                                Previa Etiqueta</h2>
+                        </div>
                         <div class="label-print-area">
                             <div class="label-container">
                                 <div>
@@ -1219,25 +1155,34 @@
 
         </div>
 
-        <div class="overflow-x-auto bg-white p-3 rounded-lg shadow">
-            <table class="min-w-full" id="logTable">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="whitespace-nowrap sortable-header" data-column-index="0">Import Reference</th>
-                        <th class="whitespace-nowrap sortable-header" data-column-index="1">Waybill</th>
-                        <th class="whitespace-nowrap sortable-header" data-column-index="2">Item Code</th>
-                        <th class="whitespace-nowrap sortable-header" data-column-index="3">Item Description</th>
-                        <th class="whitespace-nowrap sortable-header" data-column-index="4">Bin Location (Original)</th>
-                        <th class="whitespace-nowrap sortable-header" data-column-index="5">Relocated Bin (New)</th>
-                        <th class="whitespace-nowrap sortable-header" data-column-index="6">Qty. Received</th>
-                        <th class="whitespace-nowrap sortable-header" data-column-index="7">Qty. Expected</th>
-                        <th class="whitespace-nowrap sortable-header" data-column-index="8">Difference</th>
-                        <th class="whitespace-nowrap sortable-header" data-column-index="9">Timestamp</th>
-                        <th class="whitespace-nowrap px-3 py-3">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="logTableBody" class="divide-y divide-gray-200"></tbody>
-            </table>
+        <div
+            style="background-color: #ffffff; padding: 0; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); border: 1px solid var(--sap-border); overflow: hidden;">
+            <div
+                style="background: linear-gradient(135deg, var(--sap-header-bg) 0%, #34495e 100%); color: white; padding: 12px 16px;">
+                <h2 style="font-size: 14px; font-weight: 600; margin: 0; letter-spacing: 0.3px;">📋 Registros de Inbound
+                </h2>
+            </div>
+            <div class="overflow-x-auto" style="padding: 12px;">
+                <table class="min-w-full" id="logTable">
+                    <thead>
+                        <tr>
+                            <th class="whitespace-nowrap sortable-header" data-column-index="0">Import Reference</th>
+                            <th class="whitespace-nowrap sortable-header" data-column-index="1">Waybill</th>
+                            <th class="whitespace-nowrap sortable-header" data-column-index="2">Item Code</th>
+                            <th class="whitespace-nowrap sortable-header" data-column-index="3">Item Description</th>
+                            <th class="whitespace-nowrap sortable-header" data-column-index="4">Bin Location (Original)
+                            </th>
+                            <th class="whitespace-nowrap sortable-header" data-column-index="5">Relocated Bin (New)</th>
+                            <th class="whitespace-nowrap sortable-header" data-column-index="6">Qty. Received</th>
+                            <th class="whitespace-nowrap sortable-header" data-column-index="7">Qty. Expected</th>
+                            <th class="whitespace-nowrap sortable-header" data-column-index="8">Difference</th>
+                            <th class="whitespace-nowrap sortable-header" data-column-index="9">Timestamp</th>
+                            <th class="whitespace-nowrap px-3 py-3">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody" class="divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
         </div>
         <p id="emptyTableMessage" class="text-center text-gray-500 mt-4 hidden">No hay registros aún.</p>
         </div>
@@ -1258,23 +1203,39 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // --- CÓDIGO NUEVO PARA LA BARRA LATERAL COLAPSABLE ---
-            const sidebar = document.querySelector(".sidebar");
-            if (sidebar) {
-                // Colapsar la barra por defecto al cargar la página
-                sidebar.classList.add("sidebar-collapsed");
+            // --- CÓDIGO PARA EL MENÚ DESPLEGABLE ---
+            const menuToggle = document.getElementById('menuToggle');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const menuOverlay = document.getElementById('menuOverlay');
 
-                // Expandir la barra al pasar el mouse
-                sidebar.addEventListener("mouseenter", () => {
-                    sidebar.classList.remove("sidebar-collapsed");
-                });
+            // Función para abrir/cerrar el menú
+            function toggleMenu() {
+                dropdownMenu.classList.toggle('open');
+                menuOverlay.classList.toggle('active');
+            }
 
-                // Colapsar la barra al quitar el mouse
-                sidebar.addEventListener("mouseleave", () => {
-                    sidebar.classList.add("sidebar-collapsed");
+            // Event listeners
+            if (menuToggle) {
+                menuToggle.addEventListener('click', toggleMenu);
+            }
+
+            if (menuOverlay) {
+                menuOverlay.addEventListener('click', toggleMenu);
+            }
+
+            // Cerrar menú al hacer clic en un enlace
+            if (dropdownMenu) {
+                const menuLinks = dropdownMenu.querySelectorAll('a, button');
+                menuLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        if (dropdownMenu.classList.contains('open')) {
+                            toggleMenu();
+                        }
+                    });
                 });
             }
-            // --- FIN DEL CÓDIGO NUEVO ---
+            // --- FIN DEL CÓDIGO DEL MENÚ ---
+
             // --- Constants and Configuration ---
             const API_BASE_URL = "/api";
             const dynamicUrls = {
@@ -1944,38 +1905,6 @@
             itemCodeInput?.focus();
             loadInitialLogs();
             checkFormValidity();
-
-            // ===============================================================
-            // NUEVO: LÓGICA PARA EL MENÚ MÓVIL
-            // ===============================================================
-            const hamburgerBtn = document.getElementById('hamburger-btn');
-            const mobileMenu = document.getElementById('mobile-menu');
-            const desktopNav = document.querySelector('.desktop-nav');
-            const desktopLogoutBtn = document.querySelector('.desktop-logout-btn');
-
-            if (hamburgerBtn && mobileMenu && desktopNav && desktopLogoutBtn) {
-                // Clona los enlaces de navegación y el botón de logout al contenedor del menú móvil
-                mobileMenu.innerHTML = desktopNav.innerHTML;
-                mobileMenu.appendChild(desktopLogoutBtn.cloneNode(true));
-
-                // Añade el evento de click al botón de hamburguesa
-                hamburgerBtn.addEventListener('click', () => {
-                    const isOpen = mobileMenu.classList.toggle('is-open');
-
-                    // Cambia el icono de hamburguesa a una 'X' y viceversa
-                    if (isOpen) {
-                        hamburgerBtn.innerHTML = `
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                </svg>`;
-                    } else {
-                        hamburgerBtn.innerHTML = `
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                                </svg>`;
-                    }
-                });
-            }
         });
     </script>
 </body>
