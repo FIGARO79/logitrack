@@ -9,42 +9,81 @@
         href="{{ secure_url_for(request, 'static', path='images/gear-wide-connected.svg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/static/css/fallback.css">
+    <!-- SAP '72' Font -->
+    <link rel="stylesheet" href="https://ui5.sap.com/resources/sap/ui/core/themes/sap_fiori_3/library.css">
     <style>
-        /* ===== SAP Business One Inspired Styles ===== */
+        @font-face {
+            font-family: '72';
+            src: url('https://ui5.sap.com/sdk/resources/sap/ui/core/themes/sap_fiori_3/fonts/72-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: '72';
+            src: url('https://ui5.sap.com/sdk/resources/sap/ui/core/themes/sap_fiori_3/fonts/72-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-style: normal;
+        }
+    </style>
+    <style>
+        /* ===== SAP Fiori Quartz/Belize Theme ===== */
         :root {
-            --sap-primary: #0070d2;
-            --sap-primary-dark: #005fb2;
-            --sap-header-bg: #2c3e50;
-            --sap-header-text: #ffffff;
-            --sap-border: #d0d7de;
-            --sap-hover: #f3f6f9;
-            --sap-text: #32383e;
-            --sap-table-header: #4a5f7f;
-            --sap-yellow: #fbbf24;
+            --sapBrandColor: #0a6ed1;
+            --sapHighlightColor: #0854a0;
+            --sapBaseColor: #fff;
+            --sapShellColor: #354a5f;
+            --sapBackgroundColor: #f7f7f7;
+            --sapFontFamily: '72', '72full', Arial, Helvetica, sans-serif;
+            --sapFontSize: 0.875rem;
+            --sapTextColor: #32363a;
+            --sapLinkColor: #0a6ed1;
+
+            --sapPositiveColor: #107e3e;
+            --sapNegativeColor: #b00;
+            --sapCriticalColor: #e9730c;
+            --sapNeutralColor: #6a6d70;
+            --sapInformativeColor: #0a6ed1;
+
+            --sapTileBackground: #fff;
+            --sapTileBorder: #d9d9d9;
+            --sapButtonBackground: #fff;
+            --sapButtonBorderColor: #0854a0;
+            --sapButtonHoverBackground: #ebf5fe;
+            --sapFieldBackground: #fff;
+            --sapFieldBorderColor: #89919a;
+            --sapList_HeaderBackground: #f7f7f7;
+            --sapList_BorderColor: #d9d9d9;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
-            color: var(--sap-text);
+            font-family: var(--sapFontFamily);
+            font-size: var(--sapFontSize);
+            background-color: var(--sapBackgroundColor);
+            color: var(--sapTextColor);
             display: flex;
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
             margin: 0;
+            line-height: 1.4;
         }
 
-        /* Header superior */
+        /* Header superior - SAP Fiori Shell Bar */
         .top-header {
-            background: linear-gradient(135deg, var(--sap-header-bg) 0%, #34495e 100%);
+            background-color: var(--sapShellColor);
             color: white;
-            padding: 12px 20px;
+            padding: 0 1rem;
+            height: 44px;
             display: flex;
             align-items: center;
-            gap: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            gap: 1rem;
+            box-shadow: 0 0.125rem 0.5rem 0 rgba(0, 0, 0, 0.3);
             z-index: 1000;
-            border-bottom: 2px solid #34495e;
         }
 
         .menu-toggle {
@@ -52,44 +91,47 @@
             border: none;
             color: white;
             cursor: pointer;
-            padding: 8px;
+            padding: 0.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
-            transition: background-color 0.2s;
+            border-radius: 0.25rem;
+            transition: background-color 0.1s ease;
         }
 
         .menu-toggle:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
 
+        .menu-toggle:active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
         .menu-toggle svg {
-            width: 24px;
-            height: 24px;
+            width: 1.25rem;
+            height: 1.25rem;
         }
 
         .header-title {
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
+            font-size: 1rem;
+            font-weight: 400;
             margin: 0;
+            color: #fff;
         }
 
-        /* Menú desplegable */
+        /* Menú desplegable - SAP Fiori Side Navigation */
         .dropdown-menu {
             position: fixed;
-            top: 66px;
+            top: 44px;
             left: 0;
-            width: 280px;
-            max-height: calc(100vh - 66px);
-            background: linear-gradient(180deg, var(--sap-header-bg) 0%, #1a252f 100%);
-            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+            width: 15rem;
+            max-height: calc(100vh - 44px);
+            background-color: var(--sapShellColor);
+            box-shadow: 0 0 0.5rem 0 rgba(0, 0, 0, 0.5);
             transform: translateX(-100%);
-            transition: transform 0.3s ease-in-out;
+            transition: transform 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
             overflow-y: auto;
             z-index: 999;
-            border-right: 2px solid #34495e;
         }
 
         .dropdown-menu.open {
@@ -97,31 +139,38 @@
         }
 
         .dropdown-menu nav {
-            padding: 16px;
+            padding: 0.5rem 0;
         }
 
         .dropdown-menu a,
         .dropdown-menu .logout-btn {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            color: white;
+            gap: 0.75rem;
+            padding: 0.625rem 1rem;
+            color: #fff;
             text-decoration: none;
-            border-radius: 4px;
-            margin-bottom: 2px;
-            transition: background-color 0.2s;
-            font-size: 14px;
+            border-radius: 0;
+            margin: 0;
+            transition: background-color 0.1s ease;
+            font-size: 0.875rem;
+            border-left: 0.1875rem solid transparent;
         }
 
         .dropdown-menu a:hover,
         .dropdown-menu .logout-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.08);
+            border-left-color: var(--sapBrandColor);
+        }
+
+        .dropdown-menu a:active,
+        .dropdown-menu .logout-btn:active {
+            background-color: rgba(255, 255, 255, 0.12);
         }
 
         .dropdown-menu svg {
-            width: 20px;
-            height: 20px;
+            width: 1rem;
+            height: 1rem;
             flex-shrink: 0;
         }
 
@@ -131,19 +180,18 @@
             width: 100%;
             cursor: pointer;
             text-align: left;
-            justify-content: flex-start;
         }
 
         .menu-overlay {
             position: fixed;
-            top: 66px;
+            top: 44px;
             left: 0;
             width: 100%;
-            height: calc(100vh - 66px);
-            background-color: rgba(0, 0, 0, 0.5);
+            height: calc(100vh - 44px);
+            background-color: rgba(0, 0, 0, 0.6);
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
             z-index: 998;
         }
 
@@ -155,81 +203,86 @@
         .main-content {
             flex-grow: 1;
             overflow-y: auto;
+            background-color: var(--sapBackgroundColor);
         }
 
         /* Botones */
         .btn-primary {
-            background-color: var(--sap-yellow);
-            color: #1f2937;
-            border: 1px solid #f59e0b;
+            background-color: var(--sapBrandColor);
+            color: white;
+            border: 1px solid var(--sapBrandColor);
             padding: 8px 16px;
             border-radius: 3px;
             font-weight: 500;
             font-size: 13px;
             transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            font-family: var(--sapFontFamily);
         }
 
         .btn-primary:hover {
-            background-color: #f59e0b;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+            background-color: var(--sapHighlightColor);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
         }
 
         .btn-secondary {
-            background-color: #5a6c7d;
+            background-color: var(--sapNeutralColor);
             color: white;
-            border: 1px solid #4a5c6d;
+            border: 1px solid var(--sapNeutralColor);
             padding: 8px 16px;
             border-radius: 3px;
             font-weight: 500;
             font-size: 13px;
             transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            font-family: var(--sapFontFamily);
         }
 
         .btn-secondary:hover {
-            background-color: #4a5c6d;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            background-color: #6a7d8f;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
         }
 
         .btn-success {
-            background-color: #10b981;
+            background-color: var(--sapPositiveColor);
             color: white;
-            border: 1px solid #059669;
+            border: 1px solid var(--sapPositiveColor);
             padding: 8px 16px;
             border-radius: 3px;
             font-weight: 500;
             font-size: 13px;
             transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            font-family: var(--sapFontFamily);
         }
 
         .btn-success:hover {
-            background-color: #059669;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+            background-color: #2a7d42;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
         }
 
         /* Estilos para la tabla generada por pandas */
         .dataframe {
             width: 100%;
             border-collapse: collapse;
+            background-color: var(--sapTileBackground);
         }
 
         .dataframe thead {
-            background: linear-gradient(135deg, var(--sap-table-header) 0%, #3d5068 100%);
-            border-bottom: 2px solid #34495e;
+            background-color: var(--sapShellColor);
+            border-bottom: 0.125rem solid var(--sapShellColor);
         }
 
         .dataframe th {
@@ -241,7 +294,8 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             position: relative;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            font-family: var(--sapFontFamily);
         }
 
         .dataframe th:last-child {
@@ -269,41 +323,154 @@
         }
 
         .sortable.asc::after {
-            border-bottom-color: white;
+            border-bottom-color: var(--sapTextColor);
             opacity: 1;
         }
 
         .sortable.desc::after {
             content: "";
-            border-top-color: white;
+            border-top-color: var(--sapTextColor);
             opacity: 1;
         }
 
         .dataframe tbody tr {
-            border-bottom: 1px solid var(--sap-border);
+            border-bottom: 1px solid var(--sapList_BorderColor);
+            transition: background-color 0.1s ease;
         }
 
         .dataframe tbody tr:nth-child(even) {
-            background-color: #ffffff;
+            background-color: var(--sapTileBackground);
         }
 
         .dataframe tbody tr:nth-child(odd) {
-            background-color: #f8f9fa;
+            background-color: rgba(0, 0, 0, 0.1);
         }
 
         .dataframe tbody tr:hover {
-            background-color: var(--sap-hover);
+            background-color: rgba(10, 110, 209, 0.1);
         }
 
         .dataframe td {
             padding: 10px 12px;
             font-size: 13px;
             vertical-align: middle;
-            border-right: 1px solid #e5e7eb;
+            border-right: 1px solid var(--sapList_BorderColor);
+            color: var(--sapTextColor);
+            font-family: var(--sapFontFamily);
         }
 
         .dataframe td:last-child {
             border-right: none;
+        }
+
+        /* SAP Fiori Message Strip Styles */
+        #message-container {
+            position: fixed;
+            top: 44px;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            max-width: 100%;
+        }
+
+        .message-strip {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            font-family: var(--sapFontFamily);
+            font-size: var(--sapFontSize);
+            border-bottom: 0.0625rem solid rgba(0, 0, 0, 0.1);
+            animation: slideDown 0.3s ease-out;
+            box-shadow: 0 0.125rem 0.5rem 0 rgba(0, 0, 0, 0.15);
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .message-strip.hiding {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+        }
+
+        .message-strip-icon {
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .message-strip-text {
+            flex-grow: 1;
+            line-height: 1.4;
+        }
+
+        .message-strip-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+            margin-left: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            transition: background-color 0.1s ease;
+        }
+
+        .message-strip-close:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .message-strip-close svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .message-strip.success {
+            background-color: #f1fdf6;
+            color: var(--sapPositiveColor);
+            border-left: 0.25rem solid var(--sapPositiveColor);
+        }
+
+        .message-strip.error {
+            background-color: #fef6f6;
+            color: var(--sapNegativeColor);
+            border-left: 0.25rem solid var(--sapNegativeColor);
+        }
+
+        .message-strip.warning {
+            background-color: #fef9f0;
+            color: var(--sapCriticalColor);
+            border-left: 0.25rem solid var(--sapCriticalColor);
+        }
+
+        .message-strip.information {
+            background-color: #f0f7fe;
+            color: var(--sapInformativeColor);
+            border-left: 0.25rem solid var(--sapInformativeColor);
         }
     </style>
 </head>
@@ -431,34 +598,48 @@
     <!-- Overlay para cerrar el menú -->
     <div class="menu-overlay" id="menuOverlay"></div>
 
+    <!-- SAP Fiori Message Strip Container -->
+    <div id="message-container"></div>
+
     <!-- Contenido principal -->
     <main class="main-content">
         <div class="container mx-auto p-4 sm:p-6 lg:p-8">
             <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl sm:text-3xl font-bold" style="color: var(--sap-header-bg);">📊 Reporte de
+                <h1 class="text-2xl sm:text-3xl font-bold"
+                    style="color: var(--sapTextColor); font-family: var(--sapFontFamily);">Reporte de
                     Conciliación</h1>
 
                 <div class="flex space-x-2">
-                    <a href="/api/export_reconciliation" class="btn-success" download>
-                        &#x1F4E5; Exportar a Excel
+                    <a href="/api/export_reconciliation" class="btn-primary" download>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            viewBox="0 0 16 16">
+                            <path
+                                d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+                            <path
+                                d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+                        </svg>
+                        Exportar a Excel
                     </a>
                 </div>
             </div>
 
             {% if error %}
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert"
+                style="background-color: rgba(229, 41, 41, 0.1); border-color: var(--sapNegativeColor); color: var(--sapNegativeColor);">
                 <strong class="font-bold">¡Error!</strong>
                 <span class="block sm:inline">Ocurrió un problema al generar el reporte: {{ error }}</span>
             </div>
             {% elif tables %}
-            <div class="bg-white shadow-md rounded-lg overflow-x-auto" style="border: 1px solid var(--sap-border);">
+            <div class="shadow-md rounded-lg overflow-x-auto"
+                style="background-color: var(--sapTileBackground); border: 1px solid var(--sapTileBorder);">
                 {% for table in tables %}
                 {{ table|safe }}
                 {% endfor %}
             </div>
             {% else %}
-            <div class="text-center py-10 bg-white rounded-lg shadow-md">
-                <p class="text-gray-500">No hay datos disponibles para generar la conciliación.</p>
+            <div class="text-center py-10 rounded-lg shadow-md" style="background-color: var(--sapTileBackground);">
+                <p style="color: var(--sapNeutralColor); font-family: var(--sapFontFamily);">No hay datos disponibles
+                    para generar la conciliación.</p>
             </div>
             {% endif %}
         </div>
