@@ -10,44 +10,79 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/static/css/fallback.css">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- SAP '72' Font -->
+    <link rel="stylesheet" href="https://ui5.sap.com/resources/sap/ui/core/themes/sap_fiori_3/library.css">
     <style>
-        /* ===== SAP Business One Inspired Styles ===== */
+        @font-face {
+            font-family: '72';
+            src: url('https://ui5.sap.com/sdk/resources/sap/ui/core/themes/sap_fiori_3/fonts/72-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: '72';
+            src: url('https://ui5.sap.com/sdk/resources/sap/ui/core/themes/sap_fiori_3/fonts/72-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-style: normal;
+        }
+    </style>
+    <style>
+        /* ===== SAP Fiori Quartz/Belize Theme ===== */
         :root {
-            --sap-primary: #0070d2;
-            --sap-primary-dark: #005fb2;
-            --sap-header-bg: #2c3e50;
-            --sap-header-text: #ffffff;
-            --sap-border: #d0d7de;
-            --sap-hover: #f3f6f9;
-            --sap-text: #32383e;
-            --sap-yellow: #fbbf24;
+            --sapBrandColor: #0a6ed1;
+            --sapHighlightColor: #0854a0;
+            --sapBaseColor: #fff;
+            --sapShellColor: #354a5f;
+            --sapBackgroundColor: #f7f7f7;
+            --sapFontFamily: '72', '72full', Arial, Helvetica, sans-serif;
+            --sapFontSize: 0.875rem;
+            --sapTextColor: #32363a;
+            --sapLinkColor: #0a6ed1;
+
+            --sapPositiveColor: #107e3e;
+            --sapNegativeColor: #b00;
+            --sapCriticalColor: #e9730c;
+            --sapNeutralColor: #6a6d70;
+            --sapInformativeColor: #0a6ed1;
+
+            --sapTileBackground: #fff;
+            --sapTileBorder: #d9d9d9;
+            --sapButtonBackground: #fff;
+            --sapButtonBorderColor: #0854a0;
+            --sapButtonHoverBackground: #ebf5fe;
+            --sapFieldBackground: #fff;
+            --sapFieldBorderColor: #89919a;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
-            color: var(--sap-text);
+            font-family: var(--sapFontFamily);
+            font-size: var(--sapFontSize);
+            background-color: var(--sapBackgroundColor);
+            color: var(--sapTextColor);
             display: flex;
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
             margin: 0;
+            line-height: 1.4;
         }
 
-        /* Header superior */
+        /* Header superior - SAP Fiori Shell Bar */
         .top-header {
-            background: linear-gradient(135deg, var(--sap-header-bg) 0%, #34495e 100%);
+            background-color: var(--sapShellColor);
             color: white;
-            padding: 12px 20px;
+            padding: 0 1rem;
+            height: 44px;
             display: flex;
             align-items: center;
-            gap: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            gap: 1rem;
+            box-shadow: 0 0.125rem 0.5rem 0 rgba(0, 0, 0, 0.15);
             z-index: 1000;
-            border-bottom: 2px solid #34495e;
         }
 
         .menu-toggle {
@@ -55,44 +90,47 @@
             border: none;
             color: white;
             cursor: pointer;
-            padding: 8px;
+            padding: 0.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
-            transition: background-color 0.2s;
+            border-radius: 0.25rem;
+            transition: background-color 0.1s ease;
         }
 
         .menu-toggle:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
 
+        .menu-toggle:active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
         .menu-toggle svg {
-            width: 24px;
-            height: 24px;
+            width: 1.25rem;
+            height: 1.25rem;
         }
 
         .header-title {
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
+            font-size: 1rem;
+            font-weight: 400;
             margin: 0;
+            color: #fff;
         }
 
-        /* Menú desplegable */
+        /* Menú desplegable - SAP Fiori Side Navigation */
         .dropdown-menu {
             position: fixed;
-            top: 66px;
+            top: 44px;
             left: 0;
-            width: 280px;
-            max-height: calc(100vh - 66px);
-            background: linear-gradient(180deg, var(--sap-header-bg) 0%, #1a252f 100%);
-            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+            width: 15rem;
+            max-height: calc(100vh - 44px);
+            background-color: var(--sapShellColor);
+            box-shadow: 0 0 0.5rem 0 rgba(0, 0, 0, 0.3);
             transform: translateX(-100%);
-            transition: transform 0.3s ease-in-out;
+            transition: transform 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
             overflow-y: auto;
             z-index: 999;
-            border-right: 2px solid #34495e;
         }
 
         .dropdown-menu.open {
@@ -100,31 +138,38 @@
         }
 
         .dropdown-menu nav {
-            padding: 16px;
+            padding: 0.5rem 0;
         }
 
         .dropdown-menu a,
         .dropdown-menu .logout-btn {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            color: white;
+            gap: 0.75rem;
+            padding: 0.625rem 1rem;
+            color: #fff;
             text-decoration: none;
-            border-radius: 4px;
-            margin-bottom: 2px;
-            transition: background-color 0.2s;
-            font-size: 14px;
+            border-radius: 0;
+            margin: 0;
+            transition: background-color 0.1s ease;
+            font-size: 0.875rem;
+            border-left: 0.1875rem solid transparent;
         }
 
         .dropdown-menu a:hover,
         .dropdown-menu .logout-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.08);
+            border-left-color: var(--sapBrandColor);
+        }
+
+        .dropdown-menu a:active,
+        .dropdown-menu .logout-btn:active {
+            background-color: rgba(255, 255, 255, 0.12);
         }
 
         .dropdown-menu svg {
-            width: 20px;
-            height: 20px;
+            width: 1rem;
+            height: 1rem;
             flex-shrink: 0;
         }
 
@@ -134,19 +179,18 @@
             width: 100%;
             cursor: pointer;
             text-align: left;
-            justify-content: flex-start;
         }
 
         .menu-overlay {
             position: fixed;
-            top: 66px;
+            top: 44px;
             left: 0;
             width: 100%;
-            height: calc(100vh - 66px);
-            background-color: rgba(0, 0, 0, 0.5);
+            height: calc(100vh - 44px);
+            background-color: rgba(0, 0, 0, 0.4);
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
             z-index: 998;
         }
 
@@ -170,30 +214,32 @@
         input[type="text"],
         input[type="number"],
         select {
-            border: 1px solid var(--sap-border);
+            border: 1px solid var(--sapFieldBorderColor);
             padding: 8px 12px;
             border-radius: 3px;
             width: 100%;
             font-size: 13px;
-            background-color: #ffffff;
+            background-color: var(--sapFieldBackground);
             transition: border-color 0.2s, box-shadow 0.2s;
+            font-family: var(--sapFontFamily);
         }
 
         input:focus,
         select:focus {
             outline: none;
-            border-color: var(--sap-primary);
-            box-shadow: 0 0 0 2px rgba(0, 112, 210, 0.1);
+            border-color: var(--sapBrandColor);
+            box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.1);
         }
 
         .form-label {
             font-weight: 600;
             margin-bottom: 4px;
             display: block;
-            color: var(--sap-text);
+            color: var(--sapTextColor);
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.3px;
+            font-family: var(--sapFontFamily);
         }
 
         .data-field {
@@ -201,13 +247,14 @@
             padding: 8px 12px;
             border-radius: 3px;
             min-height: 38px;
-            border: 1px solid var(--sap-border);
-            color: var(--sap-text);
+            border: 1px solid var(--sapTileBorder);
+            color: var(--sapTextColor);
             overflow-wrap: break-word;
             font-size: 13px;
             line-height: 1.5;
             display: flex;
             align-items: center;
+            font-family: var(--sapFontFamily);
         }
 
         button,
@@ -223,12 +270,13 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            font-family: var(--sapFontFamily);
         }
 
         button:focus,
         .btn:focus {
             outline: none;
-            box-shadow: 0 0 0 2px rgba(0, 112, 210, 0.3);
+            box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.3);
         }
 
         button:disabled,
@@ -238,76 +286,135 @@
         }
 
         .btn-primary {
-            background-color: var(--sap-yellow);
-            color: #1f2937;
-            border: 1px solid #f59e0b;
+            background-color: var(--sapBrandColor);
+            color: white;
+            border: 1px solid var(--sapBrandColor);
         }
 
         .btn-primary:hover:not(:disabled) {
-            background-color: #f59e0b;
+            background-color: var(--sapHighlightColor);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
         }
 
         .btn-secondary {
-            background-color: #5a6c7d;
+            background-color: var(--sapNeutralColor);
             color: white;
-            border: 1px solid #4a5c6d;
+            border: 1px solid var(--sapNeutralColor);
         }
 
         .btn-secondary:hover:not(:disabled) {
-            background-color: #4a5c6d;
+            background-color: #5a6d70;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        /* Toast Notification Styles */
-        #toast-container {
+        /* SAP Fiori Message Strip Styles */
+        #message-container {
             position: fixed;
-            top: 1.5rem;
-            right: 1.5rem;
-            z-index: 9999;
+            top: 44px;
+            left: 0;
+            right: 0;
+            z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0;
+            max-width: 100%;
         }
 
-        .toast {
+        .message-strip {
             display: flex;
             align-items: center;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            max-width: 350px;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            padding: 0.75rem 1rem;
+            font-family: var(--sapFontFamily);
+            font-size: var(--sapFontSize);
+            border-bottom: 0.0625rem solid rgba(0, 0, 0, 0.1);
+            animation: slideDown 0.3s ease-out;
+            box-shadow: 0 0.125rem 0.5rem 0 rgba(0, 0, 0, 0.15);
         }
 
-        .toast.show {
-            opacity: 1;
-            transform: translateX(0);
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
-        .toast-icon {
+        .message-strip.hiding {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+        }
+
+        .message-strip-icon {
             margin-right: 0.75rem;
             flex-shrink: 0;
+            width: 1rem;
+            height: 1rem;
         }
 
-        .toast.success {
-            background-color: #dcfce7;
-            color: #166534;
-            border: 1px solid #4ade80;
+        .message-strip-text {
+            flex-grow: 1;
+            line-height: 1.4;
         }
 
-        .toast.error {
-            background-color: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #f87171;
+        .message-strip-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+            margin-left: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            transition: background-color 0.1s ease;
         }
 
-        .toast.info {
-            background-color: #e0f2fe;
-            color: #0c4a6e;
-            border: 1px solid #7dd3fc;
+        .message-strip-close:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .message-strip-close svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .message-strip.success {
+            background-color: #f1fdf6;
+            color: var(--sapPositiveColor);
+            border-left: 0.25rem solid var(--sapPositiveColor);
+        }
+
+        .message-strip.error {
+            background-color: #fef6f6;
+            color: var(--sapNegativeColor);
+            border-left: 0.25rem solid var(--sapNegativeColor);
+        }
+
+        .message-strip.warning {
+            background-color: #fef9f0;
+            color: var(--sapCriticalColor);
+            border-left: 0.25rem solid var(--sapCriticalColor);
+        }
+
+        .message-strip.information {
+            background-color: #f0f7fe;
+            color: var(--sapInformativeColor);
+            border-left: 0.25rem solid var(--sapInformativeColor);
         }
 
         .spinner {
@@ -457,11 +564,11 @@
     <!-- Contenido principal -->
     <main class="main-content">
         <div class="container-wrapper mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="bg-white p-6 rounded-md shadow-md border" style="border-color: var(--sap-border);">
+            <div class="bg-white p-6 rounded-md shadow-md border" style="border-color: var(--sapTileBorder);">
                 <div
-                    style="background: linear-gradient(135deg, var(--sap-header-bg) 0%, #34495e 100%); color: white; padding: 12px 16px; margin: -24px -24px 16px -24px; border-radius: 4px 4px 0 0;">
-                    <h1 class="text-base font-semibold" style="margin: 0; letter-spacing: 0.3px;">🔍 Consulta de
-                        Inventario</h1>
+                    style="background-color: var(--sapList_HeaderBackground); color: var(--sapTextColor); padding: 0.75rem 1rem; margin: -1.5rem -1.5rem 1rem -1.5rem; border-radius: 0.25rem 0.25rem 0 0; border-bottom: 0.0625rem solid var(--sapTileBorder);">
+                    <h1 class="text-base font-semibold" style="margin: 0; font-family: var(--sapFontFamily);">Consulta
+                        de Inventario</h1>
                 </div>
 
                 <!-- Controles de Búsqueda -->
@@ -517,7 +624,8 @@
         </div>
     </div>
 
-    <div id="toast-container"></div>
+    <!-- SAP Fiori Message Strip Container -->
+    <div id="message-container"></div>
 
     <script>
         // --- CÓDIGO PARA EL MENÚ DESPLEGABLE ---
@@ -560,16 +668,17 @@
             const closeScannerButton = document.getElementById('close-scanner-btn');
             const toggleFlashButton = document.getElementById('toggle-flash-btn');
             const flashIcon = document.getElementById('flash-icon');
-            const toastContainer = document.getElementById("toast-container");
+            const messageContainer = document.getElementById("message-container");
             let html5QrCode = null;
             let currentStream = null;
             let isFlashOn = false;
 
             const ICONS = {
                 spinner: '<div class="spinner"></div>',
-                success: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-                error: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-                info: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+                success: '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>',
+                error: '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>',
+                warning: '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 3.001-1.742 3.001H4.42c-1.53 0-2.493-1.667-1.743-3.001l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>',
+                information: '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>'
             };
 
             const fields = [
@@ -580,16 +689,32 @@
                 { id: "SupersededBy", label: "Reemplazado Por" }
             ];
 
-            function showToast(message, type = "info") {
-                const toast = document.createElement("div");
-                toast.className = `toast ${type}`;
-                toast.innerHTML = `<div class="toast-icon">${ICONS[type] || ICONS.info}</div><span>${message}</span>`;
-                toastContainer.appendChild(toast);
-                setTimeout(() => toast.classList.add("show"), 10);
+            function showMessage(message, type = "information") {
+                if (!messageContainer) return;
+
+                const messageStrip = document.createElement("div");
+                messageStrip.className = `message-strip ${type}`;
+
+                const icon = ICONS[type] || ICONS.information;
+
+                messageStrip.innerHTML = `
+                    <svg class="message-strip-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        ${icon}
+                    </svg>
+                    <span class="message-strip-text">${message}</span>
+                    <button class="message-strip-close" onclick="this.parentElement.remove()">
+                        <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                `;
+
+                messageContainer.appendChild(messageStrip);
+
                 setTimeout(() => {
-                    toast.classList.remove("show");
-                    toast.addEventListener("transitionend", () => toast.remove());
-                }, 5000);
+                    messageStrip.classList.add("hiding");
+                    setTimeout(() => messageStrip.remove(), 300);
+                }, 6000);
             }
 
             function toggleButtonSpinner(button, isLoading, defaultContent) {
@@ -613,10 +738,10 @@
 
             async function fetchAndDisplayItem(itemCode) {
                 if (!itemCode) {
-                    showToast("Por favor, introduce un código de artículo.", "error");
+                    showMessage("Por favor, introduce un código de artículo.", "error");
                     return;
                 }
-                showToast("Buscando...", "info");
+                showMessage("Buscando...", "information");
                 renderForm();
                 toggleButtonSpinner(searchButton, true, '<span>Buscar</span>');
 
@@ -625,13 +750,13 @@
                     const data = await response.json();
 
                     if (response.ok && !data.error) {
-                        showToast("Artículo encontrado.", "success");
+                        showMessage("Artículo encontrado.", "success");
                         renderForm(data);
                     } else {
-                        showToast(data.error || "Artículo no encontrado.", "error");
+                        showMessage(data.error || "Artículo no encontrado.", "error");
                     }
                 } catch (error) {
-                    showToast("Error de conexión al buscar el artículo.", "error");
+                    showMessage("Error de conexión al buscar el artículo.", "error");
                 } finally {
                     toggleButtonSpinner(searchButton, false, '<span>Buscar</span>');
                     searchInput.value = '';
@@ -646,7 +771,7 @@
                 const capabilities = track.getCapabilities();
 
                 if (!capabilities.torch) {
-                    showToast("El flash no está disponible en este dispositivo.", "error");
+                    showMessage("El flash no está disponible en este dispositivo.", "error");
                     return;
                 }
 
@@ -666,7 +791,7 @@
                         flashIcon.classList.remove('animate-pulse');
                     }
                 } catch (err) {
-                    showToast("Error al controlar el flash.", "error");
+                    showMessage("Error al controlar el flash.", "error");
                     console.error("Error al controlar el flash:", err);
                 }
             };
@@ -709,7 +834,7 @@
                         (errorMessage) => { /* Ignorar errores continuos */ }
                     );
                 } catch (err) {
-                    showToast("No se pudo iniciar la cámara. Asegúrate de dar los permisos.", "error");
+                    showMessage("No se pudo iniciar la cámara. Asegúrate de dar los permisos.", "error");
                     stopScanning();
                 }
             });
