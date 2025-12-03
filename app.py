@@ -1166,7 +1166,7 @@ async def export_reconciliation(username: str = Depends(login_required)):
 
         output.seek(0)
         timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"reporte_conciliacion_{timestamp_str}.xlsx"
+        filename = f"consolidado_inbound_{timestamp_str}.xlsx"
         return Response(content=output.getvalue(), media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers={"Content-Disposition": f"attachment; filename={filename}"})
 
     except Exception as e:
