@@ -78,9 +78,10 @@
         }
 
         #qrCodeContainer img {
+            display: block;
+            margin: auto;
             max-width: 100%;
             max-height: 100%;
-            object-fit: contain;
         }
 
         .qr-placeholder {
@@ -96,63 +97,87 @@
             border-radius: 0.25rem;
         }
 
-        .label-item-code {
-            font-size: 1.125rem;
-            /* 18px */
-            font-weight: 700;
-            line-height: 1.25;
-            margin-top: 0.75rem;
-            /* 12px */
+        .label-item-code,
+        .label-item-description {
+            font-size: 0.875rem;
+            font-weight: bold;
+            line-height: 1.25 !important;
+            word-break: normal;
+            margin-bottom: 0.25rem;
         }
 
         .label-item-description {
-            font-size: 1.125rem;
-            /* 18px */
-            font-weight: 700;
-            line-height: 1.25;
-            margin-bottom: 2.5rem;
-            /* 40px - Aumentado para mayor espacio */
+            margin-bottom: 10mm;
         }
 
         .label-data-field {
-            font-size: 0.875rem;
-            /* 14px */
+            font-size: 0.75rem;
+            font-weight: normal;
+            line-height: 1.2 !important;
             display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 1rem;
-            align-items: center;
-            margin-bottom: 0.5rem;
-            /* 8px */
+            grid-template-columns: auto 1fr;
+            gap: 0.5rem;
+            align-items: start;
+            margin-bottom: 0.5mm;
         }
 
         .label-data-field span:first-child {
-            font-weight: 400;
+            font-weight: 500;
             color: #4b5563;
-            text-align: left;
+            white-space: normal;
         }
 
-        .label-data-field span:last-child {
-            font-weight: 500;
+        .label-data-field span:last-child,
+        .label-data-field input[type="number"].label-qty-input {
+            font-weight: normal;
             text-align: right;
+            word-break: break-all;
+        }
+
+        .label-qty-input {
+            -moz-appearance: textfield;
+            appearance: textfield;
+            border: none;
+            background-color: transparent;
+            padding: 0;
+            margin: 0;
+            max-width: 70px;
+            font-size: inherit;
+            font-weight: inherit;
+            color: inherit;
+            text-align: right;
+            outline: none;
+            box-shadow: none;
+            justify-self: end;
+            line-height: 1.2;
+        }
+
+        .label-qty-input::-webkit-outer-spin-button,
+        .label-qty-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
         .label-disclaimer {
-            font-size: 0.625rem !important;
-            /* 10px */
-            font-weight: 400 !important;
-            line-height: 1.4 !important;
+            font-size: 7pt !important;
+            font-weight: normal !important;
+            line-height: 1.1 !important;
+            margin-right: 0.5rem;
             flex-grow: 1;
-            max-width: 60%;
         }
 
         .label-logo {
-            max-width: 45%;
+            max-width: 40%;
+            max-height: 20px;
+            width: auto;
             height: auto;
             object-fit: contain;
+            margin-bottom: 3.5mm;
             display: block;
         }
 
         .label-bottom-section {
+            margin-top: auto;
             display: flex;
             align-items: flex-end;
             justify-content: space-between;
@@ -427,13 +452,23 @@
         }
 
 
-        /* Estilos de Impresión */
+        /* Estilos de Impresión - CORRECCIÓN DEFINITIVA */
         @page {
             size: 70mm 100mm;
             margin: 3.5mm;
         }
 
         @media print {
+
+            /* 1. REGLA NUCLEAR: Elimina sombras en TODOS los elementos al imprimir */
+            *,
+            *::before,
+            *::after {
+                box-shadow: none !important;
+                text-shadow: none !important;
+                filter: none !important;
+                /* Elimina filtros que causen sombras */
+            }
 
             html,
             body {
@@ -444,27 +479,19 @@
                 width: 70mm;
                 height: 100mm;
                 overflow: hidden;
-            }
-
-            body {
-                margin: 0;
-                padding: 0;
-                -webkit-print-color-adjust: antialiased;
-                print-color-adjust: optimizeLegibility;
-                width: 70mm;
-                height: 100mm;
-                overflow: hidden;
-                font-family: "Arial", "Helvetica", sans-serif;
-                color: #000000 !important;
+                background-color: white !important;
+                /* Fondo blanco puro */
             }
 
             body * {
                 visibility: hidden;
+                /* Oculta todo lo que no sea la etiqueta */
             }
 
             .label-print-area,
             .label-print-area * {
                 visibility: visible;
+                /* Muestra solo la etiqueta */
             }
 
             .label-print-area {
@@ -475,13 +502,14 @@
                 height: 100%;
                 margin: 0;
                 padding: 0;
-                border: none;
-                box-shadow: none;
+                border: none !important;
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                background: white !important;
             }
 
+            /* 2. CONTENEDOR DE ETIQUETA - SIN BORDES NI SOMBRAS */
             .label-container {
                 width: 100%;
                 height: 100% !important;
@@ -489,13 +517,21 @@
                 max-height: 93mm;
                 margin: 0;
                 padding: 0mm;
-                border: none;
-                box-shadow: none;
-                page-break-inside: avoid;
+
+                /* AQUÍ ESTÁ LA SOLUCIÓN: */
+                border: none !important;
+                /* Quita la línea gris del borde */
+                outline: none !important;
+                /* Quita cualquier contorno */
+                box-shadow: none !important;
+                /* Quita la sombra gris */
                 background: white !important;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
+                /* Asegura fondo blanco */
+
+                position: relative !important;
+                /* <--- CRUCIAL para el anclaje */
+                display: block;
+                /* Cambiamos a block para evitar conflictos de flex */
                 box-sizing: border-box;
                 overflow: hidden;
             }
@@ -514,7 +550,8 @@
                 font-weight: bold !important;
                 line-height: 1.25 !important;
                 word-break: normal;
-                margin-bottom: 13mm;
+                margin-bottom: 10mm;
+                /* Ajustado para dar espacio */
                 color: #000000 !important;
             }
 
@@ -529,8 +566,24 @@
                 color: #000000 !important;
             }
 
-            .label-data-field span:first-child {
-                white-space: normal;
+            /* 3. SECCIÓN INFERIOR - POSICIONAMIENTO CORRECTO */
+            .label-bottom-section {
+                position: absolute !important;
+                /* Lo saca del flujo normal */
+                bottom: 3mm !important;
+                /* Lo clava exactamente a 5mm del fondo */
+                left: 0 !important;
+                width: 100% !important;
+
+                display: flex !important;
+                align-items: flex-end !important;
+                /* Alinea texto y QR abajo */
+                justify-content: space-between !important;
+
+                padding-left: 0mm;
+                /* Ajusta si quieres margen a los lados */
+                padding-right: 0mm;
+                background: transparent !important;
             }
 
             .label-disclaimer {
@@ -538,13 +591,21 @@
                 font-weight: normal !important;
                 line-height: 1.1 !important;
                 color: #000000 !important;
+                margin-right: 2mm !important;
+                /* Espacio entre texto y QR */
+                margin-bottom: 0 !important;
+                /* Para que alinee con el borde inferior del QR */
+                max-width: 65%;
             }
 
+            /* 4. QR - SIN BORDE */
             #qrCodeContainer {
                 width: 25mm;
                 height: 25mm;
                 min-height: 25mm;
-                border: none;
+                border: none !important;
+                /* Quita el cuadro gris alrededor del QR */
+                background: transparent !important;
                 flex-shrink: 0;
             }
 
@@ -555,9 +616,8 @@
             }
 
             .qr-placeholder {
-                border: 1px dashed;
-                color: #000000 !important;
-                font-size: 6pt;
+                display: none !important;
+                /* Oculta el placeholder en impresión */
             }
 
             .label-logo {
@@ -570,19 +630,16 @@
                 display: block;
             }
 
+            /* Ocultar elementos de la interfaz */
             #labelQtyPackInput {
                 display: none !important;
-                visibility: hidden !important;
             }
 
             #labelQtyPackSpan {
                 visibility: visible !important;
                 display: inline !important;
                 font-size: 9pt !important;
-                font-weight: normal !important;
-                text-align: right !important;
                 color: #000000 !important;
-                line-height: 1.2 !important;
             }
 
             #printLabelBtn,
@@ -595,12 +652,22 @@
             h1,
             h2,
             table,
+            nav,
+            header,
             #addLogEntryBtn,
             #exportLogBtn,
             #emptyTableMessage,
-            .container-wrapper>img:first-of-type {
+            .container-wrapper>img:first-of-type,
+            .top-header,
+            .dropdown-menu {
                 display: none !important;
                 visibility: hidden !important;
+            }
+        }
+
+        @media screen {
+            #labelQtyPackSpan {
+                display: none;
             }
         }
 
@@ -1098,47 +1165,39 @@
                     </div>
 
                     <div class="lg:col-span-1">
-                        <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Vista Previa</h2>
+                        <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Vista Previa Etiqueta</h2>
                         <div class="label-print-area">
                             <div class="label-container">
-                                <!-- Parte Superior y Media -->
                                 <div>
-                                    <img src="/static/images/logoytpe_sandvik.png" alt="Logotipo Sandvik Etiqueta"
-                                        class="label-logo"
-                                        onerror="this.onerror=null; this.src='https://placehold.co/130x25/f3f4f6/6b7280?text=Error+Logo';" />
-                                    <p class="label-item-code" id="labelItemCode">ITEM CODE</p>
-                                    <p class="label-item-description" id="labelItemDescription">Item Description</p>
-
-                                    <div class="space-y-2">
-                                        <div class="label-data-field">
-                                            <span>Quantity Received</span>
-                                            <span id="labelQtyPack">1</span>
-                                        </div>
-                                        <div class="label-data-field">
-                                            <span>Product weight</span>
-                                            <span id="labelWeight">N/A</span>
-                                        </div>
-                                        <div class="label-data-field">
-                                            <span>Bin Location</span>
-                                            <span id="labelBinLocation">BIN</span>
-                                        </div>
-                                        <div class="label-data-field">
-                                            <span>Reception Date</span>
-                                            <span id="labelReceptionDate">DD/MM/YY</span>
-                                        </div>
+                                    <div class="mb-3">
+                                        <img src="/static/images/logoytpe_sandvik.png" alt="Logotipo Sandvik Etiqueta"
+                                            class="label-logo"
+                                            onerror="this.onerror=null; this.src='https://placehold.co/130x25/f3f4f6/6b7280?text=Error+Logo';" />
+                                        <p class="label-item-code" id="labelItemCode">ITEM CODE</p>
+                                        <p class="label-item-description" id="labelItemDescription">Item Description</p>
+                                    </div>
+                                    <div class="mb-2 space-y-1">
+                                        <div class="label-data-field"><span>Quantity Received</span><input type="number"
+                                                id="labelQtyPackInput" class="label-qty-input" value="1" min="0" /><span
+                                                id="labelQtyPackSpan">1</span></div>
+                                        <div class="label-data-field"><span>Product weight</span><span
+                                                id="labelWeight">N/A</span></div>
+                                        <div class="label-data-field"><span>Bin Location</span><span
+                                                id="labelBinLocation">BIN</span></div>
+                                        <div class="label-data-field"><span>Reception Date</span><span
+                                                id="labelReceptionDate">DD/MM/YY</span></div>
                                     </div>
                                 </div>
-                                <!-- Parte Inferior -->
                                 <div class="label-bottom-section">
-                                    <p class="label-disclaimer">All trademarks and logotypes appearing on this label are
-                                        owned by Sandvik Group</p>
+                                    <p class="label-disclaimer" id="labelDisclaimer">All trademarks and logotypes
+                                        appearing on this label are owned by Sandvik Group</p>
                                     <div id="qrCodeContainer">
                                         <div class="qr-placeholder">QR Code</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <button type="button" id="printLabelBtn" class="btn-primary w-full mt-4 py-2">Imprimir
+                        <button type="button" id="printLabelBtn" class="btn-primary h-10 btn-print-label mt-4">Imprimir
                             Etiqueta</button>
                     </div>
                 </div>
