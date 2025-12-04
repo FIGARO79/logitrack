@@ -1072,7 +1072,7 @@
                             <h1 class="text-base font-semibold" style="margin: 0; letter-spacing: 0.3px;">Inbound -
                                 Recepción de Mercancía</h1>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                             <div>
                                 <label for="importReference" class="form-label">Import Reference</label>
                                 <input type="text" id="importReference" name="importReference"
@@ -1083,36 +1083,37 @@
                                 <label for="waybill" class="form-label">Waybill</label>
                                 <input type="text" id="waybill" name="waybill" placeholder="Ej: WB-67890"
                                     oninput="this.value = this.value.toUpperCase()" required />
+                            </div>                                              
+                            <div class="sm:col-span-2">
+                                <label for="itemCode" class="form-label">Item Code.</label>
+                                <div class="flex items-end gap-2">
+                                    <input type="text" id="itemCode" name="itemCode" class="flex-grow"
+                                        placeholder="Ingrese código y presione Enter o Buscar"
+                                        oninput="this.value = this.value.toUpperCase()" required />
+                                    <button type="button" id="scanItemBtn" title="Escanear código de barras"
+                                        class="btn-secondary h-9 w-auto px-3 flex-shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                            class="bi bi-qr-code-scan" viewBox="0 0 16 16">
+                                            <path
+                                                d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z" />
+                                            <path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z" />
+                                            <path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z" />
+                                            <path
+                                                d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 2h-1v1h-2v1h3zm-4 2v-1H8v1z" />
+                                            <path d="M12 9h2V8h-2z" />
+                                        </svg>
+                                    </button>
+                                    <button type="button" id="findItemBtn"
+                                        class="btn-secondary h-9 w-auto px-4 flex-shrink-0"><span>Buscar</span></button>
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <label for="itemCode" class="form-label">Item Code.</label>
-                            <div class="flex items-end gap-2">
-                                <input type="text" id="itemCode" name="itemCode" class="flex-grow"
-                                    placeholder="Ingrese código y presione Enter o Buscar"
-                                    oninput="this.value = this.value.toUpperCase()" required />
-                                <button type="button" id="scanItemBtn" title="Escanear código de barras"
-                                    class="btn-secondary h-9 w-auto px-3 flex-shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                        class="bi bi-qr-code-scan" viewBox="0 0 16 16">
-                                        <path
-                                            d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z" />
-                                        <path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z" />
-                                        <path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z" />
-                                        <path
-                                            d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 2h-1v1h-2v1h3zm-4 2v-1H8v1z" />
-                                        <path d="M12 9h2V8h-2z" />
-                                    </svg>
-                                </button>
-                                <button type="button" id="findItemBtn"
-                                    class="btn-secondary h-9 w-auto px-4 flex-shrink-0"><span>Buscar</span></button>
-                            </div>
-                        </div>
+
                         <div>
                             <label for="itemDescription" class="form-label">Item Description.</label>
                             <div id="itemDescription" class="data-field min-h-[38px]"></div>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <div>
                                 <label for="quantity" class="form-label">Quantity Received.</label>
                                 <input type="number" id="quantity" name="quantity" min="1" class="w-full sm:w-1/2"
@@ -1123,14 +1124,22 @@
                                 <div id="binLocation" class="data-field min-h-[38px]"></div>
                             </div>
                             <div>
-                                <label for="aditionalBins" class="form-label">Aditional Bins.</label>
-                                <div id="aditionalBins" class="data-field min-h-[38px]"></div>
-                            </div>
-                            <div>
                                 <label for="relocatedBin" class="form-label">Relocate Bin (New).</label>
                                 <input type="text" id="relocatedBin" name="relocatedBin" class="w-full sm:w-1/2"
                                     placeholder="(Opcional)" oninput="this.value = this.value.toUpperCase()" />
                             </div>
+                            <div>
+                                <label for="aditionalBins" class="form-label">Aditional Bins.</label>
+                                <div id="aditionalBins" class="data-field min-h-[38px]"></div>
+                            </div> 
+                            <div>
+                                <label for="itemtype" class="form-label">ABC.</label>
+                                <div id="itemtype" class="data-field min-h-[38px]"></div>
+                            </div>
+                            <div>
+                                <label for="sicCode" class="form-label">Sic Code.</label>
+                                <div id="sicCode" class="data-field min-h-[38px]"></div>
+                            </div>                                                         
                         </div>
 
                         <div
@@ -1166,7 +1175,7 @@
                     </div>
 
                     <div class="lg:col-span-1">
-                        <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Vista Previa Etiqueta</h2>
+                        <h2 class="text-lg font-semibold text-gray-700 mb-3 text-center">Vista Etiqueta</h2>
                         <div class="label-print-area">
                             <div class="label-container">
                                 <div>
@@ -1306,6 +1315,8 @@
             const quantityInput = document.getElementById("quantity");
             const relocatedBinInput = document.getElementById("relocatedBin");
             const itemDescriptionDiv = document.getElementById("itemDescription");
+            const itemtypeDiv = document.getElementById("itemtype");
+            const sicCodeDiv = document.getElementById("sicCode");
             const binLocationDiv = document.getElementById("binLocation");
             const aditionalBinsDiv = document.getElementById("aditionalBins");
             const qtyReceivedDiv = document.getElementById("qtyReceived");
@@ -1407,6 +1418,8 @@
                     if (response.ok) {
                         currentItemData = isEditing ? { ...currentItemData, ...data } : data;
                         itemDescriptionDiv.textContent = currentItemData.description || "N/A";
+                        itemtypeDiv.textContent = currentItemData.itemType || "N/A";
+                        sicCodeDiv.textContent = currentItemData.sicCode || "N/A";
                         binLocationDiv.textContent = currentItemData.binLocation || "N/A";
                         aditionalBinsDiv.textContent = currentItemData.aditionalBins || "N/A";
                         if (!isEditing) qtyReceivedDiv.textContent = quantityInput.value || "0";
@@ -1437,6 +1450,8 @@
                     if (quantityInput) quantityInput.value = "";
                     if (relocatedBinInput) relocatedBinInput.value = "";
                     if (itemDescriptionDiv) itemDescriptionDiv.textContent = "";
+                    if (itemtypeDiv) itemtypeDiv.textContent = "";
+                    if (sicCodeDiv) sicCodeDiv.textContent = "";
                     if (binLocationDiv) binLocationDiv.textContent = "";
                     if (aditionalBinsDiv) aditionalBinsDiv.textContent = "";
                     if (qtyReceivedDiv) qtyReceivedDiv.textContent = "";

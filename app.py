@@ -46,7 +46,7 @@ async_engine = create_async_engine(ASYNC_DB_URL, echo=False)
 
 # --- Configuración de Columnas ---
 COLUMNS_TO_READ_MASTER = [
-    'Item_Code', 'Item_Description', 'ABC_Code_stockroom', 'Physical_Qty','Frozen_Qty','Weight_per_Unit',
+    'Item_Code', 'Item_Description', 'ABC_Code_stockroom', 'Physical_Qty','Frozen_Qty','Weight_per_Unit', 'SIC_Code_stockroom',
     'Bin_1', 'Aditional_Bin_Location','SupersededBy'
 ]
 GRN_COLUMN_NAME_IN_CSV = 'GRN_Number'
@@ -752,7 +752,9 @@ async def find_item(item_code: str, import_reference: str, username: str = Depen
         "binLocation": effective_bin_location,
         "aditionalBins": item_details.get('Aditional_Bin_Location', 'N/A'),
         "weight": item_details.get('Weight_per_Unit', 'N/A'),
-        "defaultQtyGrn": expected_quantity
+        "defaultQtyGrn": expected_quantity,
+        "itemType": item_details.get('ABC_Code_stockroom', 'N/A'),
+        "sicCode": item_details.get('SIC_Code_stockroom', 'N/A')
     }
     return JSONResponse(content=response_data)
 
