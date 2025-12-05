@@ -1388,7 +1388,7 @@ async def get_picking_order(order_number: str, despatch_number: str):
         })
 
         # Reemplazar NaN con None para que sea compatible con JSON
-        order_data = order_data.where(pd.notnull(order_data), None)
+        order_data = order_data.replace({np.nan: None})
 
         return JSONResponse(content=order_data.to_dict(orient="records"))
 
@@ -1500,7 +1500,7 @@ async def edit_count_page(request: Request, count_id: int, username: str = Depen
         if request.method == "POST":
             form_data = await request.form()
             new_qty = form_data.get('counted_qty')
-            if new_qty is not None:
+            if new_qty is not None and isinstance(new_qty, str):
                 try:
                     await conn.execute(
                         "UPDATE stock_counts SET counted_qty = ? WHERE id = ?",
@@ -1693,17 +1693,17 @@ async def export_counts(tz: Optional[str] = None, username: str = Depends(login_
     # 4. Procesar Timestamps (Vectorizado)
     if tz:
         try:
-            # Guardar original para fallback
-            original_ts = df['timestamp'].copy()
+            # Convertir a datetime UTC-aware
+            df['timestamp_dt'] = pd.to_datetime(df['timestamp'], errors='coerce', utc=True)
             
-            # Convertir a datetime (asumiendo UTC si son naive, o ajustando)
-            df['timestamp_dt'] = pd.to_datetime(df['timestamp'], utc=True, errors='coerce', format='mixed')
+            # Convertir a la zona horaria deseada y formatear
+            mask = df['timestamp_dt'].notna()
+            # Only convert timezone on valid datetime values
+            df.loc[mask, 'timestamp_dt_converted'] = df.loc[mask, 'timestamp_dt'].dt.tz_convert(tz)
+            df.loc[mask, 'timestamp'] = df.loc[mask, 'timestamp_dt_converted'].dt.strftime("%Y-%m-%d %H:%M:%S")
             
-            # Convertir a la zona horaria deseada
-            converted_ts = df['timestamp_dt'].dt.tz_convert(tz).dt.strftime("%Y-%m-%d %H:%M:%S")
-            
-            # Usar el valor convertido donde sea válido, sino mantener el original
-            df['timestamp'] = converted_ts.fillna(original_ts)
+            # Limpiar columnas temporales
+            df.drop(columns=['timestamp_dt', 'timestamp_dt_converted'], inplace=True)
             
         except Exception as e:
             print(f"Error vectorizing timezone conversion: {e}")
@@ -2027,6 +2027,11 @@ async def reopen_location(request: Request, admin: bool = Depends(admin_login_re
 
         if not session_id or not location_code:
             query_string = urlencode({'error': 'El ID de sesión y el código de ubicación son obligatorios.'})
+            return RedirectResponse(url=f'/admin/inventory?{query_string}', status_code=status.HTTP_302_FOUND)
+
+        # Ensure session_id is a string before converting to int
+        if not isinstance(session_id, str):
+            query_string = urlencode({'error': 'El ID de sesión debe ser un valor válido.'})
             return RedirectResponse(url=f'/admin/inventory?{query_string}', status_code=status.HTTP_302_FOUND)
 
         async with aiosqlite.connect(DB_FILE_PATH) as conn:
